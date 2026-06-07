@@ -1,0 +1,10 @@
+{
+  "name": "sisyphus-gates",
+  "version": "0.1.0",
+  "description": "Governance gate enforcement for Sisyphus workflow — blocks writes/commits until PRD/plan gates pass",
+  "type": "module",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@opencode-ai/plugin": "1.15.5"
+  }
+}
