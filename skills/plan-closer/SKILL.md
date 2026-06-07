@@ -62,7 +62,7 @@ When delegating to subagents, always report: `Executing with [model] via [catego
 
 3. **Synthesize AGENTS.md Session Reflection (REQUIRED — Oracle finding: sisy-dev failed here)**
    Read:
-   - `{project_root}/.sisyphus/state/{plan_name}.json` → gate history, waves completed
+   - `~/.sisyphus/state.json` → gate history, waves completed
    - `{project_root}/STATE.md` → living project state, blockers, metrics (if exists)
    - `{project_root}/CONTEXT.md` → phase decisions, open questions (if exists)
    - `{project_root}/.sisyphus/evidence/{plan_name}/` → build evidence, test results
@@ -99,8 +99,8 @@ When delegating to subagents, always report: `Executing with [model] via [catego
 4. **Archive per-project state (JSON + living state files)**
    ```bash
    # Archive machine-readable state
-   mv {project_root}/.sisyphus/state/{plan_name}.json \
-      {project_root}/.sisyphus/evidence/state-{plan_name}-{date}.json
+cp ~/.sisyphus/state.json \
+       ~/.sisyphus/evidence/state-{plan_name}-{date}.json
 
    # Archive human-readable living state
    if [ -f {project_root}/STATE.md ]; then

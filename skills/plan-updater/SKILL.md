@@ -48,7 +48,7 @@ When delegating to subagents, always report: `Executing with [model] via [catego
 
 1. **Read per-project state to find active plan**
    ```bash
-   STATE_FILE=$(ls -t {project_root}/.sisyphus/state/*.json 2>/dev/null | head -1)
+   STATE_FILE=~/.sisyphus/state.json
    ACTIVE_PLAN=$(python3 -c "import json; print(json.load(open('$STATE_FILE'))['active_plan'])")
    ```
 

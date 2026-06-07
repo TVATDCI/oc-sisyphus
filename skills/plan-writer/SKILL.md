@@ -167,7 +167,7 @@ When delegating to subagents, always report: `Executing with [model] via [catego
 8. **Write per-project state file**
    ```bash
    TIMESTAMP=$(date -Iseconds)
-   cat > {project_root}/.sisyphus/state/{slug}.json << EOF
+   cat > ~/.sisyphus/state.json << EOF
    {
      "active_plan": ".sisyphus/plans/{slug}.md",
      "started_at": "${TIMESTAMP}",

@@ -311,7 +311,7 @@ If a loaded rule causes a deviation from the plan (e.g., naming convention requi
 
 1. **Read state file**
    ```bash
-   STATE=$(cat {project_root}/.sisyphus/state/{slug}.json)
+   STATE=$(cat ~/.sisyphus/state.json)
    ```
    Verify:
    - `approval_status` is "approved"
