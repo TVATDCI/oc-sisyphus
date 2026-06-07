@@ -23,15 +23,15 @@
    │ ├── └── each has SKILL.md + optional scripts/evals
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator
    │
-   ├── 4. PLANNING LAYER
-   │ ├── .sisyphus/ # Active state machine: runtime state, workflow.yaml plans, evidence, notepads, templates
-   │ └── .omo/ # Sync mirror: parallel copy of .sisyphus/ for Oh-My-OpenAgent tool isolation
+    ├── 4. PLANNING LAYER
+    │ ├── .sisyphus/ # Active state machine: runtime state, workflow.yaml plans, evidence, notepads, templates
+    │ └── .omo/ # ARCHIVED (W0.3): was sync mirror, now sole live state is .sisyphus/
    │
    ├── 5. TRACKING LAYER
    │ └── tasks/ # Beads per project (aino, dropDeadDev, opencode, pienso, vladi...)
    │
    ├── 6. INFRASTRUCTURE LAYER
-   │ ├── scripts/ # 8 shell scripts (load-rules, regression-gate, validate-skills, etc.)
+    │ ├── scripts/ # 14 scripts (load-rules, regression-gate, validate-skills-v2.py, verify-plugin-compat.js, check-doc-claims.sh, etc.)
    │ ├── plugins/sisyphus-gates/ # Compiled gate plugin (dist/index.js)
    │ ├── benchmark/ # 3 JSONL baseline runs (vs codegraph vs semble)
    │ └── .codegraph/codegraph.db # Search/index: semantic code index SQLite DB
@@ -69,8 +69,13 @@
    Jun 1 Oracle sisyphus/oracle flip (THIS session):
    Sisyphus primary → minimax-m3 (was kimi-k2.6); ultrawork → qwen3.7-max
    Oracle primary → qwen3.7-max (was glm-5.1); fallbacks [glm-5.1, minimax-m3]
-   tui.json plugin fix Added "oh-my-openagent/tui" to plugin array (fixed doctor warning)
-3. Complete Workflow — 9-Phase State Machine
+    tui.json plugin fix Added "oh-my-openagent/tui" to plugin array (fixed doctor warning)
+    Jun 7 W0 — Safety baseline: git init, .gitignore fix, .omo/ archive, plugin pin @4.7.5, benchmark/ removal
+    Jun 7 W1 — Runtime hardening: MCP scoped to 4 paths, health-check.md, README.md, validate-skills-v2.py (37 PASS), 6 new agents added
+    Jun 7 W2 — Contract migration: canonical state seeded (~/.sisyphus/state.json), plugin source restored (13 modules), 180 unit tests + 20 self-tests PASS, THREAT-MODEL.md
+    Jun 7 W3 — Automation: pre-push hook, GitHub Actions CI, doc drift guards (check-doc-claims.sh, check-workflow-contract.sh), full doc rewrite SYSTEM-OVERVIEW v4.0, private remote push
+    Jun 7 Fix All minimax-m3-free replaced with deepseek-v4-flash-free (12 replacements); patch-package removed (not applicable to cache-based runtime)
+ 3. Complete Workflow — 9-Phase State Machine
    ╔══════════════════════════╗
    ║ GLOBAL BLOCKING RULES ║
    ║ • Destructive cmds denied║
@@ -137,8 +142,8 @@ Phase Details
 8 validation regression-gate script: regression-gate.sh (exit 0) none Manual: user_confirms_validation
 9 close ⛔ plan-closer evidence_check: evidence_logged==true bd close unless logged Manual: user_confirms_close
 Agent Routing (12 runtime agents × 9 categories)
-12 Named Agents (runtime): sisyphus (minimax-m3-free, ultrawork: qwen3.7-max), hephaestus (deepseek-v4-pro), oracle (qwen3.7-max, high), librarian (deepseek-v4-flash-free), explore (minimax-m3-free), multimodal-looker (gemini-3-flash), prometheus (glm-5.1, max), metis (minimax-m3-free, max), momus (glm-5.1), atlas (kimi-k2.5), code-reviewer (deepseek-v4-pro), sisyphus-junior (minimax-m3-free)
-9 Categories (via task(category='...')): deep→glm-5.1, ultrabrain→deepseek-v4-pro, visual-engineering→gemini-3.1-pro, quick→deepseek-v4-flash-free, unspecified-high→glm-5.1, unspecified-low→kimi-k2.5, writing→qwen3.7, artistry→minimax-m3-free, git-commit-message→deepseek-v4-flash-free
+17 Named Agents (runtime): sisyphus (kimi-k2.6, ultrawork: qwen3.7-max), hephaestus (deepseek-v4-pro), oracle (gpt-5.4, high), librarian (deepseek-v4-flash-free), explore (deepseek-v4-flash-free), multimodal-looker (mimo-v2.5-free), prometheus (glm-5.1), metis (qwen3.6-plus), momus (glm-5.1), atlas (kimi-k2.5), sisyphus-junior (kimi-k2.6), archivist (deepseek-v4-flash-free), athena (deepseek-v4-flash-free), auditor (deepseek-v4-flash-free), post-reviewer (deepseek-v4-flash-free), reviewer (deepseek-v4-flash-free)
+9 Categories (via task(category='...')): deep→glm-5.1, ultrabrain→deepseek-v4-pro, visual-engineering→gemini-3.1-pro, quick→deepseek-v4-flash-free, unspecified-high→glm-5.1, unspecified-low→deepseek-v4-flash-free, writing→qwen3.7-max, artistry→mimo-v2.5-free, git-commit-message→deepseek-v4-flash-free
 Most constrained model: glm-5.1 (concurrency: 1) — used by 2 categories (deep, unspecified-high) + 2 agents (prometheus, momus).
 
 7 Subagent .md Permissions (security boundaries)
