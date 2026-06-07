@@ -30,10 +30,10 @@ Validates that a discovery-orchestrator brief exists and is complete enough for 
 
 ## Model Selection
 
-**Category:** `orchestration` → `kimi-k2.6` (fallback: `glm-5.1`)
+**Category:** `unspecified-high` → `kimi-k2.6` (fallback: `glm-5.1`)
 
 **Model Transparency:**
-When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via orchestration").
+When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via unspecified-high").
 
 ## Input
 

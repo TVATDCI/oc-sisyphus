@@ -33,12 +33,12 @@ Transforms an approved PRD into vertical slice issues with dependency mapping. E
 
 ## Model Selection
 
-**Category:** `orchestration` → `kimi-k2.6` (fallback: `glm-5.1`)
+**Category:** `unspecified-high` → `kimi-k2.6` (fallback: `glm-5.1`)
 
 **Rationale:** Issue creation is mechanical — read PRD, identify vertical slices, assign IDs. No deep reasoning needed.
 
 **Model Transparency:**
-When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via orchestration").
+When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via unspecified-high").
 
 ## Input
 

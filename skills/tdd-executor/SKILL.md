@@ -235,7 +235,7 @@ wave-executor Wave 1
 
 ## Model Selection
 
-**Category:** `orchestration` → `kimi-k2.6`
+**Category:** `unspecified-high` → `kimi-k2.6`
 
 TDD execution is mechanical: write test, make it pass, clean up. No architectural reasoning needed — that's in the PRD.
 

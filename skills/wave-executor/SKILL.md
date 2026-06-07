@@ -66,7 +66,7 @@ Executes one wave of an approved plan. Performs research, strategy, execution, a
 
 6. **Fix attempt limit: After 3 auto-fix attempts on a single task**, STOP fixing — document remaining issues in wave summary under "Deferred Issues". Do NOT restart builds hoping issues resolve themselves. [See Deviation Rules]
 
-7. **Model Transparency (MANDATORY):** When delegating to subagents, you MUST report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via orchestration"). [See Model Selection]
+7. **Model Transparency (MANDATORY):** When delegating to subagents, you MUST report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via unspecified-high"). [See Model Selection]
 
 8. **Without an eval, you are just changing words in a paragraph and hoping that it sticks.** Eval-first discipline (§6 of AGENTS.md) applies to all skill creation and modification. [Cross-skill constraint from [[9-step-harness]]]
 
@@ -104,14 +104,14 @@ High-level flow (stable across all invocations):
 
 ### Model Selection
 
-**Category:** `orchestration` → `kimi-k2.6` (fallback: `glm-5.1`)
+**Category:** `unspecified-high` → `kimi-k2.6` (fallback: `glm-5.1`)
 
 **Rationale:** Wave execution is mechanical work — read PRD, follow specs, implement, test. The hard architectural reasoning is already done (in PRD approved by Momus). Using cheaper model reduces cost per wave by ~10x.
 
 **Escalation rule:** If tests fail after 2 attempts with kimi-k2.6, retry with `category="deep"` → `gpt-5.4` for complex debugging.
 
 **Model Transparency (MANDATORY):**
-When delegating to subagents, you MUST report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via orchestration").
+When delegating to subagents, you MUST report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via unspecified-high").
 
 **Also record execution metadata:**
 ```bash
@@ -249,7 +249,7 @@ plan-closer (final closure)
 - Use **plan-writer** before execution (creates the plan)
 - Use **momus-plan-reviewer** before first wave and between waves
 - Use **plan-updater** for incremental progress tracking
-- Use **sisyphus-plan** for the full workflow orchestration
+- Use **sisyphus-plan** for the full workflow unspecified-high
 
 ---
 
@@ -736,7 +736,7 @@ When user invokes with `--auto` or `workflow.auto_advance` is true:
     ## Wave {N} Summary
 
     **Model Used:** Executing with [model] via [category]
-    *(e.g., "Executing with kimi-k2.6 via orchestration")*
+    *(e.g., "Executing with kimi-k2.6 via unspecified-high")*
 
     ### Completed
     - {what was completed in this wave}

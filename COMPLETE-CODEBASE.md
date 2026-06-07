@@ -8,13 +8,13 @@
    ~/.config/opencode/
    ├── 1. ORCHESTRATION LAYER
    │ ├── opencode.json # Entry-point config
-   │ └── oh-my-openagent.json # 12 agents + 9 categories + routing
+   │ └── oh-my-openagent.json # 17 agents + 9 categories + routing
    │
    ├── 2. INSTRUCTION LAYER
    │ ├── AGENTS.md # Root system prompt (compaction, routing)
    │ ├── SYSTEM-OVERVIEW.md # Architecture doc v3.0
    │ ├── HANDOFF.md # Previous session continuity
-   │ ├── rules/ # 12 rule files (4 language + 8 concern)
+   │ ├── rules/ # 14 rule files (4 language + 9 concern + README)
    │ ├── prompts/ # Context injection (main-vault, prometheus)
    │ └── agents/ # 7 subagent .md definitions with permissions
    │

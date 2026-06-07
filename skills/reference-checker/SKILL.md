@@ -260,7 +260,7 @@ Step 0: Reference Verification (mandatory pre-creation gate)
 **When to use vs other skills:**
 - Use **reference-checker** for mechanical "does this exist?" checks
 - Use **momus-prd-reviewer** or **momus-plan-reviewer** for deep quality analysis of existing artifacts
-- Use **sisyphus-plan** for workflow orchestration (calls this skill at Checkpoint 2)
+- Use **sisyphus-plan** for workflow unspecified-high (calls this skill at Checkpoint 2)
 
 ## Tool Usage
 

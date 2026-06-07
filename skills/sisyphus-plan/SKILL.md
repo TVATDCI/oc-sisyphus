@@ -1,6 +1,6 @@
 ---
 name: sisyphus-plan
-description: "Execution orchestration framework for .sisyphus planning. This is the COORDINATION skill, not the EXECUTION skill. Use when: (1) user wants to start a planning workflow, (2) understanding how the 7 phase-specific skills fit together, (3) understanding the 3-artifact chain. Triggers: 'plan this', 'start initiative', 'how does planning work'. NOT for: executing phases directly (use prd-writer, issue-creator, plan-writer, wave-executor, plan-updater, plan-closer)."
+description: "Execution unspecified-high framework for .sisyphus planning. This is the COORDINATION skill, not the EXECUTION skill. Use when: (1) user wants to start a planning workflow, (2) understanding how the 7 phase-specific skills fit together, (3) understanding the 3-artifact chain. Triggers: 'plan this', 'start initiative', 'how does planning work'. NOT for: executing phases directly (use prd-writer, issue-creator, plan-writer, wave-executor, plan-updater, plan-closer)."
 compatibility: opencode
 ---
 
@@ -152,12 +152,12 @@ State tracks phase transitions:
 
 ## Migration from v1.x
 
-**Before:** `task(category="orchestration", load_skills=["sisyphus-plan"], prompt="Plan this")`
+**Before:** `task(category="unspecified-high", load_skills=["sisyphus-plan"], prompt="Plan this")`
 
 **After:** Sequential `task()` calls, one per phase:
 ```typescript
 // Phase 1
-await task(category="orchestration", load_skills=["brief-loader"], prompt="Validate brief: ...")
+await task(category="unspecified-high", load_skills=["brief-loader"], prompt="Validate brief: ...")
 // User approves
 // Phase 2
 await task(category="deep", load_skills=["prd-writer"], prompt="Write PRD from brief: ...")
@@ -165,15 +165,15 @@ await task(category="deep", load_skills=["prd-writer"], prompt="Write PRD from b
 await task(category="deep", load_skills=["momus-prd-reviewer"], prompt="Review PRD at ...")
 // User approves
 // Phase 3
-await task(category="orchestration", load_skills=["issue-creator"], prompt="Create issues from PRD: ...")
+await task(category="unspecified-high", load_skills=["issue-creator"], prompt="Create issues from PRD: ...")
 // User approves
 // Phase 4
-await task(category="orchestration", load_skills=["plan-writer"], prompt="Create plan from issues: ...")
+await task(category="unspecified-high", load_skills=["plan-writer"], prompt="Create plan from issues: ...")
 // Mandatory Gate 2
 await task(category="deep", load_skills=["momus-plan-reviewer"], prompt="Review plan at ...")
 // User approves
 // Phase 5
-await task(category="orchestration", load_skills=["wave-executor"], prompt="Execute wave 1: ...")
+await task(category="unspecified-high", load_skills=["wave-executor"], prompt="Execute wave 1: ...")
 // ...and so on
 ```
 

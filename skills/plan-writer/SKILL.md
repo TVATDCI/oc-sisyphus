@@ -33,12 +33,12 @@ Creates a structured execution plan from approved PRD and validated issue breakd
 
 ## Model Selection
 
-**Category:** `orchestration` → `kimi-k2.6` (fallback: `glm-5.1`)
+**Category:** `unspecified-high` → `kimi-k2.6` (fallback: `glm-5.1`)
 
 **Rationale:** Plan creation is mechanical — read PRD, organize slices, structure waves. Architectural reasoning is already done.
 
 **Model Transparency:**
-When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via orchestration").
+When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via unspecified-high").
 
 ## Input
 
