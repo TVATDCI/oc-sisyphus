@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["oh-my-openagent@latest", "sisyphus-gates"],
+  "plugin": ["oh-my-openagent@4.7.5", "sisyphus-gates"],
   "default_agent": "sisyphus",
   "mcp": {
     "home": {
