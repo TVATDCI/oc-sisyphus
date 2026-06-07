@@ -9,7 +9,10 @@
         "npx",
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "/home/vladi"
+        "/home/vladi/Documents/Main-vault",
+        "/home/vladi/AGENTS",
+        "/home/vladi/.sisyphus",
+        "/home/vladi/.config/opencode"
       ],
       "enabled": true
     },
