@@ -112,6 +112,24 @@
         { "model": "opencode-go/kimi-k2.6" },
         { "model": "opencode-go/glm-5.1" }
       ]
+    },
+    "archivist": {
+      "model": "opencode/minimax-m3-free"
+    },
+    "athena": {
+      "model": "opencode/minimax-m3-free"
+    },
+    "auditor": {
+      "model": "opencode/minimax-m3-free"
+    },
+    "explorer": {
+      "model": "opencode/minimax-m3-free"
+    },
+    "post-reviewer": {
+      "model": "opencode/minimax-m3-free"
+    },
+    "reviewer": {
+      "model": "opencode/minimax-m3-free"
     }
   },
   "categories": {
