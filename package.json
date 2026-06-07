@@ -1,6 +1,15 @@
 {
   "dependencies": {
     "@opencode-ai/plugin": "1.16.2",
-    "oh-my-openagent": "^4.7.5"
+    "oh-my-openagent": "^4.7.5",
+    "patch-package": "^8.0.1"
+  },
+  "scripts": {
+    "postinstall": "patch-package",
+    "install:hooks": "bash scripts/install-hooks.sh",
+    "test": "npm --prefix plugins/sisyphus-gates test",
+    "test:self": "npm --prefix plugins/sisyphus-gates run self-test",
+    "test:compat": "node scripts/verify-plugin-compat.js",
+    "test:all": "npm test && npm run test:compat && npm run test:self"
   }
 }
