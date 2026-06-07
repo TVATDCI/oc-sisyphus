@@ -22,7 +22,7 @@
         "fallback_models": [
           { "model": "opencode-go/kimi-k2.6" },
           { "model": "opencode-go/minimax-m3" },
-          { "model": "opencode/minimax-m3-free" },
+          { "model": "opencode/deepseek-v4-flash-free" },
           { "model": "opencode/glm-5.1" }
         ]
       }
@@ -32,7 +32,7 @@
       "fallback_models": [
         { "model": "opencode-go/glm-5.1" },
         { "model": "opencode-go/kimi-k2.6" },
-        { "model": "opencode/minimax-m3-free" },
+        { "model": "opencode/deepseek-v4-flash-free" },
         { "model": "opencode/kimi-k2.6" }
       ],
       "prompt_append": "Explore thoroughly, then implement. Prefer small, testable changes."
@@ -44,7 +44,7 @@
         { "model": "opencode-go/kimi-k2.6" },
         { "model": "opencode-go/qwen3.7-max" },
         { "model": "opencode-go/glm-5.1" },
-        { "model": "opencode/minimax-m3-free" }
+        { "model": "opencode/deepseek-v4-flash-free" }
       ],
       "prompt_append": "Think step-by-step. Identify root causes, not symptoms. Propose alternatives before recommending. Prioritize correctness and maintainability."
     },
@@ -53,7 +53,7 @@
       "fallback_models": [
         { "model": "opencode-go/deepseek-v4-flash" },
         { "model": "opencode-go/minimax-m2.7" },
-        { "model": "opencode/minimax-m3-free" }
+        { "model": "opencode/deepseek-v4-flash-free" }
       ],
       "prompt_append": "Focus on production-ready patterns and official documentation. Skip basic tutorials. Include version numbers, source URLs, and concrete code examples."
     },
@@ -114,29 +114,29 @@
       ]
     },
     "archivist": {
-      "model": "opencode/minimax-m3-free"
+      "model": "opencode/deepseek-v4-flash-free"
     },
     "athena": {
-      "model": "opencode/minimax-m3-free"
+      "model": "opencode/deepseek-v4-flash-free"
     },
     "auditor": {
-      "model": "opencode/minimax-m3-free"
+      "model": "opencode/deepseek-v4-flash-free"
     },
     "explorer": {
-      "model": "opencode/minimax-m3-free"
+      "model": "opencode/deepseek-v4-flash-free"
     },
     "post-reviewer": {
-      "model": "opencode/minimax-m3-free"
+      "model": "opencode/deepseek-v4-flash-free"
     },
     "reviewer": {
-      "model": "opencode/minimax-m3-free"
+      "model": "opencode/deepseek-v4-flash-free"
     }
   },
   "categories": {
     "visual-engineering": {
       "model": "opencode/gemini-3.1-pro",
       "fallback_models": [
-        { "model": "opencode/minimax-m3-free" },
+        { "model": "opencode/deepseek-v4-flash-free" },
         { "model": "opencode/gemini-3-flash" }
       ]
     },
@@ -223,7 +223,7 @@
       "opencode-go/mimo-v2.5-pro": 3,
       "opencode-go/mimo-v2.5": 5,
       "opencode-go/minimax-m3": 2,
-      "opencode/minimax-m3-free": 5,
+      "opencode/deepseek-v4-flash-free": 5,
       "opencode-go/minimax-2.7": 5
     }
   },
