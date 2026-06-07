@@ -1,0 +1,120 @@
+[
+  {
+    "eval_id": 0,
+    "eval_name": "api-project-structure",
+    "prompt": "I'm building a new SaaS backend with Express and TypeScript. I need to set up the project structure, and the API has resources for teams, projects, and tasks with nested routes. Each team has members with different roles (admin, editor, viewer). I need a typed error system that gives the frontend consistent error shapes including validation errors with field-level detail. Scaffold the project structure, the router hierarchy, and the error classes.",
+    "assertions": [
+      {"name": "feature-first structure", "description": "Uses feature-first organization (not layer-first)"},
+      {"name": "typed error hierarchy", "description": "Defines typed error classes (not generic Error)"},
+      {"name": "validation error with field details", "description": "Validation errors include field-level detail"},
+      {"name": "three-layer separation", "description": "Controller-service-repository layers are separated"},
+      {"name": "global error handler", "description": "Has a global error handler middleware"}
+    ]
+  },
+  {
+    "eval_id": 1,
+    "eval_name": "auth-middleware-chain",
+    "prompt": "I need to add JWT authentication to an existing Next.js app that has an Express backend. The frontend should store the access token in memory and use an httpOnly cookie for the refresh token. I need the middleware chain set up correctly (request ID -> logging -> CORS -> rate limit -> auth -> validation -> handler -> error handler), and the frontend needs to intercept 401 responses to transparently refresh the token and retry the request. Show me both the backend middleware and the frontend API client.",
+    "assertions": [
+      {"name": "correct middleware order", "description": "Middleware chain follows the documented order"},
+      {"name": "httpOnly refresh cookie", "description": "Refresh token uses httpOnly cookie, not localStorage"},
+      {"name": "transparent 401 retry", "description": "Frontend intercepts 401, refreshes token, retries"},
+      {"name": "JWT short expiry", "description": "Access token has short expiry (15min or less)"},
+      {"name": "RBAC or authz check", "description": "Includes role-based or permission-based authorization"}
+    ]
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "production-hardening",
+    "prompt": "I have a working FastAPI backend for an e-commerce app, but it's not production-ready. I need health check endpoints, graceful shutdown, CORS with explicit origins, structured JSON logging with request IDs, and a global error handler that returns consistent JSON error responses. The app uses PostgreSQL with async queries and Redis for caching. Walk me through the production hardening checklist and show me the patterns for each item.",
+    "assertions": [
+      {"name": "health check endpoints", "description": "Creates /health and /ready endpoints"},
+      {"name": "graceful shutdown", "description": "Implements SIGTERM handler with drain + cleanup"},
+      {"name": "structured JSON logging", "description": "Uses structured JSON logs with request IDs"},
+      {"name": "global error handler", "description": "Returns consistent JSON error shape"},
+      {"name": "CORS explicit origins", "description": "CORS configured with explicit origins, not wildcard"}
+    ]
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "edge-case-no-auth-required",
+    "prompt": "I'm building a simple weather API in Express that just serves public forecast data. No authentication needed. Just give me the project structure, error handling, and a health check endpoint. I want to keep it minimal but well-organized. The API has a single resource (forecasts) with GET endpoints and a periodic background job that refreshes the data from an external weather service.",
+    "assertions": [
+      {"name": "no auth middleware forced", "description": "Does not force authentication where none is needed"},
+      {"name": "minimal structure", "description": "Provides lean structure appropriate to API complexity"},
+      {"name": "background job pattern", "description": "Includes idempotent background job pattern for data refresh"},
+      {"name": "error handling present", "description": "Includes typed errors and global handler even for simple API"}
+    ]
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "capability-boundary-graphql-unknown-stack",
+    "prompt": "I have a GraphQL API built with a Rust backend (Actix-web + async-graphql) and a Svelte frontend. The API handles file uploads for a photo gallery, needs real-time subscription updates when new photos are added, and uses PostgreSQL with connection pooling. Show me the fullstack integration patterns — especially the subscription setup on both sides, the file upload flow with presigned URLs, and how to share types between the Rust backend and Svelte frontend.",
+    "assertions": [
+      {"name": "acknowledges Rust gap", "description": "Notes that Rust rules don't exist and points to external references"},
+      {"name": "real-time subscription pattern", "description": "Provides GraphQL subscription setup for both server and client"},
+      {"name": "presigned URL upload", "description": "Recommends presigned URL pattern for photo uploads"},
+      {"name": "type sharing strategy", "description": "Addresses type sharing between Rust and Svelte"},
+      {"name": "handles instead of avoids", "description": "Does not bail out — provides useful patterns despite unknown stack"}
+    ]
+  },
+  {
+    "eval_id": 5,
+    "eval_name": "microservice-decomposition",
+    "prompt": "I'm breaking a monolithic e-commerce API into microservices (orders, inventory, payments). Each service needs its own Express app, database (PostgreSQL), and deployment. Services communicate via RabbitMQ for events (order.placed, inventory.reserved, payment.completed) and need a saga pattern for the checkout flow. I also need an API gateway that handles auth and routes requests to the correct service. Show me the project structure, the inter-service event contracts, the saga orchestrator, and how each service maintains its own three-layer separation.",
+    "assertions": [
+      {"name": "per-service feature-first", "description": "Each microservice maintains feature-first organization"},
+      {"name": "typed event contracts", "description": "Inter-service events are typed and versioned"},
+      {"name": "saga pattern for checkout", "description": "Compensating transactions on failure via saga orchestrator"},
+      {"name": "shared auth across services", "description": "API gateway handles auth, services trust internal token"},
+      {"name": "independent three-layer separation", "description": "Each service has its own controller/service/repository layers"}
+    ]
+  },
+  {
+    "eval_id": 6,
+    "eval_name": "offline-first-pwa",
+    "prompt": "I'm building a task management app that needs to work offline. The frontend is a React PWA and the backend is Express with PostgreSQL. When offline, users should still be able to create and edit tasks, and changes should sync when connectivity returns. I need conflict resolution for edits made while offline. Show me the service worker setup, the IndexedDB schema, the sync queue with retry logic, and the backend conflict resolution strategy.",
+    "assertions": [
+      {"name": "service worker with cache", "description": "Registers service worker and caches app shell + API responses"},
+      {"name": "IndexedDB local store", "description": "Offline writes go to IndexedDB before attempting API call"},
+      {"name": "sync queue with retry", "description": "Queues offline mutations, replays when connectivity returns"},
+      {"name": "conflict resolution strategy", "description": "Backend resolves conflicts (last-write-wins or version vectors)"},
+      {"name": "auth survives offline", "description": "Auth token state preserved across offline/online cycles"}
+    ]
+  },
+  {
+    "eval_id": 7,
+    "eval_name": "event-driven-architecture",
+    "prompt": "I'm designing a notification system for a SaaS platform. Events are produced by various services (user.signup, order.placed, payment.received, invoice.generated) and consumed by a notification service that sends emails, push notifications, and in-app alerts. I need the outbox pattern to guarantee delivery, idempotent consumers, and a dead letter queue for failed deliveries. Show me the event schema design with versioning, the outbox pattern implementation with the same DB transaction, the consumer idempotency key tracking, and the DLQ with retry count.",
+    "assertions": [
+      {"name": "outbox pattern", "description": "Events written to outbox table in same DB transaction as business operation"},
+      {"name": "idempotent consumers", "description": "Consumer tracks processed event IDs to prevent duplicates"},
+      {"name": "dead letter queue", "description": "Failed events routed to DLQ with retry count tracking"},
+      {"name": "event schema versioning", "description": "Events carry a version field for schema evolution"},
+      {"name": "consistent error handling", "description": "Typed errors and structured logging across all producers/consumers"}
+    ]
+  },
+  {
+    "eval_id": 8,
+    "eval_name": "out-of-scope-rejection",
+    "prompt": "My Next.js app is failing to build with a cryptic webpack error. I've tried clearing node_modules and reinstalling but it still fails. The error message mentions something about module resolution and a missing dependency in my API route. Can you help me debug this build failure and get my app running again?",
+    "assertions": [
+      {"name": "recognizes out-of-scope", "description": "Identifies this as a build failure diagnosis (not a fullstack architecture task)"},
+      {"name": "redirects to build-resolver", "description": "States that this should be handled by build-resolver skill"},
+      {"name": "does not attempt full diagnosis", "description": "Does not provide step-by-step debugging of the build error"},
+      {"name": "offers useful boundary info", "description": "Provides relevant context the user should share with build-resolver"}
+    ]
+  },
+  {
+    "eval_id": 9,
+    "eval_name": "stress-multi-platform-boundary",
+    "prompt": "I'm building a cross-platform mobile app with a Swift iOS client, a Kotlin Android client, and a Go backend. The backend uses gRPC for inter-service communication and exposes a REST API for mobile clients. I need push notifications, offline data sync with CRDT-based conflict resolution, and OAuth2 with Google and Apple Sign-In. There's no database yet — I'm deciding between CockroachDB and DynamoDB. Show me the full architecture, the project structure for all three platforms, how auth flows work end-to-end, and how offline sync resolves conflicts.",
+    "assertions": [
+      {"name": "acknowledges platform gaps", "description": "States that no language rules exist for Swift, Kotlin, or Go"},
+      {"name": "references external sources", "description": "Points to external style guides for Swift, Kotlin, and Go"},
+      {"name": "applies architecture patterns", "description": "Still applies feature-first, error handling, config patterns where applicable"},
+      {"name": "addresses DB decision", "description": "Provides reasoned recommendation on CockroachDB vs DynamoDB"},
+      {"name": "does not bail out", "description": "Provides useful architecture guidance despite unknown stacks"}
+    ]
+  }
+]
