@@ -1,7 +1,6 @@
 ---
 description: "Read-only high-IQ consultant for debugging hard problems and architecture decisions. Use when: complex architecture tradeoffs, unfamiliar patterns, 2+ failed fix attempts, security/performance concerns."
 mode: subagent
-model: opencode-go/glm-5.1
 temperature: 0.1
 permission:
   read:

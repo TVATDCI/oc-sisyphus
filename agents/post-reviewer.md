@@ -1,7 +1,6 @@
 ---
 description: "Post-change reviewer agent. Runs after meaningful code changes to catch mistakes before they compound. Checks: correctness, security, performance, maintainability, test coverage. Read-only — does not edit files. Reports findings with severity and fix suggestions."
 mode: subagent
-model: opencode/qwen3.6-plus
 temperature: 0.1
 permission:
   read:

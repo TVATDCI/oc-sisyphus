@@ -1,7 +1,6 @@
 ---
 description: Research specialist - gathers context, searches documentation, and synthesizes findings
 mode: subagent
-model: opencode/minimax-m2.7
 temperature: 0.1
 tools:
   read: true

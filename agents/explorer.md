@@ -1,7 +1,6 @@
 ---
 description: "Research specialist — gathers context, searches codebase/documentation, and synthesizes findings. Use when: (1) unfamiliar codebase exploration, (2) external documentation lookup, (3) pattern discovery across modules, (4) technology research before implementation. Read-only — does not modify files."
 mode: subagent
-model: opencode/deepseek-v4-flash-free
 temperature: 0.1
 tools:
   read: true

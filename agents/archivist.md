@@ -1,7 +1,6 @@
 ---
 description: "Execution agent for Main-vault file operations and vertical-slice implementation. Runs individual vault scripts and creates/edits wiki content when delegated by vault-ops, or directly for one-off operations. Triggers: create wiki page, edit wiki, implement slice, update wiki file. NOT for: orchestrating publishing workflows (use vault-ops), read-only validation (use vault-lint or auditor)."
 mode: subagent
-model: opencode/glm-5.1
 temperature: 0.1
 permission:
   read:

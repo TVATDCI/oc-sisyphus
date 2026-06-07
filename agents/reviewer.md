@@ -1,7 +1,6 @@
 ---
 description: "Combined reviewer agent — oracle (architecture/debugging) + auditor (validation) + post-reviewer (code quality). Use when: (1) PRD/plan gate reviews, (2) post-change code review, (3) architecture decisions, (4) 2+ failed fix attempts, (5) pre-commit validation. Read-only — does not edit files."
 mode: subagent
-model: opencode/qwen3.6-plus
 temperature: 0.1
 permission:
   read:
