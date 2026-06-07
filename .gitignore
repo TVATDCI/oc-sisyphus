@@ -1,14 +1,23 @@
-node_modules
-package.json
-package-lock.json
-bun.lock
+# Volatile runtime state (operator working files)
+node_modules/
+.sisyphus/evidence/
+.sisyphus/notepads/
+.omo/
+.codegraph/
+
+# Backup dirs
 *.backup*
 *.backup-*
+
+# Logs
 *.log
+
+# OS files
 .DS_Store
 *.tmp
 *.temp
-dist/
+
+# Build artifacts (only ignore root build dirs, not plugin dist/)
 build/
 .next/
 coverage/
