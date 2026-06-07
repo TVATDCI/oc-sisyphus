@@ -1,6 +1,6 @@
 # OpenCode Codebase — Complete Structure, Changes & Workflow
 
-> **Last reviewed:** 2026-06-01 | **Next review:** When agent routing changes or a new skill is added
+> **Last reviewed:** 2026-06-07 | **Next review:** When agent routing changes or a new skill is added
 > **Drift-prone sections:** §Agent Routing, §Change Timeline, §Skill count
 > **Stable sections:** §Directory Architecture, §Workflow State Machine, §Subagent Permissions
 
