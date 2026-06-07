@@ -1,0 +1,761 @@
+# Design System: {Site Name}
+
+> **Source:** {target_url}
+> **Analyzed:** {date}
+> **Depth:** {quick|deep}
+> **Analyzer Version:** 1.2.0
+
+---
+
+## 1. Product Classification
+
+- **Type:** {SaaS|Landing Page|E-commerce|Portfolio|Blog|Corporate|Web App}
+- **Confidence:** {EXTRACTED|INFERRED|AMBIGUOUS}
+- **Reasoning:** {brief explanation of classification}
+- **Design Pattern Priority:**
+  - {Pattern 1}
+  - {Pattern 2}
+  - {Pattern 3}
+
+---
+
+## 2. Theme & Mood
+
+- **Visual identity:** {description of overall look}
+- **Brand personality:** {keywords}
+- **Design approach:** {e.g., minimal, bold, playful, corporate, editorial}
+- **Mood keywords:** {3-5 adjectives}
+- **Inspiration references:** {similar brands or design systems}
+
+---
+
+## 3. Colors
+
+### Primary Palette
+
+| Role | Value | Confidence | Source |
+|------|-------|------------|--------|
+| Primary | `#RRGGBB` | EXTRACTED | CSS variable / computed |
+| Secondary | `#RRGGBB` | EXTRACTED | CSS variable / computed |
+| Accent | `#RRGGBB` | INFERRED | Dominant CTA color |
+| Neutral (Text) | `#RRGGBB` | EXTRACTED | Body text color |
+| Neutral (Background) | `#RRGGBB` | EXTRACTED | Page background |
+| Neutral (Border) | `#RRGGBB` | EXTRACTED | Border/divider color |
+
+### Semantic Colors
+
+| Role | Value | Confidence | Usage |
+|------|-------|------------|-------|
+| Success | `#RRGGBB` | {confidence} | Success states, confirmations |
+| Warning | `#RRGGBB` | {confidence} | Warnings, cautions |
+| Error | `#RRGGBB` | {confidence} | Errors, invalid states |
+| Info | `#RRGGBB` | {confidence} | Informational highlights |
+
+### Dark Mode (if detected)
+
+| Role | Light Mode | Dark Mode | Confidence |
+|------|-----------|-----------|------------|
+| Background | `#RRGGBB` | `#RRGGBB` | {confidence} |
+| Surface | `#RRGGBB` | `#RRGGBB` | {confidence} |
+| Text Primary | `#RRGGBB` | `#RRGGBB` | {confidence} |
+| Text Secondary | `#RRGGBB` | `#RRGGBB` | {confidence} |
+
+### Color Usage Rules
+
+- Primary color used for: {main CTAs, active states, brand moments}
+- Secondary color used for: {secondary actions, highlights}
+- Accent color used for: {special emphasis, hover states}
+- Neutral scale: {description of gray scale usage}
+
+---
+
+## 4. Typography
+
+### Font Stack
+
+| Role | Family | Weights | Confidence | Source |
+|------|--------|---------|------------|--------|
+| Headings | `{Font Name}` | 600, 700, 800 | EXTRACTED | Google Fonts / CSS |
+| Body | `{Font Name}` | 400, 500 | EXTRACTED | Google Fonts / CSS |
+| Mono | `{Font Name}` | 400 | {confidence} | Code blocks / pre |
+
+### Type Scale
+
+| Level | Size (Desktop) | Size (Mobile) | Weight | Line-Height | Letter-Spacing | Confidence |
+|-------|---------------|----------------|--------|-------------|----------------|------------|
+| H1 | {XXpx} | {XXpx} | {weight} | {X.X} | {Xpx} | {confidence} |
+| H2 | {XXpx} | {XXpx} | {weight} | {X.X} | {Xpx} | {confidence} |
+| H3 | {XXpx} | {XXpx} | {weight} | {X.X} | {Xpx} | {confidence} |
+| H4 | {XXpx} | {XXpx} | {weight} | {X.X} | {Xpx} | {confidence} |
+| Body Large | {XXpx} | {XXpx} | {weight} | {X.X} | {Xpx} | {confidence} |
+| Body | {XXpx} | {XXpx} | {weight} | {X.X} | {Xpx} | {confidence} |
+| Body Small | {XXpx} | {XXpx} | {weight} | {X.X} | {Xpx} | {confidence} |
+| Caption | {XXpx} | {XXpx} | {weight} | {X.X} | {Xpx} | {confidence} |
+
+### Typography Patterns
+
+- **Heading treatment:** {sentence case / Title Case / ALL CAPS}
+- **Body measure:** {optimal line length, e.g., 65-75 characters}
+- **Text alignment:** {left / center / justified}
+- **Link style:** {underlined / colored / animated}
+
+---
+
+## 5. Components
+
+### Button
+
+- **Variants:** {primary, secondary, ghost, danger, link}
+- **Sizes:** {sm (32px), md (40px), lg (48px)}
+- **Border radius:** {value}
+- **States:**
+  - Default: {description}
+  - Hover: {description}
+  - Active: {description}
+  - Disabled: {description}
+  - Loading: {description}
+- **Icon support:** {yes/no, placement}
+- **Confidence:** {confidence}
+
+### Card
+
+- **Padding:** {value}
+- **Border radius:** {value}
+- **Shadow:** {value}
+- **Border:** {value or none}
+- **Background:** {value}
+- **Hover behavior:** {description}
+- **Confidence:** {confidence}
+
+### Input / Form Field
+
+- **Height:** {sm/md/lg values}
+- **Border radius:** {value}
+- **Border:** {default / focus / error states}
+- **Background:** {value}
+- **Placeholder style:** {description}
+- **Error state:** {description}
+- **Confidence:** {confidence}
+
+### Navigation
+
+- **Desktop:** {horizontal / vertical / mega-menu}
+- **Mobile:** {hamburger / tab bar / drawer}
+- **Sticky behavior:** {yes/no, scroll trigger}
+- **Active indicator:** {description}
+- **Confidence:** {confidence}
+
+### Modal / Dialog
+
+- **Overlay:** {color + opacity}
+- **Container:** {max-width, border-radius, shadow}
+- **Animation:** {description}
+- **Close trigger:** {X button, overlay click, ESC}
+- **Confidence:** {confidence}
+
+### Additional Components
+
+{List other observed components with specifications}
+
+---
+
+## 6. Layout
+
+- **Max content width:** {value}
+- **Container padding:** {desktop value} / {mobile value}
+- **Grid system:** {12-column / custom / none}
+- **Gutter width:** {value}
+- **Section spacing:** {value rhythm, e.g., 80px desktop, 48px mobile}
+- **Breakpoints:**
+  - sm: {value}
+  - md: {value}
+  - lg: {value}
+  - xl: {value}
+- **Confidence:** {confidence}
+
+### Layout Patterns
+
+- **Hero:** {full-width / contained / split}
+- **Feature grids:** {2-col / 3-col / 4-col, responsive behavior}
+- **Content sections:** {alternating / consistent / card-based}
+- **Footer:** {multi-column / simple / mega-footer}
+
+---
+
+## 7. Depth & Elevation
+
+### Shadow Scale
+
+| Level | Value | Usage | Confidence |
+|-------|-------|-------|------------|
+| sm | `{value}` | Cards, buttons | {confidence} |
+| md | `{value}` | Dropdowns, popovers | {confidence} |
+| lg | `{value}` | Modals, dialogs | {confidence} |
+| xl | `{value}` | Full-screen overlays | {confidence} |
+
+### Border Radius Scale
+
+| Level | Value | Usage | Confidence |
+|-------|-------|-------|------------|
+| sm | `{value}` | Inputs, badges | {confidence} |
+| md | `{value}` | Cards, buttons | {confidence} |
+| lg | `{value}` | Modals, containers | {confidence} |
+| full | `{value}` | Pills, avatars | {confidence} |
+
+### Z-Index Layers
+
+| Layer | Z-Index | Usage |
+|-------|---------|-------|
+| Base | 0 | Default content |
+| Sticky | 10 | Sticky headers |
+| Dropdown | 20 | Menus, selects |
+| Backdrop | 30 | Modal overlays |
+| Modal | 40 | Dialog containers |
+| Toast | 50 | Notifications |
+| Tooltip | 60 | Tooltips |
+
+### Animation / Motion
+
+- **Default easing:** {value}
+- **Default duration:** {value}
+- **Hover transitions:** {description}
+- **Page transitions:** {description}
+- **Scroll animations:** {description}
+- **Confidence:** {confidence}
+
+---
+
+## 8. Do's & Don'ts
+
+### Do
+
+- [ ] {Specific design rule 1}
+- [ ] {Specific design rule 2}
+- [ ] {Specific design rule 3}
+- [ ] {Specific design rule 4}
+- [ ] {Specific design rule 5}
+
+### Don't
+
+- [ ] {Specific anti-pattern 1}
+- [ ] {Specific anti-pattern 2}
+- [ ] {Specific anti-pattern 3}
+- [ ] {Specific anti-pattern 4}
+- [ ] {Specific anti-pattern 5}
+
+### Accessibility Requirements
+
+- [ ] Maintain minimum 4.5:1 contrast for body text
+- [ ] Focus indicators visible on all interactive elements
+- [ ] Touch targets minimum 44x44px
+- [ ] Respect `prefers-reduced-motion`
+
+---
+
+## 9. Agent Prompt Guide
+
+```
+When implementing this design system:
+
+1. **Color discipline:** Use ONLY the colors defined in Section 3.
+   - Primary: {primary color} — reserved for main CTAs and active states
+   - Never use primary for decorative elements or body text
+   - Always check dark mode equivalents if implementing theme toggle
+
+2. **Typography consistency:** Use ONLY the fonts and scale in Section 4.
+   - Headings: {heading font} at exact sizes specified
+   - Body: {body font} at exact sizes specified
+   - Never mix more than 2 font families in any view
+
+3. **Spacing rhythm:** Maintain consistent spacing using the system in Section 6.
+   - Section padding: {value}
+   - Component gaps: {value}
+   - Never use arbitrary values — use the scale
+
+4. **Component completeness:** Implement ALL states defined in Section 5.
+   - Default, hover, active, disabled for all interactive elements
+   - Error states for all form inputs
+   - Loading states for async actions
+
+5. **Elevation consistency:** Use shadow and radius scales from Section 7.
+   - Cards: {level} shadow, {level} radius
+   - Buttons: {level} radius
+   - Modals: {level} shadow
+   - Never invent new shadow values
+
+6. **Responsive behavior:** Follow breakpoints in Section 6.
+   - Mobile-first or desktop-first: {approach}
+   - Key breakpoint changes: {description}
+   - Test all components at all breakpoints
+
+7. **Pattern adherence:** Follow {product type} patterns from Section 1.
+   - {Type-specific rule 1}
+   - {Type-specific rule 2}
+   - {Type-specific rule 3}
+
+8. **Check CSS Color Module L5 support** — Firefox needs `@supports not` fallback for BOTH dark AND light themes
+
+9. **Implement z-index scale** — Don't use ad-hoc values; create systematic scale from Section 7 tokens
+
+10. **Audit !important usage** — Should only be in `@layer overrides` if using CSS Layers (Section 10)
+
+11. **Add :focus-visible styles** — Use `--focus-ring` token for all interactive elements (Section 11)
+
+12. **Scope theme transitions** — Don't use universal `*` selector; target specific elements only
+
+13. **Throttle scroll/resize handlers** — Use requestAnimationFrame pattern (Section 10)
+
+14. **Transform not top/left** — Animate with transform/opacity for GPU acceleration, never width/height/margin
+
+15. **Respect prefers-reduced-motion** — Test with OS reduced motion setting; disable non-essential animations
+
+16. **Document browser support** — Note which modern features (Section 12) need fallbacks
+
+17. **Fix accessibility gaps first** — Section 14 high-risk items (focus, contrast, motion) before visual polish
+
+18. **Follow token compliance** — No hardcoded values; use Section 3 tokens exclusively
+
+19. **Check CSS Layers order** — If @layer present, ensure all styles are layered (no unlayered overrides)
+
+20. **Verify landmark elements** — Use semantic HTML: header, nav, main, footer, article, section
+
+21. **Implement heading hierarchy** — Single H1 per page, no skipped levels (Section 11)
+
+22. **Add ARIA labels** — All interactive elements need accessible names (Section 11)
+
+23. **Optimize animation budget** — Limit simultaneous animations (Section 13); composite only properties
+
+24. **Validate WCAG contrast** — All text meets 4.5:1 minimum; large text 3:1 minimum
+```
+
+---
+
+## 10. CSS Architecture Analysis
+
+### Specificity & Cascade
+- **Max Specificity:** [highest specificity found] — [example selector]
+- **!important Count:** [X] declarations — [locations]
+- **CSS Layers:** [@layer order] — [violations if any]
+- **Cascade Conflicts:** [identified conflicts]
+
+**Confidence:** [EXTRACTED/INFERRED/AMBIGUOUS]
+
+### Token Compliance
+- **Design Tokens Defined:** [X] variables
+- **Hardcoded Values:** [X] instances outside tokens.css
+- **Token Coverage:** [%] of colors using tokens
+- **Violations:** [list files with hardcoded values]
+
+**Confidence:** [EXTRACTED/INFERRED/AMBIGUOUS]
+
+### Animation & Performance
+- **Unthrottled Scroll Handlers:** [X] — [file:line locations]
+- **Unthrottled Resize Handlers:** [X] — [file:line locations]
+- **Layout Property Animations:** [top/left/width/height animations] — [locations]
+- **Transform Usage:** [X] animations using transform (GPU accelerated)
+- **Transition Strategy:** [universal selector / scoped / none]
+
+**Confidence:** [EXTRACTED/INFERRED/AMBIGUOUS]
+
+### Z-Index Management
+- **Ad-hoc Values:** [list all z-index values found]
+- **Systematic Scale:** [none / partial / full]
+- **Potential Conflicts:** [z-index collisions identified]
+- **Recommendation:** [suggested z-index scale]
+
+**Confidence:** [EXTRACTED/INFERRED/AMBIGUOUS]
+
+---
+
+## 11. Accessibility Inventory
+
+### Focus Management
+- **Focus Indicators:** [visible / invisible / mixed]
+- **Focus-visible Styles:** [:focus-visible rules present? yes/no]
+- **Focus Ring Token:** [--focus-ring defined? yes/no]
+- **Focus Ring Usage:** [used in X locations]
+- **Tab Order:** [logical / problematic]
+
+**Confidence:** [EXTRACTED/INFERRED/AMBIGUOUS]
+
+### ARIA & Semantics
+- **ARIA Roles:** [X] elements with role attributes
+- **ARIA Labels:** [X] aria-label / aria-labelledby
+- **Live Regions:** [X] aria-live regions
+- **Landmark Elements:** [header, nav, main, footer, etc.]
+- **Heading Hierarchy:** [h1-h6 structure]
+
+**Confidence:** [EXTRACTED/INFERRED/AMBIGUOUS]
+
+### Motion & Animation
+- **prefers-reduced-motion:** [respected / ignored / partial]
+- **Reduced Motion Rules:** [@media query present? yes/no]
+- **Essential Animations:** [which animations must remain]
+- **Safe to Disable:** [which can respect reduced motion]
+
+**Confidence:** [EXTRACTED/INFERRED/AMBIGUOUS]
+
+### Color & Contrast
+- **WCAG AA Estimate:** [pass/fail/unknown]
+- **Color Contrast Risks:** [low contrast combinations found]
+- **Text on Background:** [contrast ratios if calculable]
+- **Focus Visibility:** [contrast against background]
+
+**Confidence:** [EXTRACTED/INFERRED/AMBIGUOUS]
+
+---
+
+## 12. Browser Support Matrix
+
+### Modern CSS Features Detected
+| Feature | Usage | Fallback Strategy | Confidence |
+|---------|-------|-------------------|------------|
+| CSS Color Module L5 | [yes/no] | [fallback present?] | EXTRACTED |
+| CSS Layers (@layer) | [yes/no] | [shim needed?] | EXTRACTED |
+| Container Queries | [yes/no] | [polyfill?] | EXTRACTED |
+| :has() Selector | [yes/no] | [fallback?] | EXTRACTED |
+| Viewport Units (dvh/lvh) | [yes/no] | [fallback?] | EXTRACTED |
+
+### Recommended Support Matrix
+| Browser | Version | Support Level | Notes |
+|---------|---------|---------------|-------|
+| Chrome | Latest | Full | |
+| Firefox | Latest | Full | [CSS Color Module L5 fallback required?] |
+| Safari | Latest | Full | |
+| Chrome | -2 versions | Graceful | |
+| Firefox | ESR | Fallback | [specific features] |
+| Safari | -1 version | Graceful | |
+| Mobile Safari | iOS 15+ | Full | |
+| Chrome Android | Latest | Full | |
+
+**Confidence:** [INFERRED]
+
+---
+
+## 13. Performance Budget Estimate
+
+### CSS Metrics
+- **Total CSS Size:** [estimated KB]
+- **Critical CSS:** [estimated KB above fold]
+- **Unused CSS:** [estimated % via coverage]
+
+### Animation Budget
+- **Animation Count:** [X] simultaneous animations
+- **Complex Animations:** [X] using GPU layers
+- **Scroll-Linked Animations:** [X] (performance risk)
+
+### Font Loading
+- **Font Files:** [X] files, [total KB]
+- **Font-display Strategy:** [swap/block/auto]
+- **Critical Fonts:** [which fonts are critical]
+
+**Confidence:** [EXTRACTED/INFERRED]
+
+---
+
+## 13.5 Performance Profile
+
+### Rendering Performance
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Frame Rate (avg) | [X] fps | [measured over X seconds] |
+| Frame Time (avg) | [X]ms | [p50 Xms, p95 Xms] |
+| Dropped Frames | [X] | [X% of total frames] |
+
+### WebGL Stats (if Three.js detected)
+| Metric | Value |
+|--------|-------|
+| Draw Calls | [X] |
+| Triangles | [X] |
+| Geometries | [X] |
+| Textures | [X] |
+| Shaders | [X] |
+
+### Memory Usage
+| Metric | Value | Limit |
+|--------|-------|-------|
+| JS Heap Used | [X] MB | [Y] MB |
+| JS Heap Total | [X] MB | — |
+| GPU Memory | [X] MB | — |
+
+### Bundle Analysis
+| Resource Type | Size | Count |
+|--------------|------|-------|
+| JavaScript | [X] KB | [N] files |
+| CSS | [X] KB | [N] files |
+| Images | [X] KB | [N] files |
+| Fonts | [X] KB | [N] files |
+
+### Bottlenecks
+| Issue | Severity | Description |
+|-------|----------|-------------|
+| Layout Thrashing | [high/medium/low] | [synchronous layout reads/writes] |
+| Large Images | [high/medium/low] | [images over 500KB not lazy loaded] |
+| Unused CSS | [high/medium/low] | [estimated X% unused] |
+| Missing Lazy Loading | [high/medium/low] | [below-fold images without loading="lazy"] |
+
+### Optimization Opportunities
+- [ ] Convert layout-triggering animations to GPU-accelerated
+- [ ] Lazy load below-fold images and iframes
+- [ ] Code-split JS bundles at route level
+- [ ] Implement font-display: swap for web fonts
+- [ ] Defer non-critical third-party scripts
+
+**Confidence:** [EXTRACTED/INFERRED]
+
+---
+
+## 14. Implementation Risk Assessment
+
+### High Risk
+- [ ] **CSS Color Module L5** — Requires fallback for Firefox
+- [ ] **Complex Animations** — May need throttle/optimization
+- [ ] **Theme System** — Section-level themes add complexity
+- [ ] **Accessibility** — Missing focus indicators
+
+### Medium Risk
+- [ ] **CSS Layers** — New architecture, learning curve
+- [ ] **Z-Index Management** — Needs systematic scale
+- [ ] **Token Compliance** — Hardcoded values scattered
+
+### Low Risk
+- [ ] **Typography** — Standard web fonts
+- [ ] **Layout** — Flexbox/Grid well-supported
+
+---
+
+## 15. Animation Inventory (Enhanced)
+
+### Motion Language Profile
+- **Feel:** {springy / smooth / energetic / mixed}
+- **Responsiveness:** {immediate / delayed / lazy}
+- **Personality:** {playful / professional / minimal / dramatic}
+
+### Duration Buckets
+| Bucket | Duration Range | Count | Percentage |
+|--------|---------------|-------|------------|
+| Instant | 0-100ms | {N} | {X}% |
+| XS | 100-200ms | {N} | {X}% |
+| SM | 200-300ms | {N} | {X}% |
+| MD | 300-500ms | {N} | {X}% |
+| LG | 500-800ms | {N} | {X}% |
+| XL | 800ms+ | {N} | {X}% |
+
+### Easing Families
+| Easing | Count | Distribution |
+|--------|-------|-------------|
+| {ease / ease-out / ease-in-out / spring / custom} | {N} | {X}% |
+
+### Keyframe Patterns
+| Pattern | Count | Elements | Confidence |
+|---------|-------|----------|------------|
+| fadeIn | {N} | {elements} | EXTRACTED |
+| slideUp | {N} | {elements} | EXTRACTED |
+| scale | {N} | {elements} | EXTRACTED |
+| rotate | {N} | {elements} | EXTRACTED |
+| custom | {N} | {elements} | INFERRED |
+
+### Animation Sequences
+| Sequence | Steps | Duration | Trigger | Confidence |
+|----------|-------|----------|---------|------------|
+| {name} | {N} steps | {X}ms | {hover/scroll/mount/click} | {confidence} |
+
+### Scroll-Linked Animations
+| Library | Elements | Trigger | Effect | Confidence |
+|---------|----------|---------|--------|------------|
+| {Framer Motion useScroll / GSAP ScrollTrigger / AOS} | {N} elements | {scroll position} | {parallax/pin/reveal} | {confidence} |
+
+### Performance Classification
+| Classification | Count | Description |
+|---------------|-------|-------------|
+| GPU Accelerated | {N} | Animating transform/opacity only |
+| Layout Triggering | {N} | Animating width/height/top/left/margin/padding |
+| will-change Usage | {N} | Elements with explicit will-change hint |
+
+**Confidence:** {EXTRACTED/INFERRED/AMBIGUOUS}
+
+---
+
+## 16. 3D Scene Specification
+
+### Renderer Setup
+- **Library:** {Three.js / @react-three/fiber / Babylon.js}
+- **Renderer:** {WebGLRenderer config}
+- **Camera:** {PerspectiveCamera / OrthographicCamera, position, FOV}
+- **Scene:** {Background color, fog}
+
+### Lighting
+| Light | Type | Position | Color | Intensity | Shadows |
+|-------|------|----------|-------|-----------|---------|
+| {name} | {Ambient/Directional/Point} | [X,Y,Z] | {#hex} | {X} | {yes/no} |
+
+### Meshes & Geometries
+| Mesh | Geometry | Material | Position | Scale | Animation |
+|------|----------|----------|----------|-------|-----------|
+| {name} | {SphereGeometry / BoxGeometry} | {MeshStandardMaterial} | [X,Y,Z] | [X,Y,Z] | {rotate/float/pulse} |
+
+### Materials
+| Material | Type | Color | Textures | Properties |
+|----------|------|-------|----------|------------|
+| {name} | {Standard/Basic/Physical} | {#hex} | {map/normal/roughness} | {roughness, metalness} |
+
+### Animation Loop
+- **Rotation:** {axis, speed}
+- **Position:** {path, easing}
+- **Scale:** {pulse, breathe effects}
+- **Interaction:** {mouse follow, click effects}
+
+### Performance
+- **Polygon Count:** {estimated}
+- **Draw Calls:** {estimated}
+- **Texture Memory:** {MB}
+- **Lazy Loaded:** {yes/no, chunk size}
+
+---
+
+## 17. State Management Architecture
+
+### Store Inventory
+
+#### Store 1: {themeStore}
+- **Library:** {Zustand / Redux / MobX}
+- **State:**
+  ```javascript
+  {
+    field1: type,
+    field2: type
+  }
+  ```
+- **Actions:** {list all actions}
+- **Persistence:** {localStorage / sessionStorage / none}
+
+#### Store 2: {authStore}
+- **Library:** {Zustand / Redux / MobX}
+- **State:** {user, isAuthenticated, token, role}
+- **Actions:** {login, logout, refresh}
+
+#### Store 3: {dataStore}
+- **Library:** {Zustand / Redux / MobX}
+- **State:** {projects, selectedProject, filters}
+- **Actions:** {add, remove, update, select}
+
+### Store Interactions
+- **Subscriptions:** {which components subscribe to which stores}
+- **Derived State:** {computed values, selectors}
+- **Side Effects:** {middleware, thunks}
+
+### External State
+- **React Query:** {query keys, cache config}
+- **URL State:** {query params synced to state}
+- **Context:** {React Context usage}
+
+---
+
+## 18. Route Map & Navigation
+
+### Route Definitions
+
+| Path | Component | Layout | Lazy Loaded | Auth Required | Confidence |
+|------|-----------|--------|-------------|---------------|------------|
+| / | {Home} | {Main} | {No} | {No} | {confidence} |
+| /projects | {Projects} | {Main} | {Yes} | {No} | {confidence} |
+| /projects/:id | {ProjectDetail} | {Main} | {Yes} | {No} | {confidence} |
+| /admin | {Admin} | {Admin} | {Yes} | {Yes} | {confidence} |
+
+### Route Configuration
+- **Router:** {React Router v7 / Next.js / Vue Router}
+- **Type:** {BrowserRouter / HashRouter}
+- **Base:** {basename if any}
+
+### Navigation Patterns
+- **Links:** {React Router Link vs <a>}
+- **Programmatic:** {useNavigate, history.push}
+- **Guards:** {auth checks, redirects}
+- **Scroll:** {scroll restoration, scroll to top}
+
+### Layout Hierarchy
+```
+Layout
+├── Header (persistent)
+├── Outlet (route content)
+│   ├── / → Home
+│   ├── /projects → Projects
+│   └── ...
+└── Footer (persistent)
+```
+
+### Dynamic Routes
+- **Parameters:** {[:id, :slug, etc.]}
+- **Query Strings:** {[?filter=active, etc.]}
+- **State Passing:** {location.state}
+
+---
+
+## 19. Interaction Patterns
+
+### Event Handlers
+
+#### Global Events
+- **Scroll:** {throttled? handler?}
+- **Resize:** {debounced? handler?}
+- **Keyboard:** {shortcuts, escape handling}
+- **Mouse:** {mousemove, hover intent}
+
+#### Component Events
+| Component | Event | Handler | Action | Confidence |
+|-----------|-------|---------|--------|------------|
+| {Button} | {onClick} | {handleSubmit} | {Form submit} | {confidence} |
+| {Card} | {onMouseEnter} | {setHovered} | {Scale up} | {confidence} |
+| {Nav} | {onScroll} | {show/hide} | {Hide on scroll down} | {confidence} |
+
+### User Flows
+
+#### Flow 1: {Theme Toggle}
+1. Click theme button → toggle theme
+2. Update localStorage
+3. Re-render with new theme
+4. Animate transition (400ms)
+
+#### Flow 2: {Project Filter}
+1. Select category → update URL query
+2. Fetch filtered projects
+3. Animate list reorder
+4. Update store
+
+#### Flow 3: {3D Interaction}
+1. Mouse move → raycast
+2. Highlight hovered object
+3. Click → zoom camera
+4. Show details panel
+
+### Form Handling
+- **Validation:** {yup / zod / react-hook-form}
+- **Submission:** {async, loading states}
+- **Errors:** {display, shake animation}
+- **Success:** {toast, redirect}
+
+### Async Patterns
+- **Loading:** {skeleton, spinner}
+- **Error:** {error boundary, fallback}
+- **Retry:** {automatic? manual?}
+
+---
+
+## Appendix: Raw Detections
+
+### Tech Stack
+
+| Technology | Confidence | Evidence |
+|------------|------------|----------|
+| {Name} | {confidence} | {evidence} |
+
+### Ambiguous Detections (Need Human Verification)
+
+| Item | Why Ambiguous | Questions to Resolve |
+|------|---------------|----------------------|
+| {Item} | {reason} | {questions} |
+
+### Files Generated
+
+- `tech-detections.json` — Machine-readable stack detection
+- `analysis-summary.md` — Executive summary

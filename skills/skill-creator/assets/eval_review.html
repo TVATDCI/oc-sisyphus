@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Trigger Eval Set</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        .subtitle { color: #888; margin-bottom: 20px; }
+        .skill-info {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .skill-info h3 { font-size: 14px; color: #888; margin-bottom: 5px; }
+        .skill-info p { font-size: 14px; }
+        .eval-item {
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid transparent;
+        }
+        .eval-item.should-trigger { border-left-color: #4caf50; }
+        .eval-item.should-not-trigger { border-left-color: #f44336; }
+        .eval-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .eval-id { font-size: 12px; color: #888; }
+        .toggle-btn {
+            background: #3d3d3d;
+            border: none;
+            color: #e0e0e0;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .toggle-btn:hover { background: #4d4d4d; }
+        .query-text {
+            font-size: 14px;
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-yes { background: #4caf50; color: white; }
+        .status-no { background: #f44336; color: white; }
+        .add-btn {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .add-btn:hover { background: #3a8eef; }
+        .submit-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .submit-btn:hover { background: #45a049; }
+        .instructions {
+            background: #252525;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .instructions ul { margin-left: 20px; margin-top: 10px; }
+        .instructions li { margin-bottom: 5px; }
+        textarea.query-edit {
+            width: 100%;
+            min-height: 60px;
+            background: #1a1a1a;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 10px;
+            color: #e0e0e0;
+            font-family: monospace;
+            font-size: 13px;
+            margin-top: 10px;
+            resize: vertical;
+        }
+        .actions { margin-top: 10px; }
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-btn:hover { background: #d32f2f; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Review Trigger Eval Set</h1>
+        <p class="subtitle">Verify the eval queries before running description optimization</p>
+        
+        <div class="skill-info">
+            <h3>SKILL NAME</h3>
+            <p id="skill-name">__SKILL_NAME_PLACEHOLDER__</p>
+            <h3 style="margin-top: 10px;">CURRENT DESCRIPTION</h3>
+            <p id="skill-desc">__SKILL_DESCRIPTION_PLACEHOLDER__</p>
+        </div>
+        
+        <div class="instructions">
+            <strong>Instructions:</strong>
+            <ul>
+                <li>Review each query - does it make sense as a test case?</li>
+                <li>Toggle "Should Trigger" if the classification is wrong</li>
+                <li>Edit queries that are unclear or need improvement</li>
+                <li>Delete queries that aren't helpful</li>
+                <li>Add new queries if you notice gaps in coverage</li>
+                <li>Click "Export Eval Set" when done to download the JSON</li>
+            </ul>
+        </div>
+        
+        <div id="eval-list">
+            <!-- Eval items will be injected here -->
+        </div>
+        
+        <button class="add-btn" onclick="addNewEval()">+ Add New Query</button>
+        <button class="submit-btn" onclick="exportEvalSet()">Export Eval Set</button>
+    </div>
+
+    <script>
+        // Eval data injected from Python
+        let evalData = __EVAL_DATA_PLACEHOLDER__;
+        
+        function renderEvals() {
+            const container = document.getElementById('eval-list');
+            container.innerHTML = '';
+            
+            evalData.forEach((eval, index) => {
+                const div = document.createElement('div');
+                div.className = `eval-item ${eval.should_trigger ? 'should-trigger' : 'should-not-trigger'}`;
+                div.innerHTML = `
+                    <div class="eval-header">
+                        <span class="eval-id">#${index + 1}</span>
+                        <span class="status-badge ${eval.should_trigger ? 'status-yes' : 'status-no'}">
+                            ${eval.should_trigger ? 'SHOULD TRIGGER' : 'SHOULD NOT TRIGGER'}
+                        </span>
+                        <button class="toggle-btn" onclick="toggleTrigger(${index})">
+                            Toggle
+                        </button>
+                    </div>
+                    <textarea class="query-edit" onchange="updateQuery(${index}, this.value)">${escapeHtml(eval.query)}</textarea>
+                    <div class="actions">
+                        <button class="delete-btn" onclick="deleteEval(${index})">Delete</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function toggleTrigger(index) {
+            evalData[index].should_trigger = !evalData[index].should_trigger;
+            renderEvals();
+        }
+        
+        function updateQuery(index, newQuery) {
+            evalData[index].query = newQuery;
+        }
+        
+        function deleteEval(index) {
+            evalData.splice(index, 1);
+            renderEvals();
+        }
+        
+        function addNewEval() {
+            evalData.push({
+                query: "Enter your test query here...",
+                should_trigger: true,
+                id: evalData.length + 1
+            });
+            renderEvals();
+        }
+        
+        function exportEvalSet() {
+            const result = {
+                skill_name: document.getElementById('skill-name').textContent,
+                evals: evalData
+            };
+            
+            const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'eval_set.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('Eval set exported! Check your Downloads folder for eval_set.json');
+        }
+        
+        // Initialize
+        renderEvals();
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+[
+  {"query": "Review this pull request for me", "should_trigger": true},
+  {"query": "Can you check my code for issues?", "should_trigger": true},
+  {"query": "Code review my changes please", "should_trigger": true},
+  {"query": "What do you think of this implementation?", "should_trigger": true},
+  {"query": "Review this function for security vulnerabilities", "should_trigger": true},
+  {"query": "Please critique my code quality", "should_trigger": true},
+  {"query": "Check this PR for correctness and performance", "should_trigger": true},
+  {"query": "Review my authentication logic", "should_trigger": true},
+  {"query": "Can you assess this code for maintainability issues?", "should_trigger": true},
+  {"query": "Review this API endpoint design", "should_trigger": true},
+  {"query": "What security issues do you see in this code?", "should_trigger": true},
+  {"query": "Please review my database query for N+1 problems", "should_trigger": true},
+  {"query": "Fix this bug in my authentication code", "should_trigger": false},
+  {"query": "Write tests for this function", "should_trigger": false},
+  {"query": "Refactor this to use async/await", "should_trigger": false},
+  {"query": "Generate documentation for this module", "should_trigger": false},
+  {"query": "Explain how this algorithm works", "should_trigger": false},
+  {"query": "Help me implement a new feature", "should_trigger": false},
+  {"query": "How do I use this library?", "should_trigger": false},
+  {"query": "Debug why this test is failing", "should_trigger": false}
+]

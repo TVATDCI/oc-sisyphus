@@ -1,0 +1,76 @@
+{
+  "active_plan": ".sisyphus/plans/strategy-recommendation.md",
+  "started_at": "2026-05-31T00:00:00+02:00",
+  "plan_name": "strategy-recommendation",
+  "project_root": "/home/vladi/.config/opencode/skills/website-analyzer",
+  "state_version": "2.0.0",
+  "workflow_stage": "wave_3_completed",
+  "pending_gate": "final_approval",
+  "approval_status": "waiting",
+  "gate_history": [
+    {
+      "gate": "final_approval",
+      "status": "waiting",
+      "timestamp": "2026-05-31T10:35:29+0000"
+    },
+    {
+      "gate": "wave_3_complete",
+      "status": "completed",
+      "timestamp": "2026-05-31T10:35:29+0000"
+    },
+    {
+      "gate": "wave_3_approval",
+      "status": "waiting",
+      "timestamp": "2026-05-31T12:21:57+02:00"
+    },
+    {
+      "gate": "wave_2_complete",
+      "status": "completed",
+      "timestamp": "2026-05-31T12:21:57+02:00"
+    },
+    {
+      "gate": "wave_1_complete",
+      "status": "completed",
+      "timestamp": "2026-05-31T12:11:10+02:00"
+    },
+    {
+      "gate": "wave_2_approval",
+      "status": "waiting",
+      "timestamp": "2026-05-31T12:11:10+02:00"
+    },
+    {
+      "gate": "reference_check_prd",
+      "status": "passed",
+      "timestamp": "2026-05-31T00:00:00+02:00"
+    },
+    {
+      "gate": "momus_prd_review",
+      "status": "passed",
+      "timestamp": "2026-05-31T00:00:00+02:00"
+    },
+    {
+      "gate": "user_prd_approval",
+      "status": "approved",
+      "timestamp": "2026-05-31T00:00:00+02:00"
+    },
+    {
+      "gate": "reference_check_plan",
+      "status": "passed",
+      "timestamp": "2026-05-31T00:00:00+02:00"
+    },
+    {
+      "gate": "plan_approval",
+      "status": "waiting",
+      "timestamp": "2026-05-31T00:00:00+02:00"
+    }
+  ],
+  "retry_counts": {},
+  "current_wave": 3,
+  "completed_slices": [
+    "brain-9ol",
+    "brain-c9t",
+    "brain-ok2",
+    "brain-d15",
+    "brain-integration"
+  ]
+}

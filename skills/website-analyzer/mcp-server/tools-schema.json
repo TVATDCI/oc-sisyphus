@@ -1,0 +1,52 @@
+{
+  "tools": {
+    "analyze_website": {
+      "name": "analyze_website",
+      "description": "Analyze a website for design system, animations, Three.js, state management, and routing information using Playwright browser automation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL of the website to analyze"
+          },
+          "sections": {
+            "type": "string",
+            "enum": ["all", "design", "animations", "threejs", "state", "routes"],
+            "default": "all",
+            "description": "Which analysis sections to run"
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    "extract_colors": {
+      "name": "extract_colors",
+      "description": "Extract the top color values (hex, rgb, rgba, hsl) used on a website by scanning its HTML and CSS",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL of the website to extract colors from"
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    "inventory_components": {
+      "name": "inventory_components",
+      "description": "Inventory UI components (buttons, cards, nav, modals, forms, etc.) on a website by analyzing class names and HTML structure",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL of the website to inventory components from"
+          }
+        },
+        "required": ["url"]
+      }
+    }
+  }
+}

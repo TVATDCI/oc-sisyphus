@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["oh-my-openagent@latest", "sisyphus-gates"],
+  "default_agent": "sisyphus",
+  "mcp": {
+    "home": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/vladi"
+      ],
+      "enabled": true
+    },
+    "semble": {
+      "type": "local",
+      "command": ["semble", "mcp"],
+      "enabled": true
+    }
+  },
+  "permission": {
+    "external_directory": "ask"
+  },
+  "lsp": true
+}

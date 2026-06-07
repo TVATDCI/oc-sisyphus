@@ -1,0 +1,22 @@
+[
+  {"query": "Write a commit message for my staged changes", "should_trigger": true},
+  {"query": "Generate a commit message for this diff", "should_trigger": true},
+  {"query": "Help me write a good commit message", "should_trigger": true},
+  {"query": "Draft a commit message explaining these changes", "should_trigger": true},
+  {"query": "What should my commit message be for this update?", "should_trigger": true},
+  {"query": "Create a conventional commit message from my changes", "should_trigger": true},
+  {"query": "I need help with my git commit message", "should_trigger": true},
+  {"query": "Suggest a commit message for this bug fix", "should_trigger": true},
+  {"query": "Write a descriptive commit message for these file changes", "should_trigger": true},
+  {"query": "Help me craft a good commit message following best practices", "should_trigger": true},
+  {"query": "Create a commit message for this feature I'm adding", "should_trigger": true},
+  {"query": "Generate commit text for my staged files", "should_trigger": true},
+  {"query": "Check out a new branch for my feature work", "should_trigger": false},
+  {"query": "Merge the main branch into my current branch", "should_trigger": false},
+  {"query": "Show me the git log for the last 10 commits", "should_trigger": false},
+  {"query": "Revert my last commit", "should_trigger": false},
+  {"query": "Clone this repository from GitHub", "should_trigger": false},
+  {"query": "Set up git config with my name and email", "should_trigger": false},
+  {"query": "Squash these commits into one", "should_trigger": false},
+  {"query": "Explain how git rebase works", "should_trigger": false}
+]

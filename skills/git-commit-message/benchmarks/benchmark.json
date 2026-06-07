@@ -1,0 +1,125 @@
+{
+  "metadata": {
+    "skill_name": "git-commit-message",
+    "timestamp": "2026-01-15T10:30:00Z",
+    "evals_run": [
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "original",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.95,
+        "passed": 19,
+        "failed": 1,
+        "total": 20,
+        "time_seconds": 45.2
+      }
+    },
+    {
+      "eval_id": 1,
+      "configuration": "original",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.95,
+        "passed": 19,
+        "failed": 1,
+        "total": 20,
+        "time_seconds": 43.8
+      }
+    },
+    {
+      "eval_id": 1,
+      "configuration": "original",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.9,
+        "passed": 18,
+        "failed": 2,
+        "total": 20,
+        "time_seconds": 44.5
+      }
+    },
+    {
+      "eval_id": 2,
+      "configuration": "improved",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.95,
+        "passed": 19,
+        "failed": 1,
+        "total": 20,
+        "time_seconds": 42.1
+      }
+    },
+    {
+      "eval_id": 2,
+      "configuration": "improved",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 20,
+        "failed": 0,
+        "total": 20,
+        "time_seconds": 41.3
+      }
+    },
+    {
+      "eval_id": 2,
+      "configuration": "improved",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.95,
+        "passed": 19,
+        "failed": 1,
+        "total": 20,
+        "time_seconds": 41.9
+      }
+    }
+  ],
+  "run_summary": {
+    "original": {
+      "pass_rate": {
+        "mean": 0.933,
+        "stddev": 0.028,
+        "min": 0.9,
+        "max": 0.95
+      },
+      "time_seconds": {
+        "mean": 44.5,
+        "stddev": 0.7,
+        "min": 43.8,
+        "max": 45.2
+      }
+    },
+    "improved": {
+      "pass_rate": {
+        "mean": 0.967,
+        "stddev": 0.028,
+        "min": 0.95,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 41.8,
+        "stddev": 0.4,
+        "min": 41.3,
+        "max": 42.1
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.03",
+      "time_seconds": "-2.7"
+    }
+  },
+  "notes": [
+    "Improved description adds explicit 'draft/write/generate' focus",
+    "Negative constraint added: 'Do not use for revert, branch, merge'",
+    "Variance decreased from iteration 1 to 2",
+    "Time improved slightly (more precise description = faster decisions)"
+  ]
+}

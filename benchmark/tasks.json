@@ -1,0 +1,321 @@
+{
+  "benchmark_name": "opencode-calibration-v1",
+  "benchmark_version": "1.0.0",
+  "repo_root": "/home/vladi/.config/opencode",
+  "path_mode": "relative_to_repo_root",
+  "created": "2026-05-29",
+  "created_by": "sisyphus-oracle",
+  "description": "Calibration benchmark for measuring Explore-agent code navigation performance on the OpenCode agent configuration system. 16 tasks across 6 categories.",
+  "response_wrapper": {
+    "format": "json",
+    "required_fields": ["task_id", "final_answer", "evidence_files", "facts"],
+    "instructions": "evidence_files must list exact relative paths used to answer. facts should be atomic statements, one fact per list item. scorer should reject answers that omit required evidence files. scorer should apply negative_requirements as hard failures."
+  },
+  "tasks": [
+    {
+      "id": "CAL-01",
+      "category": "implementation_location",
+      "prompt": "I'm trying to understand the top-level runtime config. Which config file sets the default agent, what is the default agent, and which plugins are enabled?",
+      "gold_evidence_files": ["opencode.json"],
+      "required_facts": [
+        "The config file is `opencode.json`.",
+        "The `default_agent` is `sisyphus`.",
+        "The enabled plugins are `oh-my-openagent@latest` and `sisyphus-gates@latest`."
+      ],
+      "negative_requirements": [
+        "Do not name any plugin other than `oh-my-openagent@latest` and `sisyphus-gates@latest`."
+      ],
+      "scorer_type": "exact_lookup"
+    },
+    {
+      "id": "CAL-02",
+      "category": "implementation_location",
+      "prompt": "Where is the agent model registry, and what model/variant is configured for the `explore` agent?",
+      "gold_evidence_files": ["oh-my-openagent.json"],
+      "required_facts": [
+        "The registry file is `oh-my-openagent.json`.",
+        "The agent key is `explore`.",
+        "Its model is `openrouter/deepseek/deepseek-v4-flash`.",
+        "Its variant is `low`."
+      ],
+      "negative_requirements": [
+        "Do not cite `agents/explorer.md` as the source of the model registry answer."
+      ],
+      "scorer_type": "exact_lookup"
+    },
+    {
+      "id": "CAL-03",
+      "category": "architecture_understanding",
+      "prompt": "I'm new to this repo. Where should I start for system architecture, and where is the deeper reference now?",
+      "gold_evidence_files": [
+        "SYSTEM-OVERVIEW.md",
+        "skills/system-reference/SKILL.md"
+      ],
+      "required_facts": [
+        "A newcomer should start with `SYSTEM-OVERVIEW.md`.",
+        "`SYSTEM-OVERVIEW.md` says the full reference moved to `skill:system-reference`.",
+        "The deeper reference lives in `skills/system-reference/SKILL.md`.",
+        "`SYSTEM-OVERVIEW.md` is a quick routing/high-level overview, not the full reference."
+      ],
+      "negative_requirements": [
+        "Do not claim that `SYSTEM-OVERVIEW.md` itself is the full system reference."
+      ],
+      "scorer_type": "synthesis"
+    },
+    {
+      "id": "CAL-04",
+      "category": "architecture_understanding",
+      "prompt": "List the Sisyphus workflow phases in order.",
+      "gold_evidence_files": [".sisyphus/workflow.yaml"],
+      "required_facts": [
+        "The ordered phases are: discovery, prd-writing, prd-review, issue-creation, plan-writing, plan-review, execution, validation, close."
+      ],
+      "negative_requirements": [
+        "Do not omit any phase.",
+        "Do not reorder the phases."
+      ],
+      "scorer_type": "exact_lookup"
+    },
+    {
+      "id": "CAL-05",
+      "category": "behavior_flow_tracing",
+      "prompt": "What automatic event moves the workflow from PRD writing into PRD review, and what state/checkpoint change happens immediately when that event fires?",
+      "gold_evidence_files": [
+        ".sisyphus/workflow.yaml",
+        "plugins/sisyphus-gates/dist/index.js"
+      ],
+      "required_facts": [
+        "The automatic trigger is a `write` to a path containing `prd`/`PRD`.",
+        "That transition moves the phase from `prd-writing` to `prd-review`.",
+        "The plugin sets the checkpoint to `prd-written` (`lastCheckpoint = \"prd-written\"`).",
+        "This transition does not itself mark the PRD gate as PASS or set PRD approval to true."
+      ],
+      "negative_requirements": [
+        "Do not say the automatic transition requires `PRD review PASS`.",
+        "Do not say explicit user approval is required for this automatic file-write transition."
+      ],
+      "scorer_type": "synthesis"
+    },
+    {
+      "id": "CAL-06",
+      "category": "behavior_flow_tracing",
+      "prompt": "Trace what happens after the system sees `Plan review PASS`. What phase does it move to, and what approval state is recorded?",
+      "gold_evidence_files": [
+        ".sisyphus/workflow.yaml",
+        "plugins/sisyphus-gates/dist/index.js",
+        ".sisyphus/state.json"
+      ],
+      "required_facts": [
+        "The workflow advances from `plan-review` to `execution`.",
+        "The plan gate/status is set to PASS.",
+        "Plan approval becomes true.",
+        "The checkpoint becomes `plan-approved`.",
+        "Persistent approval status is recorded as `approved`."
+      ],
+      "negative_requirements": [
+        "Do not say the workflow moves directly to `validation` or `close`."
+      ],
+      "scorer_type": "synthesis"
+    },
+    {
+      "id": "CAL-07",
+      "category": "cross_module_references",
+      "prompt": "How is execution-model transparency recorded during wave execution, and where is that later checked?",
+      "gold_evidence_files": [
+        "skills/wave-executor/SKILL.md",
+        "scripts/track-execution.sh",
+        "scripts/wave-validator.sh"
+      ],
+      "required_facts": [
+        "Wave execution requires the exact transparency line `Executing with [model] via [category]`.",
+        "Wave execution also calls `bash ~/.config/opencode/scripts/track-execution.sh {plan_name} {wave_number} {slice_name} {model} {category}`.",
+        "`track-execution.sh` writes a log file to `~/.config/opencode/.sisyphus/metadata/{plan_name}-execution.log`.",
+        "`wave-validator.sh` checks evidence markdown files for the `Executing with` line and fails if it is missing."
+      ],
+      "negative_requirements": [
+        "Do not claim that `wave-validator.sh` reads the metadata log to verify model transparency."
+      ],
+      "scorer_type": "synthesis"
+    },
+    {
+      "id": "CAL-08",
+      "category": "negative_disambiguation",
+      "prompt": "If a user says `review my code`, which skill should handle it: `code-review`, `security-auditor`, or `wave-executor`? Explain the choice briefly.",
+      "gold_evidence_files": [
+        "skills/code-review/SKILL.md",
+        "skills/security-auditor/SKILL.md",
+        "skills/wave-executor/SKILL.md"
+      ],
+      "required_facts": [
+        "The correct primary skill is `code-review`.",
+        "`code-review` is for reviewing/assessing existing code, pull requests, and implementations.",
+        "`security-auditor` is a pre-deployment vulnerability scanner, not the general code-review skill.",
+        "`wave-executor` is for implementing an approved plan, not for reviewing existing code."
+      ],
+      "negative_requirements": [
+        "Do not say `code-review` edits or repairs code.",
+        "Do not choose `wave-executor`."
+      ],
+      "scorer_type": "synthesis"
+    },
+    {
+      "id": "CAL-09",
+      "category": "negative_disambiguation",
+      "prompt": "Is the Explorer agent allowed to modify files or run shell commands?",
+      "gold_evidence_files": ["agents/explorer.md"],
+      "required_facts": [
+        "Explorer is a `subagent`.",
+        "Explorer has read-only practical access: `write` is false and `execute` is false.",
+        "Its enabled tools are read, grep, websearch, and webfetch.",
+        "It is described as read-only and says it does not modify files."
+      ],
+      "negative_requirements": [
+        "Do not say Explorer can edit files.",
+        "Do not say Explorer can run bash/shell commands."
+      ],
+      "scorer_type": "exact_lookup"
+    },
+    {
+      "id": "CAL-10",
+      "category": "implementation_location",
+      "prompt": "Where is the workflow loader script, what environment variable overrides its default workflow path, and what is that default path?",
+      "gold_evidence_files": ["scripts/workflow-loader.sh"],
+      "required_facts": [
+        "The script is `scripts/workflow-loader.sh`.",
+        "The override environment variable is `SISYPHUS_WORKFLOW`.",
+        "The default workflow path is `$HOME/.config/opencode/.sisyphus/workflow.yaml`."
+      ],
+      "negative_requirements": [],
+      "scorer_type": "exact_lookup"
+    },
+    {
+      "id": "CAL-11",
+      "category": "negative_disambiguation",
+      "prompt": "I see both `.omo` and `.sisyphus` in this repo. Which state file path does the workflow actually use at runtime?",
+      "gold_evidence_files": [
+        "plugins/sisyphus-gates/dist/index.js",
+        "scripts/workflow-loader.sh",
+        ".omo/state.json"
+      ],
+      "required_facts": [
+        "The runtime/plugin state path is `~/.config/opencode/.sisyphus/state.json`.",
+        "The plugin hard-codes that path via `GLOBAL_STATE_PATH`.",
+        "The workflow tooling also defaults to `.sisyphus` paths, not `.omo`.",
+        "`.omo/state.json` exists in the repo, but it is not the runtime state path referenced by the plugin/loader."
+      ],
+      "negative_requirements": [
+        "Do not claim that `.omo/state.json` is the authoritative runtime state file."
+      ],
+      "scorer_type": "synthesis"
+    },
+    {
+      "id": "CAL-12",
+      "category": "pattern_discovery",
+      "prompt": "What kinds of destructive shell commands are globally blocked before gates pass? Give three concrete examples.",
+      "gold_evidence_files": [
+        ".sisyphus/workflow.yaml",
+        "plugins/sisyphus-gates/dist/index.js"
+      ],
+      "required_facts": [
+        "The answer must state that destructive bash commands are globally blocked before gates pass.",
+        "The answer must name at least three blocked patterns from this set: `rm`, `rm -rf`, `git reset --hard`, `git push --force`, `git clean -fd`, `sudo`, `dd`, `mkfs`, `shutdown`, `reboot`."
+      ],
+      "negative_requirements": [
+        "Do not say non-destructive bash commands are globally blocked in all phases."
+      ],
+      "scorer_type": "synthesis"
+    },
+    {
+      "id": "CAL-13",
+      "category": "cross_module_references",
+      "prompt": "I'm adding a new skill. What will make validation fail outright, what only produces warnings, and when am I allowed to move on to test cases?",
+      "gold_evidence_files": [
+        "scripts/validate-skills.sh",
+        "skills/skill-creator/SKILL.md"
+      ],
+      "required_facts": [
+        "Validation FAILs if `SKILL.md` is missing.",
+        "Validation FAILs if YAML frontmatter is missing.",
+        "Validation FAILs if required frontmatter fields are missing: `name`, `description`, `compatibility`.",
+        "Validation WARNs if `README.md` or `CHANGELOG.md` exists inside the skill directory.",
+        "Validation WARNs if `SKILL.md` is over 500 lines.",
+        "`skill-creator` says not to proceed to test cases until validation passes; WARNs are advisory."
+      ],
+      "negative_requirements": [
+        "Do not classify `SKILL.md > 500 lines` as a FAIL condition."
+      ],
+      "scorer_type": "synthesis"
+    },
+    {
+      "id": "CAL-14",
+      "category": "behavior_flow_tracing",
+      "prompt": "Trace the `analyze_website` MCP tool from entrypoint to returned analysis sections.",
+      "gold_evidence_files": [
+        "skills/website-analyzer/mcp-server/index.js",
+        "skills/website-analyzer/browser/launcher.js",
+        "skills/website-analyzer/browser/inspector.js"
+      ],
+      "required_facts": [
+        "The MCP server dispatches `analyze_website` from `tools/call` to `handleAnalyzeWebsite`.",
+        "`handleAnalyzeWebsite` creates `BrowserLauncher({ headless: true })`, launches the browser, navigates to the URL, creates an inspector, initializes it, and calls `runFullAnalysis()`.",
+        "`runFullAnalysis()` collects screenshot(s), animations, threeJs, state, routes, interactions, enhanced animations, and performance.",
+        "The MCP response returns selected sections from `design`, `animations`, `threeJs`, `state`, and `routes`."
+      ],
+      "negative_requirements": [
+        "Do not say this flow uses `extract_colors` or `inventory_components`."
+      ],
+      "scorer_type": "synthesis"
+    },
+    {
+      "id": "CAL-15",
+      "category": "implementation_location",
+      "prompt": "What tools does the website-analyzer MCP server expose?",
+      "gold_evidence_files": [
+        "skills/website-analyzer/mcp-server/index.js"
+      ],
+      "required_facts": [
+        "The exposed MCP tools are `analyze_website`, `extract_colors`, and `inventory_components`."
+      ],
+      "negative_requirements": [
+        "Do not list any tool name not present in the MCP server."
+      ],
+      "scorer_type": "exact_lookup"
+    },
+    {
+      "id": "CAL-16",
+      "category": "pattern_discovery",
+      "prompt": "How does the skill trigger evaluator decide whether a skill passed its eval set?",
+      "gold_evidence_files": [
+        "skills/skill-creator/scripts/run_eval.py"
+      ],
+      "required_facts": [
+        "It runs queries in parallel with `ProcessPoolExecutor`.",
+        "By default it uses `runs_per_query = 3`.",
+        "By default it uses `trigger_threshold = 0.5`.",
+        "If `should_trigger` is true, a query passes when `trigger_rate >= trigger_threshold`.",
+        "If `should_trigger` is false, a query passes when `trigger_rate < trigger_threshold`.",
+        "The output summary includes `total`, `passed`, and `failed`."
+      ],
+      "negative_requirements": [
+        "Do not say a single run determines pass/fail by default."
+      ],
+      "scorer_type": "synthesis"
+    }
+  ],
+  "configs": [
+    {
+      "id": "baseline",
+      "description": "Current explore agent configuration — read + grep + websearch + webfetch. No semantic search, no semble.",
+      "tools_available": ["read", "grep", "websearch", "webfetch"],
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "variant": "low"
+    },
+    {
+      "id": "semble-first",
+      "description": "Same model and tools but with semble_search/semble_find_related added as preferred first pass, grep/read as fallback.",
+      "tools_available": ["semble_search", "semble_find_related", "read", "grep", "websearch", "webfetch"],
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "variant": "low"
+    }
+  ]
+}

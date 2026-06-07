@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "meta": {
+    "description": "Website Analyzer Strategy Scoring Matrix",
+    "tie_breaker": "ambitious",
+    "priority_order": ["full_rebuild", "design_capture", "component_extract", "content_migrate", "static_export"]
+  },
+  "signals": [
+    { "key": "is_spa", "weights": { "full_rebuild": 3, "design_capture": 0, "component_extract": 1, "content_migrate": 0, "static_export": -2 } },
+    { "key": "is_static_html", "weights": { "full_rebuild": -2, "design_capture": 1, "component_extract": 1, "content_migrate": 1, "static_export": 3 } },
+    { "key": "has_3d", "weights": { "full_rebuild": 3, "design_capture": 1, "component_extract": 0, "content_migrate": 0, "static_export": -1 } },
+    { "key": "has_state_management", "weights": { "full_rebuild": 2, "design_capture": 0, "component_extract": 1, "content_migrate": 0, "static_export": 0 } },
+    { "key": "route_count_high", "weights": { "full_rebuild": 1, "design_capture": 0, "component_extract": -1, "content_migrate": 3, "static_export": -1 } },
+    { "key": "css_complexity_high", "weights": { "full_rebuild": 1, "design_capture": 3, "component_extract": 1, "content_migrate": 0, "static_export": 0 } },
+    { "key": "content_volume_high", "weights": { "full_rebuild": 0, "design_capture": 0, "component_extract": -1, "content_migrate": 3, "static_export": 0 } },
+    { "key": "has_animations", "weights": { "full_rebuild": 2, "design_capture": 1, "component_extract": 1, "content_migrate": 0, "static_export": -1 } },
+    { "key": "no_animations", "weights": { "full_rebuild": -1, "design_capture": 0, "component_extract": 0, "content_migrate": 0, "static_export": 1 } },
+    { "key": "has_auth", "weights": { "full_rebuild": 2, "design_capture": -1, "component_extract": -1, "content_migrate": 0, "static_export": -1 } }
+  ]
+}

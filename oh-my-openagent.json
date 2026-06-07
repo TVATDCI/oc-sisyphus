@@ -1,0 +1,220 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
+  "runtime_fallback": {
+    "enabled": true,
+    "retry_on_errors": [400, 401, 403, 404, 429, 500, 502, 503, 504],
+    "cooldown_seconds": 15,
+    "timeout_seconds": 10,
+    "notify_on_fallback": true
+  },
+  "agents": {
+    "sisyphus": {
+      "model": "opencode/kimi-k2.6",
+      "variant": "high",
+      "fallback_models": [
+        { "model": "opencode-go/kimi-k2.6" },
+        { "model": "opencode-go/qwen3.7-max" },
+        { "model": "opencode/qwen3.7-plus" }
+      ],
+      "ultrawork": {
+        "model": "opencode-go/qwen3.7-max",
+        "variant": "high",
+        "fallback_models": [
+          { "model": "opencode-go/kimi-k2.6" },
+          { "model": "opencode-go/minimax-m3" },
+          { "model": "opencode/minimax-m3-free" },
+          { "model": "opencode/glm-5.1" }
+        ]
+      }
+    },
+    "hephaestus": {
+      "model": "opencode-go/deepseek-v4-pro",
+      "fallback_models": [
+        { "model": "opencode-go/glm-5.1" },
+        { "model": "opencode-go/kimi-k2.6" },
+        { "model": "opencode/minimax-m3-free" },
+        { "model": "opencode/kimi-k2.6" }
+      ],
+      "prompt_append": "Explore thoroughly, then implement. Prefer small, testable changes."
+    },
+    "oracle": {
+      "model": "opencode/gpt-5.4",
+      "variant": "high",
+      "fallback_models": [
+        { "model": "opencode-go/kimi-k2.6" },
+        { "model": "opencode-go/qwen3.7-max" },
+        { "model": "opencode-go/glm-5.1" },
+        { "model": "opencode/minimax-m3-free" }
+      ],
+      "prompt_append": "Think step-by-step. Identify root causes, not symptoms. Propose alternatives before recommending. Prioritize correctness and maintainability."
+    },
+    "librarian": {
+      "model": "opencode/deepseek-v4-flash-free",
+      "fallback_models": [
+        { "model": "opencode-go/deepseek-v4-flash" },
+        { "model": "opencode-go/minimax-m2.7" },
+        { "model": "opencode/minimax-m3-free" }
+      ],
+      "prompt_append": "Focus on production-ready patterns and official documentation. Skip basic tutorials. Include version numbers, source URLs, and concrete code examples."
+    },
+    "explore": {
+      "model": "opencode/deepseek-v4-flash-free",
+      "fallback_models": [
+        { "model": "opencode-go/deepseek-v4-flash" },
+        { "model": "opencode/deepseek-v4-flash-free" }
+      ],
+      "prompt_append": "Search thoroughly but efficiently. Return file paths with pattern descriptions. Skip test files unless specifically asked. Prioritize implementation files over config."
+    },
+    "multimodal-looker": {
+      "model": "opencode/mimo-v2.5-free",
+      "fallback_models": [
+        { "model": "opencode-go/mimo-v2.5" },
+        { "model": "opencode-go/mimo-v2.5-pro" }
+      ]
+    },
+    "prometheus": {
+      "model": "opencode-go/glm-5.1",
+      "fallback_models": [
+        { "model": "opencode-go/qwen3.7-plus" },
+        { "model": "opencode/glm-5.1" }
+      ],
+      "prompt_append": "file://~/.config/opencode/prompts/prometheus-guidance.md"
+    },
+    "metis": {
+      "model": "opencode/qwen3.6-plus",
+      "fallback_models": [
+        { "model": "opencode-go/qwen3.7-max" },
+        { "model": "opencode-go/qwen3.7-plus" },
+        { "model": "opencode-go/kimi-k2.6" },
+        { "model": "opencode-go/glm-5.1" }
+      ]
+    },
+    "momus": {
+      "model": "opencode-go/glm-5.1",
+      "fallback_models": [
+        { "model": "opencode-go/kimi-k2.6" },
+        { "model": "opencode/glm-5.1" }
+      ]
+    },
+    "atlas": {
+      "model": "opencode-go/kimi-k2.5",
+      "fallback_models": [
+        { "model": "opencode-go/qwen3.5-plus" },
+        { "model": "opencode-go/deepseek-v4-flash" },
+        { "model": "opencode/kimi-k2.5" }
+      ]
+    },
+    "sisyphus-junior": {
+      "model": "opencode/kimi-k2.6",
+      "fallback_models": [
+        { "model": "opencode-go/qwen3.7-max" },
+        { "model": "opencode-go/qwen3.7-plus" },
+        { "model": "opencode-go/kimi-k2.6" },
+        { "model": "opencode-go/glm-5.1" }
+      ]
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "opencode/gemini-3.1-pro",
+      "fallback_models": [
+        { "model": "opencode/minimax-m3-free" },
+        { "model": "opencode/gemini-3-flash" }
+      ]
+    },
+    "ultrabrain": {
+      "model": "opencode-go/deepseek-v4-pro",
+      "fallback_models": [
+        { "model": "opencode-go/kimi-k2.6" },
+        { "model": "opencode/glm-5.1" }
+      ]
+    },
+    "deep": {
+      "model": "opencode-go/glm-5.1",
+      "fallback_models": [
+        { "model": "opencode-go/qwen3.7-max" },
+        { "model": "opencode-go/kimi-k2.6" },
+        { "model": "opencode/glm-5.1" }
+      ]
+    },
+    "artistry": {
+      "model": "opencode/mimo-v2.5-free",
+      "fallback_models": [
+        { "model": "opencode-go/mimo-v2.5" },
+        { "model": "opencode-go/mimo-v2.5-pro" }
+      ]
+    },
+    "quick": {
+      "model": "opencode/deepseek-v4-flash-free",
+      "fallback_models": [{ "model": "opencode-go/deepseek-v4-flash" }]
+    },
+    "unspecified-low": {
+      "model": "opencode/deepseek-v4-flash-free",
+      "fallback_models": [
+        { "model": "opencode-go/qwen3.5-plus" },
+        { "model": "opencode-go/deepseek-v4-flash" },
+        { "model": "opencode-go/deepseek-v4-flash" }
+      ]
+    },
+    "unspecified-high": {
+      "model": "opencode/glm-5.1",
+      "fallback_models": [
+        { "model": "opencode-go/minimax-m3" },
+        { "model": "opencode-go/qwen3.7-plus" },
+        { "model": "opencode-go/kimi-k2.6" },
+        { "model": "opencode/qwen3.7-plus" }
+      ]
+    },
+    "writing": {
+      "model": "opencode-go/qwen3.7-max",
+      "fallback_models": [
+        { "model": "opencode-go/minimax-m3" },
+        { "model": "opencode-go/qwen3.7-plus" },
+        { "model": "opencode-go/kimi-k2.6" },
+        { "model": "opencode-go/glm-5.1" },
+        { "model": "opencode/qwen3.7-plus" }
+      ]
+    },
+    "git-commit-message": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "fallback_models": [{ "model": "opencode/deepseek-v4-flash-free" }],
+      "description": "All git operations — commits, branches, rebases, history searches",
+      "prompt_append": "Focus on atomic commits, clear conventional commit messages, and safe operations. Never force-push or skip hooks unless explicitly requested."
+    }
+  },
+  "background_task": {
+    "defaultConcurrency": 5,
+    "staleTimeoutMs": 180000,
+    "providerConcurrency": {
+      "opencode-go": 10,
+      "opencode": 10
+    },
+    "modelConcurrency": {
+      "opencode-go/kimi-k2.6": 2,
+      "opencode-go/kimi-k2.5": 2,
+      "opencode-go/deepseek-v4-pro": 3,
+      "opencode-go/deepseek-v4-flash": 5,
+      "opencode/deepseek-v4-flash-free": 20,
+      "opencode-go/glm-5.1": 1,
+      "opencode-go/glm-5": 1,
+      "opencode/glm-5.1": 2,
+      "opencode/gemini-3.1-pro": 1,
+      "opencode/gemini-3-flash": 2,
+      "opencode-go/qwen3.7-max": 2,
+      "opencode-go/qwen3.6-plus": 5,
+      "opencode-go/mimo-v2.5-pro": 3,
+      "opencode-go/mimo-v2.5": 5,
+      "opencode-go/minimax-m3": 2,
+      "opencode/minimax-m3-free": 5,
+      "opencode-go/minimax-2.7": 5
+    }
+  },
+  "experimental": {
+    "task_system": true,
+    "aggressive_truncation": true,
+    "preemptive_compaction": true
+  },
+  "git_master": {
+    "include_co_authored_by": false
+  }
+}

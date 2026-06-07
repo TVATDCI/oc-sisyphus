@@ -1,0 +1,14 @@
+node_modules
+package.json
+package-lock.json
+bun.lock
+*.backup*
+*.backup-*
+*.log
+.DS_Store
+*.tmp
+*.temp
+dist/
+build/
+.next/
+coverage/

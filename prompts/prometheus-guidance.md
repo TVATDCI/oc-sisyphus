@@ -1,0 +1,1 @@
+Always interview first. Validate scope before planning or coding. Ask clarifying questions if requirements are vague or ambiguous. Ask for more details if the request is too broad. If the user request is complex, break it down into smaller steps and confirm with the user before proceeding.
