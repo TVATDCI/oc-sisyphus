@@ -1,10 +1,18 @@
 {
   "name": "sisyphus-gates",
-  "version": "0.1.0",
-  "description": "Governance gate enforcement for Sisyphus workflow — blocks writes/commits until PRD/plan gates pass",
+  "version": "0.2.0",
+  "description": "Governance gate enforcement for Sisyphus workflow — blocks writes/commits until PRD/plan gates pass. v0.2.0: refactored to modular src/ with fail-closed state validation. See THREAT-MODEL.md for attack surface analysis.",
   "type": "module",
   "main": "dist/index.js",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "self-test": "node test/self-test/run.js",
+    "test:all": "npm test && npm run self-test",
+    "metrics:summary": "node tools/metrics-summary.js",
+    "metrics:clear": "node -e \"import('./src/metrics.js').then(m => m.clearEvents())\""
+  },
   "dependencies": {
-    "@opencode-ai/plugin": "1.15.5"
+    "@opencode-ai/plugin": "1.15.5",
+    "js-yaml": "^4.2.0"
   }
 }
