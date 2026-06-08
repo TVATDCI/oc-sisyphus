@@ -118,7 +118,7 @@ When delegating to subagents, you MUST report: `Executing with [model] via [cate
 bash ~/.config/opencode/scripts/track-execution.sh {plan_name} {wave_number} {slice_name} {model} {category}
 ```
 
-This creates a machine-readable log at `~/.config/opencode/.sisyphus/metadata/{plan}-execution.log` that the validator can check.
+This creates a machine-readable log at `~/.sisyphus/metadata/{plan}-execution.log` that the validator can check.
 
 Why: Enables cost verification, model debugging, confirms cheap models are used for mechanical work, and provides mechanical evidence for the validator.
 

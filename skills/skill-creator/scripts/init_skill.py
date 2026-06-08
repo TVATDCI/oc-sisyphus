@@ -34,7 +34,7 @@ TODO: Add skill instructions here.
     if not design_md.exists():
         print("Note: No DESIGN.md found in project root.")
         print("If this project involves UI, create DESIGN.md from template:")
-        print(f"  cp ~/.config/opencode/.sisyphus/templates/DESIGN.md ./DESIGN.md")
+        print(f"  cp ~/.sisyphus/templates/DESIGN.md ./DESIGN.md")
     
     print(f"Created skill at {skill_dir}")
     

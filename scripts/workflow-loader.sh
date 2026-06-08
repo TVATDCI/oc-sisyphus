@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-WORKFLOW_FILE="${SISYPHUS_WORKFLOW:-$HOME/.config/opencode/.sisyphus/workflow.yaml}"
+WORKFLOW_FILE="${SISYPHUS_WORKFLOW:-$HOME/.sisyphus/workflow.yaml}"
 
 if [ ! -f "$WORKFLOW_FILE" ]; then
   echo "ERROR: Workflow file not found at $WORKFLOW_FILE" >&2

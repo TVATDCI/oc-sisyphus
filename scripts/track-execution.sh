@@ -9,7 +9,7 @@ SLICE_NAME="${3:-unknown}"
 MODEL="${4:-unknown}"
 CATEGORY="${5:-unknown}"
 
-META_DIR="${HOME}/.config/opencode/.sisyphus/metadata"
+META_DIR="${HOME}/.sisyphus/metadata"
 mkdir -p "$META_DIR"
 
 META_FILE="${META_DIR}/${PLAN_NAME}-execution.log"
