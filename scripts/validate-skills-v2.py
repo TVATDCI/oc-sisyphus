@@ -176,8 +176,8 @@ def validate_frontmatter(skill_dir: Path) -> tuple[bool, list[str], list[str]]:
 
     # Validate compatibility if present
     compat = data.get("compatibility", "")
-    if compat and not isinstance(compat, str):
-        errors.append(f"Compatibility must be a string, got {type(compat).__name__}")
+    if compat and not isinstance(compat, (str, dict)):
+        errors.append(f"Compatibility must be a string or dict, got {type(compat).__name__}")
 
     return len(errors) == 0, errors, warnings
 

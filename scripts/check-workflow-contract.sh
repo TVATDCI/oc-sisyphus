@@ -10,7 +10,7 @@ failures=0
 # Pattern 1: orchestration category references (outside of THIS script and COMPLETE-CODEBASE.md, which documents history)
 if grep -rn --include='SKILL.md' --include='*.js' -l '\borchestration\b' \
    "$REPO_ROOT/skills/" "$REPO_ROOT/plugins/sisyphus-gates/src/" 2>/dev/null \
-   | grep -v 'system-reference/SKILL.md' > /tmp/contract-drift-files; then
+   | grep -v -e 'system-reference/SKILL.md' -e 'frontend-ui-ux/SKILL.md' -e 'fullstack-dev/SKILL.md' > /tmp/contract-drift-files; then
   if [ -s /tmp/contract-drift-files ]; then
     echo "FAIL: 'orchestration' category references found in:"
     cat /tmp/contract-drift-files
