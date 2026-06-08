@@ -3,8 +3,8 @@
 Personal OpenCode configuration. See:
 - [COMPLETE-CODEBASE.md](./COMPLETE-CODEBASE.md) — full system map
 - [SYSTEM-OVERVIEW.md](./SYSTEM-OVERVIEW.md) — architecture doc
-- [HANDOFF.md](./HANDOFF.md) — session continuity
+- [Session handoff](../../.sisyphus/evidence/session-handoff-2026-06-07.md) — session continuity (canonical state in ~/.sisyphus/)
 - [oh-my-openagent.json](./oh-my-openagent.json) — agent + category routing
 - [opencode.json](./opencode.json) — entry-point config
 
-Last refresh: 2026-06-07 (W1).
+Last refresh: 2026-06-08 (W4 — synthesis complete).
