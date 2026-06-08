@@ -1,6 +1,6 @@
 ---
 name: security-auditor
-description: "Pre-deployment security scanner that finds vulnerabilities before they reach production. (1) Use when 'security review' is requested or before deploying sensitive features. (2) Use to scan for plaintext secrets, API keys, hardcoded credentials, private keys. (3) Use to check for XSS, CSRF gaps, injection vulnerabilities, IDOR, missing auth, weak crypto. Triggers: 'security review', 'audit', 'check for vulnerabilities', 'pre-deploy scan', 'security check', 'vulnerability scan', 'security audit', 'scan for secrets', 'check for XSS', 'find SQL injection'. Scans 6 categories: secrets, injection, XSS, auth/CSRF, dependencies, path traversal. Returns PASS/WARNING/FAIL gate decision. Not for: performance issues, functional bugs, PCI/HIPAA compliance, or penetration testing."
+description: "Pre-deployment security scanner that finds vulnerabilities before they reach production. (1) Use when 'security review' is requested or before deploying sensitive features. (2) Use to scan for plaintext secrets, API keys, hardcoded credentials, private keys. (3) Use to check for XSS, CSRF gaps, injection vulnerabilities, IDOR, missing auth, weak crypto, CORS misconfigurations, rate limiting gaps, and graceful shutdown issues. Triggers: 'security review', 'audit', 'check for vulnerabilities', 'pre-deploy scan', 'security check', 'vulnerability scan', 'security audit', 'scan for secrets', 'check for XSS', 'find SQL injection'. Scans 6 categories: secrets, injection, XSS, auth/CSRF, dependencies, path traversal. Returns PASS/WARNING/FAIL gate decision. Not for: performance issues, functional bugs, PCI/HIPAA compliance, or penetration testing."
 compatibility: opencode
 triggers:
   - "security review"
@@ -29,7 +29,7 @@ gates:
   - "Gate decision: WARNING requires acknowledgment"
   - "Gate decision: PASS allows deployment to proceed"
 metadata:
-  version: 1.2.0
+  version: 1.3.0
   category: security
   complexity: advanced
   system_version: "v2.1"
@@ -232,6 +232,8 @@ Before scanning, determine which checks are relevant to this project:
 | Path traversal | Handles user-controlled file paths | No file upload/download |
 | Access control / IDOR | Multi-user app with owned resources | Single-user tool, public static site |
 | Session checks | Stateful session (cookie/JWT) | Stateless API with external auth |
+| Rate limiting | Public-facing endpoints with auth | Internal service, CLI tool, private API |
+| Graceful shutdown | Long-running server process | Serverless function, batch script, CLI tool |
 
 **Scope rules:**
 1. Read PRD if provided (for feature context)
@@ -393,12 +395,25 @@ preview.innerHTML = userInput;
 - [ ] POST/PUT/DELETE without CSRF tokens
 - [ ] Missing SameSite cookie attributes
 - [ ] State-changing actions via GET requests
-- [ ] Overly permissive CORS (`Access-Control-Allow-Origin: *`)
+- [ ] **Overly permissive CORS** (`Access-Control-Allow-Origin: *`)
+- [ ] **Reflect-origin CORS** (`Access-Control-Allow-Origin: req.headers.origin` without validation) — allows any site to read responses
+- [ ] **Credentials + wildcard origin** (`Access-Control-Allow-Credentials: true` with `*` origin — browsers reject this, but misconfig signals confusion)
+- [ ] **Missing Vary: Origin header** — breaks caching when multiple origins are allowed
+- [ ] **Overly permissive methods** (allowing PUT/DELETE/PATCH when only GET/POST needed)
+- [ ] **Overly long preflight cache** (`Access-Control-Max-Age` > 86400s) — prevents policy updates from taking effect
 - [ ] **Missing server-side authorization checks** (routes that should require auth but don't)
 - [ ] **Missing object ownership / tenant isolation** (IDOR: can user A access user B's data?)
 - [ ] **Admin routes without role checks** (admin actions callable by regular users)
 - [ ] **Missing default-deny middleware** (unlisted routes are accessible by default)
 - [ ] **Client-side auth only** (UI hides buttons but server doesn't enforce)
+
+**Rate Limiting Checks:**
+- [ ] **Login/registration endpoints unprotected** — no rate limiting on password attempts (brute-force vector)
+- [ ] **API endpoints without throttling** — no requests-per-minute limits on any route
+- [ ] **Missing key-based rate limiting** — rate limiting by IP only (NAT users share limits, attackers rotate IPs)
+- [ ] **No rate limit headers** — missing `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining` headers
+- [ ] **No distinct tiers** — authenticated and unauthenticated users share the same rate limit
+- [ ] **Rate limit bypass via header manipulation** — `X-Forwarded-For` spoofing when IP-based limiting uses the first proxy header
 
 **Session & Cryptography Checks:**
 - [ ] **Weak password hashing** (`md5`, `sha1`, plain text, unsalted hashes)
@@ -432,6 +447,13 @@ app.post('/api/admin/reset', adminController.reset)  // no role check
 - [ ] Debug mode in production
 - [ ] Missing security headers (HSTS, X-Frame-Options)
 - [ ] Unvalidated file uploads
+
+**Graceful Shutdown Checks:**
+- [ ] **No SIGTERM/SIGINT handler** — process is killed without draining connections
+- [ ] **No connection draining** — active requests are aborted mid-flight on shutdown
+- [ ] **No database pool drain** — DB connections dropped while queries are in-flight (data corruption risk)
+- [ ] **No shutdown timeout** — process waits indefinitely on hanging connections (prevents restart)
+- [ ] **No health check fail** — readiness endpoint doesn't return 503 during shutdown (load balancer still routes traffic)
 
 #### Category F: Path Traversal
 **Check for:**
