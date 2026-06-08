@@ -23,17 +23,25 @@ Work is NOT complete until `git push` succeeds.
 
 1. **File issues for remaining work** - Create beads issues for anything that needs follow-up
 2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE**:
+3. **Run COMPLETE-CODEBASE.md drift check** — If this session touched skills, agents, routing, permissions, workflow docs, scripts, or canonical paths:
+   - Update `Last reviewed` date in header
+   - Check skill count / notable skill changes
+   - Check agent routing (named agents, categories, models)
+   - Check subagent permissions (count, write-capable agents)
+   - Append one timeline entry for this session/wave
+   - Fix any moved/renamed/canonical path references
+   - If nothing relevant changed, note `"COMPLETE-CODEBASE check: no update needed"` in evidence
+4. **Update issue status** - Close finished work, update in-progress items
+5. **PUSH TO REMOTE**:
    ```bash
    git pull --rebase
    bd dolt push
    git push
    git status  # MUST show "up to date with origin"
    ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+6. **Clean up** - Clear stashes, prune remote branches
+7. **Verify** - All changes committed AND pushed
+8. **Hand off** - Provide context for next session
 
 ### Critical Rules
 - NEVER stop before pushing — that leaves work stranded locally
@@ -50,10 +58,11 @@ Test artifacts in directories like `~/developer/test-artifacts/` do NOT need git
 1. Close beads issues locally (`bd close <id>`)
 2. Update state file (`.sisyphus/state.json`)
 3. Run cleanup checklist (see `~/.config/opencode/CLEANUP.md`) — archive old iterations, prune stale memory entries
-3. Document evidence in `.sisyphus/evidence/`
-4. **SKIP git push** — test artifacts are local-only
-5. **SKIP `bd dolt push`** — beads issues stay local for tests
-6. Hand off context with test results summary
+4. **Run COMPLETE-CODEBASE.md drift check** — If this session touched skills, agents, routing, permissions, workflow docs, scripts, or canonical paths, update the relevant sections (see Real Projects step 3 for the sub-check list). If nothing changed, note `"COMPLETE-CODEBASE check: no update needed"` in evidence.
+5. Document evidence in `.sisyphus/evidence/`
+6. **SKIP git push** — test artifacts are local-only
+7. **SKIP `bd dolt push`** — beads issues stay local for tests
+8. Hand off context with test results summary
 
 ---
 
