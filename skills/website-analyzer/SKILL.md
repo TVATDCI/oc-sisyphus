@@ -1,6 +1,6 @@
 ---
 name: website-analyzer
-description: "Analyzes a target website and produces DESIGN.md (21 sections), tech-detections.json, content-inventory.json, and design tokens for cloning or reference. (1) Use when user provides a URL and wants to clone or rebuild a site. (2) Use to extract design system, tech stack, color palette, and typography from any live URL. (3) Use to generate Tailwind config, shadcn theme, or Figma variables from a reference site. Triggers: 'clone this website', 'analyze this URL', 'rebuild this site', 'what tech does this site use', 'extract design from', 'website analysis', 'design system extraction', 'export design tokens', 'analyze via MCP', 'generate tailwind config'. TAKES PRECEDENCE over discovery-orchestrator when a URL is in the message. Not for: login-walled sites, static text-only articles, or anti-bot-protected targets."
+description: "Analyzes a target website and produces DESIGN.md (21 sections), tech-detections.json, content-inventory.json, and design tokens for cloning or reference. (1) Use when user provides a URL and wants to clone or rebuild a site. (2) Use to extract design system, tech stack, color palette, and typography from any live URL. (3) Use to generate Tailwind config, shadcn theme, or Figma variables from a reference site. (4) Use with 'critique' mode for structured visual UI quality assessment. Triggers: 'clone this website', 'analyze this URL', 'rebuild this site', 'what tech does this site use', 'extract design from', 'website analysis', 'design system extraction', 'export design tokens', 'analyze via MCP', 'generate tailwind config', 'UI critique', 'visual review', 'design audit'. TAKES PRECEDENCE over discovery-orchestrator when a URL is in the message. Not for: login-walled sites, static text-only articles, or anti-bot-protected targets."
 compatibility: opencode
 triggers:
   - "clone this website"
@@ -18,6 +18,10 @@ triggers:
   - "generate tailwind config"
   - "extract figma variables"
   - "create shadcn theme"
+  - "UI critique"
+  - "visual review"
+  - "design audit"
+  - "review this site"
 mode: agent-driven
 inputs:
   - "Target URL (required) — the website to analyze"
@@ -47,10 +51,13 @@ gates:
   - "User approves DESIGN.md: 'looks good', 'proceed', 'approved'"
   - "User requests changes: 'add section', 'fix color', 'deeper analysis'"
 metadata:
-  version: 1.5.0
+  version: 1.6.0
   category: analysis
   complexity: advanced
   status: complete
+  features:
+    - "standard analysis (quick/deep)"
+    - "UI critique mode (v1.6.0)"
 ---
 
 # Website Analyzer
@@ -115,15 +122,16 @@ When delegating to subagents, always report: `Executing with [model] via [catego
 ## Input
 
 - Target URL (e.g., `https://example.com`)
-- Analysis depth: `quick` (structure + tech only) or `deep` (full DESIGN.md)
+- Analysis depth: `quick` (structure + tech only), `deep` (full DESIGN.md), or `critique` (visual quality assessment only, no DESIGN.md)
 - Output path (default: `{project_root}/.sisyphus/analysis/`)
 
 ## Produces
 
-- `DESIGN.md` — structured design specification with 21+ sections
+- `DESIGN.md` — structured design specification with 21+ sections (not produced in critique mode)
 - `content-inventory.json` — machine-readable content inventory (navigation, hero, sections, projects, footer, metadata)
 - `tech-detections.json` — machine-readable tech stack with confidence scores
 - `analysis-summary.md` — human-readable executive summary
+- `ui-critique.md` — structured visual quality assessment (critique mode only)
 
 ## Entry Criteria
 
@@ -282,8 +290,153 @@ await launcher.launchMCP(); // Uses Playwright MCP server
 - `{output_path}/content-inventory.json` — Machine-readable content inventory
 - `{output_path}/tech-detections.json` — Machine-readable stack detection
 - `{output_path}/analysis-summary.md` — Executive summary
+- `{output_path}/ui-critique.md` — Structured visual quality assessment (critique mode only)
 
 ---
+
+# UI Critique Mode
+
+A specialized analysis mode that evaluates a target website's visual and UX quality, producing a structured critique report. **Not a replacement for full analysis** — no DESIGN.md or design tokens are generated in this mode.
+
+## When to Use
+
+| Signal | Example |
+|--------|---------|
+| User asks "review this site's design" | "Can you review the UI of example.com?" |
+| User wants visual quality assessment | "Is this site's design any good?" |
+| Before cloning a reference site | "Critique this site before we rebuild it" |
+| Competitive design audit | "Compare the UX of these two landing pages" |
+| Pre-redesign assessment | "What's wrong with our current site's design?" |
+
+## Mode Behavior
+
+When invoked with `critique` mode, the analyzer skips Phases 3-5 (confidence tagging, structured output, quality gate) and instead produces a focused critique after Phase 2 (runtime analysis):
+
+| Phase | Standard Mode | Critique Mode |
+|-------|--------------|---------------|
+| Phase 1: Multi-pass extraction | ✅ Full | ✅ Full (same extraction) |
+| Phase 2: Browser runtime | ✅ Full | ✅ Full (same runtime data) |
+| Phase 3: Confidence tagging | ✅ Required | ❌ Skipped |
+| Phase 4: DESIGN.md generation | ✅ Required | ❌ Skipped |
+| Phase 5: Quality gate | ✅ Required | ❌ Skipped |
+| **Critique synthesis** | ❌ N/A | ✅ **New** |
+
+## Critique Dimensions
+
+Each dimension is scored on a scale of **1 (poor) to 5 (excellent)** with an evidence-based justification:
+
+### 1. Visual Cohesion (1-5)
+Evaluates whether the design feels intentional and consistent:
+- **Color harmony**: Are the palette and its usage consistent? Are there orphan colors?
+- **Typography hierarchy**: Clear heading/body distinction? Appropriate line-height and measure?
+- **Spacing rhythm**: Is whitespace consistent (8px grid, 4px base)? Or arbitrary?
+- **Component consistency**: Do buttons, cards, inputs share the same visual language?
+
+### 2. Layout & Composition (1-5)
+Evaluates structure and spatial organization:
+- **Grid system**: Is there a clear grid? Content aligned to it?
+- **Visual tension**: Is the layout dynamic (asymmetry, overlap) or boxy and centered?
+- **Responsive behavior**: Does the layout adapt gracefully or break?
+- **Information density**: Is content scannable? Too dense or too sparse?
+
+### 3. Typography & Readability (1-5)
+Evaluates text presentation:
+- **Font choices**: Distinctive or generic (Inter/Roboto/system)? Appropriate pairings?
+- **Readability**: Sufficient contrast, appropriate font sizes, reasonable line lengths (45-75 chars)?
+- **Hierarchy**: Clear distinction between headings, subheadings, body, and captions?
+
+### 4. Motion & Interaction (1-5)
+Evaluates animation quality and interaction design:
+- **Purposefulness**: Does motion serve a purpose (guiding attention, providing feedback) or is it decorative?
+- **Performance**: Smooth animations (60fps) or janky?
+- **Restraint**: Tasteful, minimal motion or overwhelming?
+- **Accessibility**: `prefers-reduced-motion` respected? No seizure-risk animations?
+
+### 5. Accessibility Baseline (1-5)
+Evaluates fundamental a11y (automated checks only):
+- **Color contrast**: Sufficient WCAG AA for body text?
+- **Focus indicators**: Visible focus rings on interactive elements?
+- **Alt text**: Images have meaningful alt attributes?
+- **Semantic HTML**: Proper heading hierarchy, landmark elements?
+
+### 6. Polish & Craft (1-5)
+Evaluates attention to detail:
+- **Micro-interactions**: Hover states, focus transitions, loading states?
+- **Edge cases**: Empty states, error states, 404 page?
+- **Loading experience**: Skeleton screens, spinners, or blank flashes?
+- **Cross-browser consistency**: Does it look intentional across viewports?
+
+## Critique Report Format
+
+Output is written to `{output_path}/ui-critique.md`:
+
+```markdown
+# UI Critique: {Site Name}
+
+**URL:** {target_url}
+**Date:** {YYYY-MM-DD}
+**Mode:** Critique
+
+## Overall Score: {avg}/5
+
+### Dimension Scores
+
+| Dimension | Score | Verdict |
+|-----------|-------|---------|
+| Visual Cohesion | {1-5} | {Strong / Adequate / Needs Work / Poor} |
+| Layout & Composition | {1-5} | {Strong / Adequate / Needs Work / Poor} |
+| Typography & Readability | {1-5} | {Strong / Adequate / Needs Work / Poor} |
+| Motion & Interaction | {1-5} | {Strong / Adequate / Needs Work / Poor} |
+| Accessibility Baseline | {1-5} | {Strong / Adequate / Needs Work / Poor} |
+| Polish & Craft | {1-5} | {Strong / Adequate / Needs Work / Poor} |
+
+### Strengths
+1. {specific strength with evidence} — e.g., "Consistent 4px spacing grid throughout (score: 5)"
+
+### Issues Found
+1. **[Severity] {Issue}**
+   - **Location**: {page section or component}
+   - **Evidence**: {specific observation}
+   - **Impact**: {who it affects and how}
+   - **Suggestion**: {actionable fix}
+
+### Anti-Patterns Detected
+- {anti-pattern} — {where and why it's a problem}
+
+### Recommendations (Priority Order)
+1. {recommendation} — {effort estimate}
+
+### Verdict
+**{PASS / PASS WITH NOTES / MAJOR CONCERNS / FAIL}**
+{One-paragraph summary of the site's visual quality and what to address.}
+```
+
+## Verdict Scale
+
+| Verdict | Overall Score | Meaning |
+|---------|---------------|---------|
+| PASS | 4.0-5.0 | Production-ready design. Minor polish suggestions only. |
+| PASS WITH NOTES | 3.0-3.9 | Solid foundation. Address flagged issues before production. |
+| MAJOR CONCERNS | 2.0-2.9 | Significant design debt. Needs redesign or major rework. |
+| FAIL | 1.0-1.9 | Fundamental design problems. Not ready for users. |
+
+## Hard Constraints
+
+- **No invented scores** — every score must be backed by specific evidence from the target site. If evidence is insufficient, mark as `INSUFFICIENT DATA` instead of guessing.
+- **No OCR or chart extraction** — critique is based on structural/runtime analysis only. Defer pixel-level analysis and data extraction from images.
+- **Critique is not a replacement** — critique mode does not produce DESIGN.md, tokens, or implementation artifacts. Use standard `deep` mode for those.
+- **Be specific** — avoid vague criticism like "bad design". Every issue must include: what's wrong, where, why it matters, and how to fix it.
+
+## Integration with Standard Pipeline
+
+The critique mode shares Phases 1-2 with the standard pipeline but diverges at critique synthesis:
+
+```
+Standard: Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → DESIGN.md
+Critique:  Phase 1 → Phase 2 → Critique Synthesis → ui-critique.md
+```
+
+To run a combined analysis + critique, run `deep` mode first, then request critique separately. The Phase 2 runtime data is cached and reusable.
 
 ## Detailed Steps
 
