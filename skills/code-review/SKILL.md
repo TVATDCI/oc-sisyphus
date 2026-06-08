@@ -9,16 +9,17 @@ description: >
   problems in", "audit this code", "assess code quality", "look for bugs in",
   "security review", "open, or any request for feedback on
   code that already exists. The skill produces a structured review covering
-  correctness, security, performance, maintainability, error handling, and
-  testing. Do NOT use this skill for writing new code, generating tests,
-  fixing bugs, refactoring, debugging failing tests, explaining how code works,
-  or answering general programming questions. Do NOT use it when the user wants
-  the assistant to implement, modify, or repair code rather than evaluate it.
+  correctness, security, performance, maintainability, architecture,
+  error handling, and testing. Do NOT use this skill for writing new code,
+  generating tests, fixing bugs, refactoring, debugging failing tests, explaining
+  how code works, or answering general programming questions. Do NOT use it when
+  the user wants the assistant to implement, modify, or repair code rather than
+  evaluate it.
 license: MIT
 allowed-tools: [read, grep, edit, git]
 metadata:
   author: OpenCode
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # Code Review Assistant
@@ -62,6 +63,31 @@ If intent cannot be determined from (1-3), flag: **"Scope context unclear — re
    - Requirements from plan/PRD not addressed in the diff
 5. Note both problems *and* positive aspects (don't just criticize)
 6. Provide specific, actionable suggestions, not vague complaints
+
+### Architecture Review Patterns
+
+In addition to the core review dimensions, evaluate the project's architectural structure for these patterns:
+
+1. **Feature-First Organization**
+   - **Check**: Is code grouped by domain/feature rather than by technical role?
+   - **Good**: `src/features/auth/`, `src/features/billing/` — each feature owns its routes, services, tests
+   - **Antipattern**: `src/controllers/`, `src/services/`, `src/models/` spread across directories by role, forcing multi-directory changes for a single feature
+   - **Flag when**: A single feature change requires editing 4+ role-based directories rather than one feature directory
+
+2. **Typed Error Handling**
+   - **Check**: Are errors modeled as explicit types rather than generic throws or nulls?
+   - **Good**: `Result<T, E>` or `Either<T, E>` patterns, discriminated union error types with `cause` chains, exhaustive `switch`/`match` on error variants
+   - **Good (simpler)**: Custom error classes extending `Error` with typed `code` fields, documented error contracts in API handlers
+   - **Antipattern**: `throw new Error('something failed')`, returning `null`/`undefined`/`-1` to signal failure (caller can't distinguish error types), untyped error objects
+   - **Flag when**: Callers must inspect error `.message` strings to decide how to handle the failure
+
+3. **Global Handler Patterns**
+   - **Check**: Are cross-cutting concerns centralized rather than duplicated?
+   - **Good**: Single global error middleware, one auth guard applied at the router level, shared validation pipeline, consistent response formatter
+   - **Antipattern**: Try/catch in every route handler, duplicated auth checks per endpoint, scattered error formatting, ad-hoc logging
+   - **Flag when**: Adding a new route requires remembering to add error handling, auth, and logging separately
+
+These architecture patterns should be evaluated alongside the core review dimensions and included as findings in the review report when violated.
 
 ### Finding Promotion Gate
 
