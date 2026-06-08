@@ -1,6 +1,6 @@
 # OpenCode Codebase — Complete Structure, Changes & Workflow
 
-> **Last reviewed:** 2026-06-07 | **Next review:** When agent routing changes or a new skill is added
+> **Last reviewed:** 2026-06-08 | **Next review:** When agent routing changes or a new skill is added
 > **Drift-prone sections:** §Agent Routing, §Change Timeline, §Skill count
 > **Stable sections:** §Directory Architecture, §Workflow State Machine, §Subagent Permissions
 
@@ -11,10 +11,9 @@
    │ └── oh-my-openagent.json # 17 agents + 9 categories + routing
    │
    ├── 2. INSTRUCTION LAYER
-   │ ├── AGENTS.md # Root system prompt (compaction, routing)
-   │ ├── SYSTEM-OVERVIEW.md # Architecture doc v3.0
-   │ ├── HANDOFF.md # Previous session continuity
-   │ ├── rules/ # 14 rule files (4 language + 9 concern + README)
+    │ ├── AGENTS.md # Root system prompt (compaction, routing)
+    │ ├── SYSTEM-OVERVIEW.md # Architecture doc v4.0
+    │ ├── rules/ # 14 rule files (4 language + 9 concern + README)
    │ ├── prompts/ # Context injection (main-vault, prometheus)
    │ └── agents/ # 8 subagent .md definitions with permissions
    │
@@ -23,9 +22,9 @@
    │ ├── └── each has SKILL.md + optional scripts/evals
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator
    │
-    ├── 4. PLANNING LAYER
-    │ ├── .sisyphus/ # Active state machine: runtime state, workflow.yaml plans, evidence, notepads, templates
-    │ └── .omo/ # ARCHIVED (W0.3): was sync mirror, now sole live state is .sisyphus/
+     ├── 4. PLANNING LAYER
+     │ ├── ~/.sisyphus/ # Canonical state machine (consolidated from .sisyphus/): state.json, hotcache, evidence, notepads, plans, archive
+     │ └── .omo/ # ARCHIVED (W0.3): was sync mirror, now sole live state is ~/.sisyphus/
    │
    ├── 5. TRACKING LAYER
    │ └── tasks/ # Beads per project (aino, dropDeadDev, opencode, pienso, vladi...)
@@ -75,6 +74,10 @@
     Jun 7 W2 — Contract migration: canonical state seeded (~/.sisyphus/state.json), plugin source restored (13 modules), 180 unit tests + 20 self-tests PASS, THREAT-MODEL.md
     Jun 7 W3 — Automation: pre-push hook, GitHub Actions CI, doc drift guards (check-doc-claims.sh, check-workflow-contract.sh), full doc rewrite SYSTEM-OVERVIEW v4.0, private remote push
     Jun 7 Fix All minimax-m3-free replaced with deepseek-v4-flash-free (12 replacements); patch-package removed (not applicable to cache-based runtime)
+    Jun 8 W4 — Synthesis project: fullstack-dev skill created (863 lines, 48/48 evals) + subagent; frontend-ui-ux enhanced (anti-slop, motion, copywriting); code-review v1.1.0 (architecture patterns); security-auditor v1.3.0 (CORS/rate-limit/shutdown); document-builder created (PPTX via PptxGenJS); website-analyzer v1.6.0 (UI Critique Mode)
+    Jun 8 W4 — shader-dev: constrained WebGL2 fragment-shader skill (oracle architecture, 6 recipes, 6/6 evals, 3 bugs fixed)
+    Jun 8 Env Canonical path consolidation: .sisyphus/ → ~/.sisyphus/; HANDOFF.md/hotcache.md deleted; CLEANUP.md created; stale iteration-1 evals pruned
+    Jun 8 Git 10 atomic commits across all 7 skills; doc-claims drift fixed (subagents 7→8, directories 38→43)
  3. Complete Workflow — 9-Phase State Machine
    ╔══════════════════════════╗
    ║ GLOBAL BLOCKING RULES ║
@@ -146,5 +149,5 @@ Agent Routing (12 runtime agents × 9 categories)
 9 Categories (via task(category='...')): deep→glm-5.1, ultrabrain→deepseek-v4-pro, visual-engineering→gemini-3.1-pro, quick→deepseek-v4-flash-free, unspecified-high→glm-5.1, unspecified-low→deepseek-v4-flash-free, writing→qwen3.7-max, artistry→mimo-v2.5-free, git-commit-message→deepseek-v4-flash-free
 Most constrained model: glm-5.1 (concurrency: 1) — used by 2 categories (deep, unspecified-high) + 2 agents (prometheus, momus).
 
-7 Subagent .md Permissions (security boundaries)
-Only 1 agent has write access: archivist (restricted to ~/Main-vault/wiki/\*\*). All others are read-only or read+network. oracle is the most restricted (read-only, no bash, no edit).
+8 Subagent .md Permissions (security boundaries)
+Only 2 agents have write access: archivist (restricted to ~/Main-vault/wiki/\*\*) and fullstack-dev-tester (edit: \*: allow). All others are read-only or read+network. oracle is the most restricted (read-only, no bash, no edit).
