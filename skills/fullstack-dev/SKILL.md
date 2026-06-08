@@ -112,6 +112,7 @@ When a request clearly falls into a "DO NOT use this skill for" category, follow
 1. **State the boundary**: "This task is outside the scope of fullstack-dev. It is a **[category]** task."
 2. **Redirect**: "The [skill-name] skill is designed for this — switch to that skill for proper handling."
 3. **Stop**: Do NOT offer preliminary diagnosis, partial fixes, or "getting started" steps. Zero assistance on the out-of-scope task.
+4. **Do not execute**: Do NOT load or execute another skill to fulfill the request. Redirect means tell the user to use that skill — not use it for them.
 
 This is a boundary enforcement rule, not a suggestion. The skill explicitly excludes these domains — redirecting protects the user from incomplete or inappropriate guidance.
 

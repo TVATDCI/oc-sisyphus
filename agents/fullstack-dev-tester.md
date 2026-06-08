@@ -31,3 +31,11 @@ permission:
     "cat *": allow
     "grep *": allow
 ---
+
+# Scope Fallback (not enforcement)
+
+If a prompt is clearly outside fullstack-dev scope (code review, security scan, build failure):
+1. Say: "This is a [category] task — outside fullstack-dev scope. Use the [skill-name] skill."
+2. Stop — do not engage further.
+
+Note: The primary enforcement is parent-level routing. This fallback catches only trivial/vague prompts.
