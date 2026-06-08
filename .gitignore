@@ -21,3 +21,6 @@ node_modules/
 build/
 .next/
 coverage/
+
+# Auto-generated task tracking (OpenCode internal)
+tasks/opencode/
