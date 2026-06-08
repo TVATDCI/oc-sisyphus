@@ -16,7 +16,7 @@
 #   3. Restore → exit 0
 #
 # Ground-truth table (11 rows, bg_16df9ed3 §F, Oracle-revised):
-#   17 agents | 8 categories | 14 rule files | 38 directories | 7 subagent .md
+#   17 agents | 8 categories | 14 rule files | 43 directories | 8 subagent .md
 #   0 model: lines | 14 scripts | 12 src/ modules | 3 JSONL baseline runs
 #   166 unit tests | 0 agents have write access
 #
@@ -209,11 +209,11 @@ while IFS='|' read -r claimed_num noun; do
       cmd="find \"$REPO_ROOT/rules\" -maxdepth 2 -name '*.md' -not -path '*/node_modules/*' | wc -l"
       ;;
     directories)
-      expected=38
+      expected=43
       cmd="find \"$REPO_ROOT/skills\" -maxdepth 1 -mindepth 1 -type d -not -name node_modules | wc -l"
       ;;
     subagent)
-      expected=7
+      expected=8
       cmd="ls \"$REPO_ROOT/agents\"/*.md 2>/dev/null | wc -l"
       ;;
     scripts)

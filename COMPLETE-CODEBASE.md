@@ -16,10 +16,10 @@
    │ ├── HANDOFF.md # Previous session continuity
    │ ├── rules/ # 14 rule files (4 language + 9 concern + README)
    │ ├── prompts/ # Context injection (main-vault, prometheus)
-   │ └── agents/ # 7 subagent .md definitions with permissions
+   │ └── agents/ # 8 subagent .md definitions with permissions
    │
    ├── 3. SKILL LAYER
-   │ ├── skills/ # 38 directories (37 real + 1 \_shared refs)
+   │ ├── skills/ # 43 directories (42 real + 1 _shared refs)
    │ ├── └── each has SKILL.md + optional scripts/evals
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator
    │
