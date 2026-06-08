@@ -6,9 +6,9 @@ Use **bd** (beads) for task tracking. Run `bd prime` for full workflow context.
 
 | Trigger | Action |
 |---------|--------|
-| `session-begin`, `continue`, `pick up`, `where was I` | Read `state.json` + `hotcache.md` + `log.md`. Present last session status. |
+| `session-begin`, `continue`, `pick up`, `where was I` | Read `~/.sisyphus/state.json` + `~/.sisyphus/hotcache.md`, query `bd remember` for preserved facts. Present last session status. |
 | `session-close`, `done`, `archive`, `wrap up` | Run `skill:session-close` |
-| `checkpoint`, `save state` | Update hotcache + timestamp evidence entry |
+| `checkpoint`, `save state` | Delegated to `skill:session-close` — see its Checkpoint / Save State section |
 
 ## Beads
 
@@ -39,7 +39,7 @@ Trigger compaction at **50% usage** (not 100%). The goal is to preserve task con
 
 **⚠️ Critical: What Compression Loses**
 
-Compaction uses lossy summarization. Based on Hermes research (see `.sisyphus/notepads/hermes-pattern-study.md`), these 5 categories are ALWAYS lost or degraded during compression:
+Compaction uses lossy summarization. Based on Hermes research (see `~/.sisyphus/notepads/hermes-pattern-study.md`), these 5 categories are ALWAYS lost or degraded during compression:
 
 1. **Exact numeric values** — thresholds, port numbers, version pins, token counts
 2. **Hard constraints** — "don't touch test files", "no Redis", "use Postgres only"
@@ -71,7 +71,7 @@ During compaction, write a structured handoff message (NOT freeform prose):
 
 ```markdown
 ## Session Handoff
-**Compated at:** {timestamp}
+**Compacted at:** {timestamp}
 **Original intent:** {one-sentence user request}
 **Current phase:** {e.g., wave 2 execution, debugging}
 
@@ -94,7 +94,7 @@ During compaction, write a structured handoff message (NOT freeform prose):
 - {exact numeric values, version pins, etc.}
 ```
 
-**Storage:** Write handoff to `hotcache.md` as the compaction artifact. Do NOT modify AGENTS.md.
+**Storage:** Write handoff to `~/.sisyphus/hotcache.md` as the compaction artifact. Do NOT modify AGENTS.md.
 
 ---
 
@@ -175,8 +175,8 @@ bd remember "turn-3:preference:concise_responses_preferred"
    - If yes: STOP and ask user for explicit confirmation
    - If user confirms: Log the override with reason
    - If user declines: Cancel the operation
-4. **Rehydrate aggressively** — Re-read hotcache.md, query bd remember, re-verify constraints
-5. **Log the event** — Write to `.sisyphus/evidence/degraded-mode-{timestamp}.md` with reason and recovery actions
+4. **Rehydrate aggressively** — Re-read `~/.sisyphus/hotcache.md`, query bd remember, re-verify constraints
+5. **Log the event** — Write to `~/.sisyphus/evidence/degraded-mode-{timestamp}.md` with reason and recovery actions
 
 **Do NOT trigger degraded mode for:**
 - Normal compaction with complete handoff
@@ -185,12 +185,12 @@ bd remember "turn-3:preference:concise_responses_preferred"
 
 ---
 
-### Preserve these 5 anchors in the compaction summary:**
+### Preserve these 5 anchors in the compaction summary
 1. **Session intent** — original user request + current phase
 2. **File modifications** — files created, modified, deleted (paths only)
 3. **Decisions made** — architecture choices, scope decisions, model selections
 4. **Next steps** — current task, remaining subtasks, blocked items
-5. **Evidence references** — paths to `.sisyphus/evidence/` files, key test results
+5. **Evidence references** — paths to `~/.sisyphus/evidence/` files, key test results
 
 **Discard** (summarize to 1-2 lines):
 - Full file contents already read
@@ -207,8 +207,8 @@ bd remember "turn-3:preference:concise_responses_preferred"
 4. bd remember "compact:files:src/components/MotionReducer.tsx"
 5. bd remember "compact:decision:Chose CSS-only over JS runtime"
 6. bd remember "compact:next:Complete wave 2, blocked by RM-001 test"
-7. Write structured handoff message to hotcache.md (rotate: copy hotcache.md → hotcache-prev.md first, then overwrite)
-8. Archive detailed evidence to .sisyphus/evidence/compaction-{timestamp}.md
+7. Write structured handoff message to `~/.sisyphus/hotcache.md` (rotate: copy hotcache.md → hotcache-prev.md first, then overwrite)
+8. Archive detailed evidence to `~/.sisyphus/evidence/compaction-{timestamp}.md`
 9. Inject preserved facts from bd remember into working context
 10. Check for degraded mode conditions; signal if triggered
 11. Continue with compact context
@@ -224,16 +224,23 @@ Before triggering compaction, verify these are in `bd remember`:
 
 The full conversation history is always preserved in JSONL regardless of compaction — branching and rewinding remain possible.
 
+## Doc Drift Guard
+
+If a change touches **skills, agents, routing, permissions, canonical paths, or workflow docs**, update `./COMPLETE-CODEBASE.md` in the same change. The session-close protocol enforces this at close time; the pre-push `check-doc-claims.sh` validates it at push time.
+
+For routing decisions, refer to the skill system map in `COMPLETE-CODEBASE.md` or `skill:system-reference`. Skills are invoked by domain match against their trigger descriptions — and `session-close` includes a mandatory COMPLETE-CODEBASE.md drift check if system topology changed.
+
 ## Shell Safety
 
 Always use non-interactive flags: `cp -f`, `mv -f`, `rm -f`, `scp -o BatchMode=yes`, `ssh -o BatchMode=yes`, `apt-get -y`, `HOMEBREW_NO_AUTO_UPDATE=1`. Full reference: `skill:shell-safety`.
 
 ## On-Demand Reference
 
+- **System map** → `./COMPLETE-CODEBASE.md` — full topology, routing, timeline, permissions
 - **Architecture / workflow / skills** → `skill:system-reference`
 - **Session close protocol** → `skill:session-close`
 - **System architecture, gates, hardening** → `skill:system-reference`
-- **Language rules** → loaded by wave-executor Step 0
+- **Language rules** → loaded by `scripts/load-rules.sh` (automated, called by wave-executor Step 0)
 - **Agent full prompts** → loaded at delegation time
 - **LSP tools** (diagnostics, references, rename) → `skill:toolkit-lsp`
 - **Research tools** (web search, docs, GitHub) → `skill:toolkit-research`
