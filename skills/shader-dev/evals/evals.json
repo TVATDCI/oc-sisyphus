@@ -1,0 +1,130 @@
+[
+  {
+    "eval_id": 0,
+    "eval_name": "2D SDF Circle",
+    "prompt": "Create a WebGL2 shader that renders a blue circle in the center of the screen with radius 0.3. The circle should have a subtle glow effect using the SDF recipe.",
+    "assertions": [
+      {
+        "text": "Uses sdCircle or equivalent SDF function",
+        "check": "code_contains",
+        "target": "sdCircle"
+      },
+      {
+        "text": "Renders non-black frame with visible circle",
+        "check": "render_variance",
+        "min_variance": 0.01
+      },
+      {
+        "text": "Compiles without GLSL errors",
+        "check": "no_gl_errors"
+      }
+    ]
+  },
+  {
+    "eval_id": 1,
+    "eval_name": "Cosine Color Palette",
+    "prompt": "Generate a WebGL2 shader that shows an animated cosine color palette. Use parameters a=(0.5,0.5,0.5), b=(0.5,0.5,0.5), c=(1.0,1.0,1.0), d=(0.0,0.33,0.67). The palette should animate over time.",
+    "assertions": [
+      {
+        "text": "Uses cosinePalette function",
+        "check": "code_contains",
+        "target": "cosinePalette"
+      },
+      {
+        "text": "Compiles without GLSL errors",
+        "check": "no_gl_errors"
+      },
+      {
+        "text": "Shows animated color variation",
+        "check": "render_variance",
+        "min_variance": 0.01
+      }
+    ]
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "FBM Noise Texture",
+    "prompt": "Create a WebGL2 shader that generates an FBM noise texture with 4 octaves and scale 5.0. Display it as a grayscale pattern.",
+    "assertions": [
+      {
+        "text": "Uses fbm function",
+        "check": "code_contains",
+        "target": "fbm"
+      },
+      {
+        "text": "Octaves parameter ≤ 6",
+        "check": "code_contains",
+        "target": "4"
+      },
+      {
+        "text": "Compiles and renders non-black",
+        "check": "render_variance",
+        "min_variance": 0.01
+      }
+    ]
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "UV Kaleidoscope Transform",
+    "prompt": "Create a WebGL2 shader that applies a kaleidoscope UV transform with 6 segments and displays a colorful pattern using the transformed coordinates.",
+    "assertions": [
+      {
+        "text": "Uses kaleidoscopeUV or equivalent",
+        "check": "code_contains",
+        "target": "kaleidoscope"
+      },
+      {
+        "text": "Compiles without errors",
+        "check": "no_gl_errors"
+      },
+      {
+        "text": "Renders symmetric pattern",
+        "check": "render_variance",
+        "min_variance": 0.01
+      }
+    ]
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "Basic Raymarching Sphere",
+    "prompt": "Create a WebGL2 shader that raymarches a single sphere with Phong lighting. The sphere should be centered at origin with radius 0.5. Include soft shadows if possible within the basic recipe.",
+    "assertions": [
+      {
+        "text": "Uses raymarch function",
+        "check": "code_contains",
+        "target": "raymarch"
+      },
+      {
+        "text": "Uses Phong or basic lighting",
+        "check": "code_contains",
+        "target": "phong"
+      },
+      {
+        "text": "Compiles without errors",
+        "check": "no_gl_errors"
+      },
+      {
+        "text": "Renders visible lit sphere",
+        "check": "render_variance",
+        "min_variance": 0.01
+      }
+    ]
+  },
+  {
+    "eval_id": 5,
+    "eval_name": "Out-of-Scope Refusal",
+    "prompt": "Create a WebGL2 compute shader that does fluid simulation using ping-pong FBOs.",
+    "assertions": [
+      {
+        "text": "Refuses or redirects the request",
+        "check": "response_contains_one_of",
+        "targets": ["out of scope", "not supported", "refuse", "v1", "compute shader"]
+      },
+      {
+        "text": "Does not generate fluid simulation code",
+        "check": "code_does_not_contain",
+        "target": "fluid"
+      }
+    ]
+  }
+]

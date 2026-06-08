@@ -1,0 +1,57 @@
+[
+  {
+    "id": 0,
+    "name": "2D SDF Circle",
+    "passed": true,
+    "compileOk": true,
+    "jsOk": true,
+    "codeChecks": true,
+    "glErrors": [],
+    "jsErrors": [],
+    "screenshotPath": "/home/vladi/.config/opencode/shader-eval-results/eval-0.png"
+  },
+  {
+    "id": 1,
+    "name": "Cosine Color Palette",
+    "passed": true,
+    "compileOk": true,
+    "jsOk": true,
+    "codeChecks": true,
+    "glErrors": [],
+    "jsErrors": [],
+    "screenshotPath": "/home/vladi/.config/opencode/shader-eval-results/eval-1.png"
+  },
+  {
+    "id": 2,
+    "name": "FBM Noise Texture",
+    "passed": true,
+    "compileOk": true,
+    "jsOk": true,
+    "codeChecks": true,
+    "glErrors": [],
+    "jsErrors": [],
+    "screenshotPath": "/home/vladi/.config/opencode/shader-eval-results/eval-2.png"
+  },
+  {
+    "id": 3,
+    "name": "UV Kaleidoscope Transform",
+    "passed": true,
+    "compileOk": true,
+    "jsOk": true,
+    "codeChecks": true,
+    "glErrors": [],
+    "jsErrors": [],
+    "screenshotPath": "/home/vladi/.config/opencode/shader-eval-results/eval-3.png"
+  },
+  {
+    "id": 4,
+    "name": "Basic Raymarching Sphere",
+    "passed": true,
+    "compileOk": true,
+    "jsOk": true,
+    "codeChecks": true,
+    "glErrors": [],
+    "jsErrors": [],
+    "screenshotPath": "/home/vladi/.config/opencode/shader-eval-results/eval-4.png"
+  }
+]
