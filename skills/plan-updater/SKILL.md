@@ -33,10 +33,10 @@ Updates execution plan with progress, marks tasks complete, logs evidence to not
 
 ## Model Selection
 
-**Category:** `unspecified-high` → `kimi-k2.6` (fallback: `glm-5.1`)
+**Category:** `unspecified-high` → `glm-5.2` (fallback: `glm-5.1`, `kimi-k2.6`)
 
 **Model Transparency:**
-When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via unspecified-high").
+When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.2 via unspecified-high").
 
 ## Input
 

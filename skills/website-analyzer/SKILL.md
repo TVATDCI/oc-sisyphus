@@ -112,12 +112,12 @@ The 9-step analysis pipeline — see `## Detailed Steps` below for per-step proc
 
 ## Model Selection
 
-**Category:** `deep` → `kimi-k2.6` (fallback: `glm-5.1`)
+**Category:** `deep` → `glm-5.2` (fallback: `glm-5.1`, `kimi-k2.6`)
 
 **Rationale:** Website analysis requires visual interpretation, tech stack inference, and design system extraction — tasks that benefit from strong multimodal and reasoning capabilities.
 
 **Model Transparency:**
-When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via deep").
+When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.2 via deep").
 
 ## Input
 

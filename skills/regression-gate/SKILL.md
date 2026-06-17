@@ -227,7 +227,7 @@ archivist / vault-ops
 
 ## Model Selection
 
-**Category:** `unspecified-low` → `glm-5.1`
+**Category:** `unspecified-low` → `deepseek-v4-flash-free` (fallback: `deepseek-v4-flash`)
 
 Regression testing is mechanical: run tests, parse output, report results. No reasoning needed.
 
