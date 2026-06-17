@@ -200,7 +200,7 @@ User: "continue"
 
 ## Upstream OpenCode Routing
 
-Our custom system (oh-my-openagent + 38 skills) coexists with upstream OpenCode's built-in features. Some have overlapping capabilities. When both exist, the decision is:
+Our custom system (oh-my-openagent + 44 real skills + 1 _shared reference) coexists with upstream OpenCode's built-in features. Some have overlapping capabilities. When both exist, the decision is:
 
 | Capability | Use Our Custom | Use Upstream Built-in |
 |---|---|---|
