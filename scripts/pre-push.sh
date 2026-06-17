@@ -30,7 +30,11 @@ echo "    [3/4] self-test (18 scenarios, ~50ms)"
 (cd "$PLUGIN_DIR" && npm run self-test --silent)
 
 # 4. Doc-claims drift check
-echo "    [4/4] doc-claims drift check"
+echo "    [4/5] doc-claims drift check"
 bash "$REPO_ROOT/scripts/check-doc-claims.sh"
+
+# 5. Completion honesty topology gate
+echo "    [5/5] completion-honesty topology gate"
+bash "$REPO_ROOT/scripts/check-completion-honesty.sh"
 
 echo "==> pre-push: PASS"
