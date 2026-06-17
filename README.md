@@ -7,4 +7,4 @@ Personal OpenCode configuration. See:
 - [oh-my-openagent.json](./oh-my-openagent.json) — agent + category routing
 - [opencode.json](./opencode.json) — entry-point config
 
-Last refresh: 2026-06-08 (W4 — synthesis complete).
+Last refresh: 2026-06-17 (W4 synthesis + absorption from remote opencode-config: intent gate, execution-receipt, reflection, check-completion-honesty).

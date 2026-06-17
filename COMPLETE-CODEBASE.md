@@ -1,6 +1,6 @@
 # OpenCode Codebase — Complete Structure, Changes & Workflow
 
-> **Last reviewed:** 2026-06-08 | **Next review:** When agent routing changes or a new skill is added
+> **Last reviewed:** 2026-06-17 | **Next review:** When agent routing changes or a new skill is added
 > **Drift-prone sections:** §Agent Routing, §Change Timeline, §Skill count
 > **Stable sections:** §Directory Architecture, §Workflow State Machine, §Subagent Permissions
 
@@ -18,7 +18,7 @@
    │ └── agents/ # 8 subagent .md definitions with permissions
    │
    ├── 3. SKILL LAYER
-   │ ├── skills/ # 43 directories (42 real + 1 _shared refs)
+   │ ├── skills/ # 45 directories (44 real + 1 _shared refs)
    │ ├── └── each has SKILL.md + optional scripts/evals
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator
    │
@@ -30,7 +30,7 @@
    │ └── tasks/ # Beads per project (aino, dropDeadDev, opencode, pienso, vladi...)
    │
    ├── 6. INFRASTRUCTURE LAYER
-    │ ├── scripts/ # 14 scripts (load-rules, regression-gate, validate-skills-v2.py, verify-plugin-compat.js, check-doc-claims.sh, etc.)
+    │ ├── scripts/ # 15 scripts (load-rules, regression-gate, validate-skills-v2.py, verify-plugin-compat.js, check-doc-claims.sh, check-completion-honesty.sh, etc.)
    │ ├── plugins/sisyphus-gates/ # Compiled gate plugin (dist/index.js)
    │ ├── benchmark/ # 3 JSONL baseline runs (vs codegraph vs semble)
    │ └── .codegraph/codegraph.db # Search/index: semantic code index SQLite DB
@@ -78,6 +78,7 @@
     Jun 8 W4 — shader-dev: constrained WebGL2 fragment-shader skill (oracle architecture, 6 recipes, 6/6 evals, 3 bugs fixed)
     Jun 8 Env Canonical path consolidation: .sisyphus/ → ~/.sisyphus/; HANDOFF.md/hotcache.md deleted; CLEANUP.md created; stale iteration-1 evals pruned
     Jun 8 Git 10 atomic commits across all 7 skills; doc-claims drift fixed (subagents 7→8, directories 38→43)
+    Jun 17 Absorption from remote opencode-config repo: intent gate added to sisyphus agent prompt_append; execution-receipt and reflection skills created; check-completion-honesty.sh topology gate added; COMPLETE-CODEBASE.md counts reconciled (skills 43→45, scripts 14→15)
  3. Complete Workflow — 9-Phase State Machine
    ╔══════════════════════════╗
    ║ GLOBAL BLOCKING RULES ║
@@ -144,10 +145,10 @@ Phase Details
 7 execution wave-executor checkpoint-3 (between waves) bash (non-destructive only) Manual: wave approval; self-loop on evidence
 8 validation regression-gate script: regression-gate.sh (exit 0) none Manual: user_confirms_validation
 9 close ⛔ plan-closer evidence_check: evidence_logged==true bd close unless logged Manual: user_confirms_close
-Agent Routing (12 runtime agents × 9 categories)
-17 Named Agents (runtime): sisyphus (kimi-k2.6, ultrawork: qwen3.7-max), hephaestus (deepseek-v4-pro), oracle (gpt-5.4, high), librarian (deepseek-v4-flash-free), explore (deepseek-v4-flash-free), multimodal-looker (mimo-v2.5-free), prometheus (glm-5.1), metis (qwen3.6-plus), momus (glm-5.1), atlas (kimi-k2.5), sisyphus-junior (kimi-k2.6), archivist (deepseek-v4-flash-free), athena (deepseek-v4-flash-free), auditor (deepseek-v4-flash-free), post-reviewer (deepseek-v4-flash-free), reviewer (deepseek-v4-flash-free)
+Agent Routing (17 runtime agents × 9 categories)
+17 Named Agents (runtime): sisyphus (kimi-k2.7-code, ultrawork: minimax-m3), hephaestus (deepseek-v4-pro), oracle (gpt-5.4, high), librarian (minimax-m2.7), explore (deepseek-v4-flash-free), multimodal-looker (mimo-v2.5-free), prometheus (glm-5.2), metis (qwen3.7-plus), momus (glm-5.2), atlas (kimi-k2.5), sisyphus-junior (kimi-k2.7-code), archivist (glm-5.1), athena (deepseek-v4-flash-free), auditor (deepseek-v4-flash-free), explorer (deepseek-v4-flash-free), post-reviewer (glm-5.2), reviewer (glm-5.2)
 9 Categories (via task(category='...')): deep→glm-5.1, ultrabrain→deepseek-v4-pro, visual-engineering→gemini-3.1-pro, quick→deepseek-v4-flash-free, unspecified-high→glm-5.1, unspecified-low→deepseek-v4-flash-free, writing→qwen3.7-max, artistry→mimo-v2.5-free, git-commit-message→deepseek-v4-flash-free
-Most constrained model: glm-5.1 (concurrency: 1) — used by 2 categories (deep, unspecified-high) + 2 agents (prometheus, momus).
+Most constrained models: glm-5.1 and glm-5.2 (concurrency: 1 each). glm-5.2 is primary for 3 categories (deep, writing, unspecified-high) + 2 agents (prometheus, momus); glm-5.1 is primary for 1 agent (archivist).
 
 8 Subagent .md Permissions (security boundaries)
 Only 2 agents have write access: archivist (restricted to ~/Main-vault/wiki/\*\*) and fullstack-dev-tester (edit: \*: allow). All others are read-only or read+network. oracle is the most restricted (read-only, no bash, no edit).
