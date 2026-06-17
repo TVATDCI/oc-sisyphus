@@ -12,13 +12,14 @@
    │
    ├── 2. INSTRUCTION LAYER
     │ ├── AGENTS.md # Root system prompt (compaction, routing)
-    │ ├── SYSTEM-OVERVIEW.md # Architecture doc v4.0
+    │ ├── SYSTEM-OVERVIEW.md # Architecture doc v4.1
     │ ├── rules/ # 14 rule files (4 language + 9 concern + README)
-   │ ├── prompts/ # Context injection (main-vault, prometheus)
-   │ └── agents/ # 8 subagent .md definitions with permissions
+    │ ├── prompts/ # Context injection (main-vault, prometheus)
+    │ ├── agents/ # 8 subagent .md definitions with permissions
+    │ └── commands/ # Slash-command definitions (reflection)
    │
    ├── 3. SKILL LAYER
-   │ ├── skills/ # 45 directories (44 real + 1 _shared refs)
+   │ ├── skills/ # 44 real skill directories + 1 _shared refs (45 total)
    │ ├── └── each has SKILL.md + optional scripts/evals
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator
    │
@@ -147,7 +148,7 @@ Phase Details
 9 close ⛔ plan-closer evidence_check: evidence_logged==true bd close unless logged Manual: user_confirms_close
 Agent Routing (17 runtime agents × 9 categories)
 17 Named Agents (runtime): sisyphus (kimi-k2.7-code, ultrawork: minimax-m3), hephaestus (deepseek-v4-pro), oracle (gpt-5.4, high), librarian (minimax-m2.7), explore (deepseek-v4-flash-free), multimodal-looker (mimo-v2.5-free), prometheus (glm-5.2), metis (qwen3.7-plus), momus (glm-5.2), atlas (kimi-k2.5), sisyphus-junior (kimi-k2.7-code), archivist (glm-5.1), athena (deepseek-v4-flash-free), auditor (deepseek-v4-flash-free), explorer (deepseek-v4-flash-free), post-reviewer (glm-5.2), reviewer (glm-5.2)
-9 Categories (via task(category='...')): deep→glm-5.1, ultrabrain→deepseek-v4-pro, visual-engineering→gemini-3.1-pro, quick→deepseek-v4-flash-free, unspecified-high→glm-5.1, unspecified-low→deepseek-v4-flash-free, writing→qwen3.7-max, artistry→mimo-v2.5-free, git-commit-message→deepseek-v4-flash-free
+9 Categories (via task(category='...')): deep→glm-5.2, ultrabrain→deepseek-v4-pro, visual-engineering→minimax-m3, quick→deepseek-v4-flash-free, unspecified-high→glm-5.2, unspecified-low→deepseek-v4-flash-free, writing→glm-5.2, artistry→mimo-v2.5-free, git-commit-message→deepseek-v4-flash
 Most constrained models: glm-5.1 and glm-5.2 (concurrency: 1 each). glm-5.2 is primary for 3 categories (deep, writing, unspecified-high) + 2 agents (prometheus, momus); glm-5.1 is primary for 1 agent (archivist).
 
 8 Subagent .md Permissions (security boundaries)
