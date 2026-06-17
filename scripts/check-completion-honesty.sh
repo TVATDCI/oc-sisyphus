@@ -8,7 +8,8 @@ set -euo pipefail
 ERRORS=0
 WARNINGS=0
 
-REPO="/home/vladi/.config/opencode"
+# Derive repo root from script location so this is portable across clones
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
 DOC="$REPO/COMPLETE-CODEBASE.md"
 
 add_error() {
@@ -115,9 +116,9 @@ claim() {
   grep -oE "$2" "$DOC" | grep -oE '[0-9]+' | head -1 || true
 }
 
-# Skills: "43 directories (42 real + 1 _shared refs)" etc.
-SKILL_CLAIM=$(claim skills 'skills/ # [0-9]+ directories')
-SKILL_ACTUAL=$(find "$REPO/skills" -maxdepth 1 -type d ! -name '_shared' | wc -l)
+# Skills: "44 real skill directories + 1 _shared refs (45 total)"
+SKILL_CLAIM=$(claim skills 'skills/ # [0-9]+ real skill directories')
+SKILL_ACTUAL=$(find "$REPO/skills" -maxdepth 1 -mindepth 1 -type d ! -name '_shared' | wc -l)
 if [ -n "$SKILL_CLAIM" ]; then
   if [ "$SKILL_ACTUAL" -eq "$SKILL_CLAIM" ]; then
     add_pass "skills/ claim matches: $SKILL_CLAIM directories"
@@ -165,6 +166,59 @@ if [ -n "$SUBAGENT_CLAIM" ]; then
   fi
 else
   add_warning "Could not parse agents/ count claim"
+fi
+
+# === Check 9: routing claims match oh-my-openagent.json ===
+if [ -f "$OMA" ]; then
+  ROUTING_MISMATCHES=$(OMA="$OMA" DOC="$DOC" node - <<'NODE'
+const fs = require('fs');
+const oma = JSON.parse(fs.readFileSync(process.env.OMA, 'utf8'));
+const doc = fs.readFileSync(process.env.DOC, 'utf8');
+
+const jsonCats = Object.entries(oma.categories).map(([name, cfg]) => {
+  const model = cfg.model.replace(/^opencode-go\//, '').replace(/^opencode\//, '');
+  return { name, model };
+});
+
+const line = doc.split('\n').find(l => l.includes('Categories (via task(category'));
+if (!line) {
+  console.log('Could not find Categories line in COMPLETE-CODEBASE.md');
+  process.exit(0);
+}
+
+const docCats = [];
+const afterColon = line.split(':').slice(1).join(':');
+const pairs = afterColon.split(',').map(s => s.trim()).filter(Boolean);
+for (const pair of pairs) {
+  const m = pair.match(/^([a-z-]+)→(.+?)$/);
+  if (m) docCats.push({ name: m[1], model: m[2].trim() });
+}
+
+const jsonMap = new Map(jsonCats.map(c => [c.name, c.model]));
+const docMap = new Map(docCats.map(c => [c.name, c.model]));
+const mismatches = [];
+for (const [name, docModel] of docMap) {
+  const jsonModel = jsonMap.get(name);
+  if (!jsonModel) {
+    mismatches.push(`${name}: documented but missing in oh-my-openagent.json`);
+  } else if (jsonModel !== docModel) {
+    mismatches.push(`${name}: doc claims ${docModel}, JSON has ${jsonModel}`);
+  }
+}
+for (const [name] of jsonMap) {
+  if (!docMap.has(name)) mismatches.push(`${name}: in JSON but missing from doc`);
+}
+console.log(mismatches.join('\n'));
+NODE
+  )
+
+  if [ -n "$ROUTING_MISMATCHES" ]; then
+    while IFS= read -r line; do
+      add_error "Category routing mismatch: $line"
+    done <<< "$ROUTING_MISMATCHES"
+  else
+    add_pass "Category routing claims match oh-my-openagent.json"
+  fi
 fi
 
 # === Summary ===
