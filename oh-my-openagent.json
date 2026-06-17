@@ -15,6 +15,7 @@
         { "model": "opencode-go/qwen3.7-max" },
         { "model": "opencode-go/glm-5.2" }
       ],
+      "prompt_append": "Intent gate: On each new user request, classify intent before acting. Analysis-oriented requests (analyze, research, compare, evaluate, audit, investigate, gather context, look into) default to exploration-first: gather context, do not modify files unless explicitly asked, then present findings and ask before implementing. Execution-oriented requests (implement, add, create, fix, change, write, build, deploy) proceed with normal planning and execution. If ambiguous, ask the user whether they want analysis first or implementation.",
       "ultrawork": {
         "model": "opencode-go/minimax-m3",
         "variant": "high",
