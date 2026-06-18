@@ -11,27 +11,27 @@
    │ └── oh-my-openagent.json # 17 agents + 9 categories + routing
    │
    ├── 2. INSTRUCTION LAYER
-    │ ├── AGENTS.md # Root system prompt (compaction, routing)
-    │ ├── SYSTEM-OVERVIEW.md # Architecture doc v4.1
-    │ ├── rules/ # 14 rule files (4 language + 9 concern + README)
-    │ ├── prompts/ # Context injection (main-vault, prometheus)
-    │ ├── agents/ # 8 subagent .md definitions with permissions
-    │ └── commands/ # Slash-command definitions (reflection)
+   │ ├── AGENTS.md # Root system prompt (compaction, routing)
+   │ ├── SYSTEM-OVERVIEW.md # Architecture doc v4.1
+   │ ├── rules/ # 14 rule files (4 language + 9 concern + README)
+   │ ├── prompts/ # Context injection (main-vault, prometheus)
+   │ ├── agents/ # 8 subagent .md definitions with permissions
+   │ └── commands/ # Slash-command definitions (reflection)
    │
    ├── 3. SKILL LAYER
-   │ ├── skills/ # 44 real skill directories + 1 _shared refs (45 total)
+   │ ├── skills/ # 44 real skill directories + 1 \_shared refs (45 total)
    │ ├── └── each has SKILL.md + optional scripts/evals
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator
    │
-     ├── 4. PLANNING LAYER
-     │ ├── ~/.sisyphus/ # Canonical state machine (consolidated from .sisyphus/): state.json, hotcache, evidence, notepads, plans, archive
-     │ └── .omo/ # ARCHIVED (W0.3): was sync mirror, now sole live state is ~/.sisyphus/
+   ├── 4. PLANNING LAYER
+   │ ├── ~/.sisyphus/ # Canonical state machine (consolidated from .sisyphus/): state.json, hotcache, evidence, notepads, plans, archive
+   │ └── .omo/ # ARCHIVED (W0.3): was sync mirror, now sole live state is ~/.sisyphus/
    │
    ├── 5. TRACKING LAYER
    │ └── tasks/ # Beads per project (aino, dropDeadDev, opencode, pienso, vladi...)
    │
    ├── 6. INFRASTRUCTURE LAYER
-    │ ├── scripts/ # 15 scripts (load-rules, regression-gate, validate-skills-v2.py, verify-plugin-compat.js, check-doc-claims.sh, check-completion-honesty.sh, etc.)
+   │ ├── scripts/ # 15 scripts (load-rules, regression-gate, validate-skills-v2.py, verify-plugin-compat.js, check-doc-claims.sh, check-completion-honesty.sh, etc.)
    │ ├── plugins/sisyphus-gates/ # Compiled gate plugin (dist/index.js)
    │ ├── benchmark/ # 3 JSONL baseline runs (vs codegraph vs semble)
    │ └── .codegraph/codegraph.db # Search/index: semantic code index SQLite DB
@@ -69,18 +69,18 @@
    Jun 1 Oracle sisyphus/oracle flip (THIS session):
    Sisyphus primary → minimax-m3 (was kimi-k2.6); ultrawork → qwen3.7-max
    Oracle primary → qwen3.7-max (was glm-5.1); fallbacks [glm-5.1, minimax-m3]
-    tui.json plugin fix Added "oh-my-openagent/tui" to plugin array (fixed doctor warning)
-    Jun 7 W0 — Safety baseline: git init, .gitignore fix, .omo/ archive, plugin pin @4.7.5, benchmark/ removal
-    Jun 7 W1 — Runtime hardening: MCP scoped to 4 paths, health-check.md, README.md, validate-skills-v2.py (37 PASS), 6 new agents added
-    Jun 7 W2 — Contract migration: canonical state seeded (~/.sisyphus/state.json), plugin source restored (13 modules), 180 unit tests + 20 self-tests PASS, THREAT-MODEL.md
-    Jun 7 W3 — Automation: pre-push hook, GitHub Actions CI, doc drift guards (check-doc-claims.sh, check-workflow-contract.sh), full doc rewrite SYSTEM-OVERVIEW v4.0, private remote push
-    Jun 7 Fix All minimax-m3-free replaced with deepseek-v4-flash-free (12 replacements); patch-package removed (not applicable to cache-based runtime)
-    Jun 8 W4 — Synthesis project: fullstack-dev skill created (863 lines, 48/48 evals) + subagent; frontend-ui-ux enhanced (anti-slop, motion, copywriting); code-review v1.1.0 (architecture patterns); security-auditor v1.3.0 (CORS/rate-limit/shutdown); document-builder created (PPTX via PptxGenJS); website-analyzer v1.6.0 (UI Critique Mode)
-    Jun 8 W4 — shader-dev: constrained WebGL2 fragment-shader skill (oracle architecture, 6 recipes, 6/6 evals, 3 bugs fixed)
-    Jun 8 Env Canonical path consolidation: .sisyphus/ → ~/.sisyphus/; HANDOFF.md/hotcache.md deleted; CLEANUP.md created; stale iteration-1 evals pruned
-    Jun 8 Git 10 atomic commits across all 7 skills; doc-claims drift fixed (subagents 7→8, directories 38→43)
-    Jun 17 Absorption from remote opencode-config repo: intent gate added to sisyphus agent prompt_append; execution-receipt and reflection skills created; check-completion-honesty.sh topology gate added; COMPLETE-CODEBASE.md counts reconciled (skills 43→45, scripts 14→15)
- 3. Complete Workflow — 9-Phase State Machine
+   tui.json plugin fix Added "oh-my-openagent/tui" to plugin array (fixed doctor warning)
+   Jun 7 W0 — Safety baseline: git init, .gitignore fix, .omo/ archive, plugin pin @4.7.5, benchmark/ removal
+   Jun 7 W1 — Runtime hardening: MCP scoped to 4 paths, health-check.md, README.md, validate-skills-v2.py (37 PASS), 6 new agents added
+   Jun 7 W2 — Contract migration: canonical state seeded (~/.sisyphus/state.json), plugin source restored (13 modules), 180 unit tests + 20 self-tests PASS, THREAT-MODEL.md
+   Jun 7 W3 — Automation: pre-push hook, GitHub Actions CI, doc drift guards (check-doc-claims.sh, check-workflow-contract.sh), full doc rewrite SYSTEM-OVERVIEW v4.0, private remote push
+   Jun 7 Fix All minimax-m3-free replaced with deepseek-v4-flash-free (12 replacements); patch-package removed (not applicable to cache-based runtime)
+   Jun 8 W4 — Synthesis project: fullstack-dev skill created (863 lines, 48/48 evals) + subagent; frontend-ui-ux enhanced (anti-slop, motion, copywriting); code-review v1.1.0 (architecture patterns); security-auditor v1.3.0 (CORS/rate-limit/shutdown); document-builder created (PPTX via PptxGenJS); website-analyzer v1.6.0 (UI Critique Mode)
+   Jun 8 W4 — shader-dev: constrained WebGL2 fragment-shader skill (oracle architecture, 6 recipes, 6/6 evals, 3 bugs fixed)
+   Jun 8 Env Canonical path consolidation: .sisyphus/ → ~/.sisyphus/; HANDOFF.md/hotcache.md deleted; CLEANUP.md created; stale iteration-1 evals pruned
+   Jun 8 Git 10 atomic commits across all 7 skills; doc-claims drift fixed (subagents 7→8, directories 38→43)
+   Jun 17 Absorption from remote opencode-config repo: intent gate added to sisyphus agent prompt_append; execution-receipt and reflection skills created; check-completion-honesty.sh topology gate added; COMPLETE-CODEBASE.md counts reconciled (skills 43→45, scripts 14→15)
+3. Complete Workflow — 9-Phase State Machine
    ╔══════════════════════════╗
    ║ GLOBAL BLOCKING RULES ║
    ║ • Destructive cmds denied║
@@ -147,7 +147,7 @@ Phase Details
 8 validation regression-gate script: regression-gate.sh (exit 0) none Manual: user_confirms_validation
 9 close ⛔ plan-closer evidence_check: evidence_logged==true bd close unless logged Manual: user_confirms_close
 Agent Routing (17 runtime agents × 9 categories)
-17 Named Agents (runtime): sisyphus (kimi-k2.7-code, ultrawork: minimax-m3), hephaestus (deepseek-v4-pro), oracle (gpt-5.4, high), librarian (minimax-m2.7), explore (deepseek-v4-flash-free), multimodal-looker (mimo-v2.5-free), prometheus (glm-5.2), metis (qwen3.7-plus), momus (glm-5.2), atlas (kimi-k2.5), sisyphus-junior (kimi-k2.7-code), archivist (glm-5.1), athena (deepseek-v4-flash-free), auditor (deepseek-v4-flash-free), explorer (deepseek-v4-flash-free), post-reviewer (glm-5.2), reviewer (glm-5.2)
+17 Named Agents (runtime): sisyphus (kimi-k2.7-code, ultrawork: kimi-k2.6), hephaestus (deepseek-v4-pro), oracle (gpt-5.4, high), librarian (minimax-m2.7), explore (deepseek-v4-flash-free), multimodal-looker (mimo-v2.5-free), prometheus (glm-5.2), metis (qwen3.6-plus), momus (glm-5.2), atlas (kimi-k2.5), sisyphus-junior (kimi-k2.6), archivist (glm-5.1), athena (deepseek-v4-flash-free), auditor (deepseek-v4-flash-free), explorer (deepseek-v4-flash-free), post-reviewer (glm-5.1), reviewer (glm-5.1)
 9 Categories (via task(category='...')): deep→glm-5.2, ultrabrain→deepseek-v4-pro, visual-engineering→minimax-m3, quick→deepseek-v4-flash-free, unspecified-high→glm-5.2, unspecified-low→deepseek-v4-flash-free, writing→glm-5.2, artistry→mimo-v2.5-free, git-commit-message→deepseek-v4-flash
 Most constrained models: glm-5.1 and glm-5.2 (concurrency: 1 each). glm-5.2 is primary for 3 categories (deep, writing, unspecified-high) + 2 agents (prometheus, momus); glm-5.1 is primary for 1 agent (archivist).
 
