@@ -218,7 +218,7 @@ else:
     echo "  query '<expr>'        Raw Python query on parsed YAML"
     echo ""
     echo "Environment:"
-    echo "  SISYPHUS_WORKFLOW     Path to workflow.yaml (default: ~/.config/opencode/.sisyphus/workflow.yaml)"
+    echo "  SISYPHUS_WORKFLOW     Path to workflow.yaml (default: ~/.sisyphus/workflow.yaml)"
     echo ""
     echo "Examples:"
     echo "  workflow-loader.sh validate"

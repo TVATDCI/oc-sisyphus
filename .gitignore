@@ -1,7 +1,5 @@
 # Volatile runtime state (operator working files)
 node_modules/
-.sisyphus/evidence/
-.sisyphus/notepads/
 .omo/
 .codegraph/
 

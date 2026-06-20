@@ -7,7 +7,6 @@
 | Iteration | Date | Evals | Status |
 |-----------|------|-------|--------|
 | iteration-2 | 2026-06-07 | 0-9 (all 10) | ✅ VALIDATED — 48/48, grading report present |
-| iteration-3 | 2026-06-07 | 8 only | Scope refusal fix verification |
 
 ## Retention Rule
 

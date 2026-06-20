@@ -176,8 +176,7 @@ const oma = JSON.parse(fs.readFileSync(process.env.OMA, 'utf8'));
 const doc = fs.readFileSync(process.env.DOC, 'utf8');
 
 const jsonCats = Object.entries(oma.categories).map(([name, cfg]) => {
-  const model = cfg.model.replace(/^opencode-go\//, '').replace(/^opencode\//, '');
-  return { name, model };
+  return { name, model: cfg.model };
 });
 
 const line = doc.split('\n').find(l => l.includes('Categories (via task(category'));

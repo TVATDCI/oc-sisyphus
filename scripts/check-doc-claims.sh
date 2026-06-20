@@ -15,10 +15,10 @@
 #   2. Break one claim (change "17 agents" to "99 agents" in a temp copy) → exit 1
 #   3. Restore → exit 0
 #
-# Ground-truth table (11 rows, bg_16df9ed3 §F, Oracle-revised):
-#   17 agents | 8 categories | 14 rule files | 43 directories | 8 subagent .md
-#   0 model: lines | 14 scripts | 12 src/ modules | 3 JSONL baseline runs
-#   166 unit tests | 0 agents have write access
+# Ground-truth table (current system state):
+#   17 agents | 9 categories | 14 rule files | 45 skill directories | 8 subagent .md
+#   0 model: lines | 15 scripts | 13 src/ modules | 3 JSONL baseline runs
+#   180 unit tests | 2 agents have write access
 #
 # Design:
 #   - set -euo pipefail for strict error handling
@@ -192,40 +192,31 @@ mv "${TMP_CLAIMS}.dedup" "$TMP_CLAIMS"
 while IFS='|' read -r claimed_num noun; do
   nkey=$(echo "$noun" | tr '[:upper:]' '[:lower:]')
 
-  expected=""
   cmd=""
 
   case "$nkey" in
     agents|"named agents"|"runtime agents")
-      expected=17
       cmd="node -e \"console.log(Object.keys(require('$REPO_ROOT/oh-my-openagent.json').agents).length)\""
       ;;
     categories)
-      expected=8
       cmd="node -e \"console.log(Object.keys(require('$REPO_ROOT/oh-my-openagent.json').categories).length)\""
       ;;
     "rule files"|rule)
-      expected=14
       cmd="find \"$REPO_ROOT/rules\" -maxdepth 2 -name '*.md' -not -path '*/node_modules/*' | wc -l"
       ;;
     directories)
-      expected=43
       cmd="find \"$REPO_ROOT/skills\" -maxdepth 1 -mindepth 1 -type d -not -name node_modules | wc -l"
       ;;
     subagent)
-      expected=8
       cmd="ls \"$REPO_ROOT/agents\"/*.md 2>/dev/null | wc -l"
       ;;
     scripts)
-      expected=14
       cmd="find \"$REPO_ROOT/scripts\" -maxdepth 1 -type f -not -path '*/__pycache__/*' -not -path '*/_shared/*' 2>/dev/null | wc -l"
       ;;
     src/)
-      expected=12
       cmd="find \"$REPO_ROOT/plugins/sisyphus-gates/src\" -maxdepth 1 -name '*.js' | wc -l"
       ;;
     jsonl|"baseline runs")
-      expected=3
       cmd="ls \"$REPO_ROOT/benchmark/results\"/*.jsonl 2>/dev/null | wc -l"
       ;;
     layers|phase)

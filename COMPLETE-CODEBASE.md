@@ -1,6 +1,6 @@
 # OpenCode Codebase — Complete Structure, Changes & Workflow
 
-> **Last reviewed:** 2026-06-17 | **Next review:** When agent routing changes or a new skill is added
+> **Last reviewed:** 2026-06-20 | **Next review:** When agent routing changes or a new skill is added
 > **Drift-prone sections:** §Agent Routing, §Change Timeline, §Skill count
 > **Stable sections:** §Directory Architecture, §Workflow State Machine, §Subagent Permissions
 
@@ -24,8 +24,8 @@
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator
    │
    ├── 4. PLANNING LAYER
-   │ ├── ~/.sisyphus/ # Canonical state machine (consolidated from .sisyphus/): state.json, hotcache, evidence, notepads, plans, archive
-   │ └── .omo/ # ARCHIVED (W0.3): was sync mirror, now sole live state is ~/.sisyphus/
+    │ ├── ~/.sisyphus/ # Canonical state machine (consolidated from .sisyphus/): state.json, hotcache, evidence, notepads, plans, archive
+    │ └── .omo/ # ARCHIVED (W0.3): retained as read-only historical reference; sole live state is ~/.sisyphus/
    │
    ├── 5. TRACKING LAYER
    │ └── tasks/ # Beads per project (aino, dropDeadDev, opencode, pienso, vladi...)
@@ -37,7 +37,7 @@
    │ └── .codegraph/codegraph.db # Search/index: semantic code index SQLite DB
    │
    └── 7. UI LAYER
-   ├── tui.json # Terminal UI config (plugin: ["oh-my-openagent/tui"])
+    ├── tui.json # Terminal UI config (plugin: [])
    └── .vscode/settings.json # VS Code workspace settings
 2. What Changed — Full Timeline
    Date Event Artifact
@@ -68,9 +68,10 @@
    Session handoff session-handoff-2026-05-31.md
    Jun 1 Oracle sisyphus/oracle flip (THIS session):
    Sisyphus primary → minimax-m3 (was kimi-k2.6); ultrawork → qwen3.7-max
-   Oracle primary → qwen3.7-max (was glm-5.1); fallbacks [glm-5.1, minimax-m3]
-   tui.json plugin fix Added "oh-my-openagent/tui" to plugin array (fixed doctor warning)
-   Jun 7 W0 — Safety baseline: git init, .gitignore fix, .omo/ archive, plugin pin @4.7.5, benchmark/ removal
+    Oracle primary → qwen3.7-max (was glm-5.1); fallbacks [glm-5.1, minimax-m3]
+    tui.json plugin fix Added "oh-my-openagent/tui" to plugin array (fixed doctor warning)
+    Jun 20 oh-my-openagent.json reset + doc sync: provider/model prefixes restored in §Agent Routing; MCP home path aligned to ~/Main-vault; tui.json plugin array cleared
+    Jun 7 W0 — Safety baseline: git init, .gitignore fix, .omo/ archive, plugin pin @4.7.5, benchmark/ removal
    Jun 7 W1 — Runtime hardening: MCP scoped to 4 paths, health-check.md, README.md, validate-skills-v2.py (37 PASS), 6 new agents added
    Jun 7 W2 — Contract migration: canonical state seeded (~/.sisyphus/state.json), plugin source restored (13 modules), 180 unit tests + 20 self-tests PASS, THREAT-MODEL.md
    Jun 7 W3 — Automation: pre-push hook, GitHub Actions CI, doc drift guards (check-doc-claims.sh, check-workflow-contract.sh), full doc rewrite SYSTEM-OVERVIEW v4.0, private remote push
@@ -147,9 +148,9 @@ Phase Details
 8 validation regression-gate script: regression-gate.sh (exit 0) none Manual: user_confirms_validation
 9 close ⛔ plan-closer evidence_check: evidence_logged==true bd close unless logged Manual: user_confirms_close
 Agent Routing (17 runtime agents × 9 categories)
-17 Named Agents (runtime): sisyphus (kimi-k2.7-code, ultrawork: kimi-k2.6), hephaestus (deepseek-v4-pro), oracle (gpt-5.4, high), librarian (minimax-m2.7), explore (deepseek-v4-flash-free), multimodal-looker (mimo-v2.5-free), prometheus (glm-5.2), metis (qwen3.6-plus), momus (glm-5.2), atlas (kimi-k2.5), sisyphus-junior (kimi-k2.6), archivist (glm-5.1), athena (deepseek-v4-flash-free), auditor (deepseek-v4-flash-free), explorer (deepseek-v4-flash-free), post-reviewer (glm-5.1), reviewer (glm-5.1)
-9 Categories (via task(category='...')): deep→glm-5.2, ultrabrain→deepseek-v4-pro, visual-engineering→minimax-m3, quick→deepseek-v4-flash-free, unspecified-high→glm-5.2, unspecified-low→deepseek-v4-flash-free, writing→glm-5.2, artistry→mimo-v2.5-free, git-commit-message→deepseek-v4-flash
-Most constrained models: glm-5.1 and glm-5.2 (concurrency: 1 each). glm-5.2 is primary for 3 categories (deep, writing, unspecified-high) + 2 agents (prometheus, momus); glm-5.1 is primary for 1 agent (archivist).
+17 Named Agents (runtime): sisyphus (opencode-go/kimi-k2.7-code, ultrawork: opencode-go/kimi-k2.6), hephaestus (opencode-go/deepseek-v4-pro), oracle (opencode-go/glm-5.2 high), librarian (opencode-go/minimax-m2.7), explore (opencode/deepseek-v4-flash-free), multimodal-looker (opencode/mimo-v2.5-free), prometheus (opencode-go/glm-5.2), metis (opencode-go/glm-5.1), momus (opencode/gemini-3.1-pro), atlas (opencode-go/kimi-k2.6), sisyphus-junior (opencode-go/kimi-k2.6), archivist (opencode-go/glm-5.1), athena (opencode/deepseek-v4-flash-free), auditor (opencode/deepseek-v4-flash-free), explorer (opencode/deepseek-v4-flash-free), post-reviewer (opencode-go/glm-5.1), reviewer (opencode-go/mimo-v2.5-pro)
+9 Categories (via task(category='...')): deep→opencode-go/glm-5.1, ultrabrain→opencode-go/deepseek-v4-pro, visual-engineering→opencode/mimo-v2.5-free, quick→opencode/deepseek-v4-flash-free, unspecified-high→opencode-go/glm-5.2, unspecified-low→opencode/deepseek-v4-flash-free, writing→opencode-go/glm-5.1, artistry→opencode/mimo-v2.5-free, git-commit-message→opencode/deepseek-v4-flash-free
+Provider mix: agents lean opencode-go (11 of 17 primaries), categories are balanced (5 opencode, 4 opencode-go). Most constrained models: opencode-go/glm-5.2 and opencode-go/glm-5.1 (concurrency: 1 each). glm-5.2 is primary for 2 agents (oracle, prometheus) + 1 category (unspecified-high); glm-5.1 is primary for 3 agents (metis, archivist, post-reviewer) + 2 categories (deep, writing).
 
 8 Subagent .md Permissions (security boundaries)
-Only 2 agents have write access: archivist (restricted to ~/Main-vault/wiki/\*\*) and fullstack-dev-tester (edit: \*: allow). All others are read-only or read+network. oracle is the most restricted (read-only, no bash, no edit).
+Only 2 agents have write access: archivist (write: ~/Main-vault/wiki/**, index.md, log.md, hotcache.md, .sisyphus/evidence/**, .sisyphus/plans/**, .sisyphus/boulder.json, .sisyphus/notepads/**, projects/**; deny: *.env*, *.pem, *.key, *credentials*, *secrets*, ~/Main-vault/raw/**) and fullstack-dev-tester (edit: *: allow). All others are read-only or read+network. oracle is the most restricted (read-only, no bash, no edit).

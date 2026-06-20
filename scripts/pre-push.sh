@@ -18,15 +18,15 @@ PLUGIN_DIR="$REPO_ROOT/plugins/sisyphus-gates"
 echo "==> pre-push: running test suite..."
 
 # 1. Unit tests
-echo "    [1/4] unit tests (165 tests, ~400ms)"
+echo "    [1/5] unit tests (180 tests, ~400ms)"
 (cd "$PLUGIN_DIR" && npm test --silent)
 
 # 2. Plugin compat check
-echo "    [2/4] verify-plugin-compat.js"
+echo "    [2/5] verify-plugin-compat.js"
 node "$REPO_ROOT/scripts/verify-plugin-compat.js"
 
 # 3. Self-test (end-to-end)
-echo "    [3/4] self-test (18 scenarios, ~50ms)"
+echo "    [3/5] self-test (20 scenarios, ~50ms)"
 (cd "$PLUGIN_DIR" && npm run self-test --silent)
 
 # 4. Doc-claims drift check

@@ -43,6 +43,7 @@
 | Compaction handoff | `~/.sisyphus/hotcache.md` |
 | Skills | `~/.config/opencode/skills/` |
 | Agents | `~/.config/opencode/agents/` |
+| Project-level state | `<project>/.sisyphus/` (e.g., `~/Main-vault/.sisyphus/` for vault-specific plans/boulder) — separate from global `~/.sisyphus/` |
 
 **The stale path `~/.config/opencode/.sisyphus/` should not exist.** If it reappears, scripts are still referencing it — grep and fix.
 

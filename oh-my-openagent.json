@@ -12,8 +12,8 @@
       "model": "opencode-go/kimi-k2.7-code",
       "variant": "high",
       "fallback_models": [
-        { "model": "opencode-go/qwen3.7-max" },
-        { "model": "opencode-go/glm-5.2" }
+        { "model": "opencode-go/glm-5.2" },
+        { "model": "opencode-go/kimi-k2.6" }
       ],
       "prompt_append": "Intent gate: On each new user request, classify intent before acting. Analysis-oriented requests (analyze, research, compare, evaluate, audit, investigate, gather context, look into) default to exploration-first: gather context, do not modify files unless explicitly asked, then present findings and ask before implementing. Execution-oriented requests (implement, add, create, fix, change, write, build, deploy) proceed with normal planning and execution. If ambiguous, ask the user whether they want analysis first or implementation.",
       "ultrawork": {
@@ -37,11 +37,12 @@
       "prompt_append": "Explore thoroughly, then implement. Prefer small, testable changes."
     },
     "oracle": {
-      "model": "opencode/gpt-5.4",
+      "model": "opencode-go/glm-5.2",
       "variant": "high",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.7-code" },
-        { "model": "opencode-go/qwen3.7-max" }
+        { "model": "opencode-go/qwen3.7-max" },
+        { "model": "opencode/glm-5.2" }
       ],
       "prompt_append": "Think step-by-step. Identify root causes, not symptoms. Propose alternatives before recommending. Prioritize correctness and maintainability."
     },
@@ -68,29 +69,28 @@
     "prometheus": {
       "model": "opencode-go/glm-5.2",
       "fallback_models": [
-        { "model": "opencode-go/qwen3.7-plus" },
+        { "model": "opencode-go/glm-5.1" },
         { "model": "opencode-go/kimi-k2.6" },
         { "model": "opencode/glm-5.1" }
       ],
       "prompt_append": "file://~/.config/opencode/prompts/prometheus-guidance.md"
     },
     "metis": {
-      "model": "opencode-go/qwen3.6-plus",
+      "model": "opencode-go/glm-5.1",
       "fallback_models": [
-        { "model": "opencode-go/glm-5.1" },
-        { "model": "opencode-go/kimi-k2.6" },
-        { "model": "opencode/glm-5.1" }
+        { "model": "opencode/kimi-k2.5" },
+        { "model": "opencode-go/qwen3.7-plus" }
       ]
     },
     "momus": {
-      "model": "opencode-go/glm-5.2",
+      "model": "opencode/gemini-3.1-pro",
       "fallback_models": [
         { "model": "opencode-go/glm-5.1" },
         { "model": "opencode/glm-5.1" }
       ]
     },
     "atlas": {
-      "model": "opencode-go/kimi-k2.5",
+      "model": "opencode-go/kimi-k2.6",
       "fallback_models": [
         { "model": "opencode-go/qwen3.5-plus" },
         { "model": "opencode-go/deepseek-v4-flash" },

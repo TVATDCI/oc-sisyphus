@@ -129,7 +129,7 @@
       "required_facts": [
         "Wave execution requires the exact transparency line `Executing with [model] via [category]`.",
         "Wave execution also calls `bash ~/.config/opencode/scripts/track-execution.sh {plan_name} {wave_number} {slice_name} {model} {category}`.",
-        "`track-execution.sh` writes a log file to `~/.config/opencode/.sisyphus/metadata/{plan_name}-execution.log`.",
+        "`track-execution.sh` writes a log file to `~/.sisyphus/metadata/{plan_name}-execution.log`.",
         "`wave-validator.sh` checks evidence markdown files for the `Executing with` line and fails if it is missing."
       ],
       "negative_requirements": [
@@ -183,7 +183,7 @@
       "required_facts": [
         "The script is `scripts/workflow-loader.sh`.",
         "The override environment variable is `SISYPHUS_WORKFLOW`.",
-        "The default workflow path is `$HOME/.config/opencode/.sisyphus/workflow.yaml`."
+        "The default workflow path is `$HOME/.sisyphus/workflow.yaml`."
       ],
       "negative_requirements": [],
       "scorer_type": "exact_lookup"
@@ -198,7 +198,7 @@
         ".omo/state.json"
       ],
       "required_facts": [
-        "The runtime/plugin state path is `~/.config/opencode/.sisyphus/state.json`.",
+        "The runtime/plugin state path is `~/.sisyphus/state.json`.",
         "The plugin hard-codes that path via `GLOBAL_STATE_PATH`.",
         "The workflow tooling also defaults to `.sisyphus` paths, not `.omo`.",
         "`.omo/state.json` exists in the repo, but it is not the runtime state path referenced by the plugin/loader."
