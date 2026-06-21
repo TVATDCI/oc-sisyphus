@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@opencode-ai/plugin": "1.16.2",
-    "oh-my-openagent": "^4.7.5"
+    "oh-my-openagent": "^4.12.1"
   },
   "scripts": {
     "install:hooks": "bash scripts/install-hooks.sh",
