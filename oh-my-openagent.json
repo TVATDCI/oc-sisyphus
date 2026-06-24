@@ -9,26 +9,26 @@
   },
   "agents": {
     "sisyphus": {
-      "model": "opencode-go/glm-5.2",
+      "model": "zai-coding-plan/glm-5.2",
       "variant": "high",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.7-code" },
-        { "model": "zai-coding-plan/glm-5.2" }
+        { "model": "opencode-go/glm-5.2" }
       ],
       "prompt_append": "Intent gate: On each new user request, classify intent before acting. Analysis-oriented requests (analyze, research, compare, evaluate, audit, investigate, gather context, look into) default to exploration-first: gather context, do not modify files unless explicitly asked, then present findings and ask before implementing. Execution-oriented requests (implement, add, create, fix, change, write, build, deploy) proceed with normal planning and execution. If ambiguous, ask the user whether they want analysis first or implementation.",
       "ultrawork": {
-        "model": "opencode-go/kimi-k2.5",
+        "model": "zai-coding-plan/glm-5.1",
         "variant": "high",
         "fallback_models": [
-          { "model": "zai-coding-plan/glm-5.1" },
+          { "model": "opencode-go/glm-5.1" },
           { "model": "opencode/deepseek-v4-flash-free" }
         ]
       }
     },
     "hephaestus": {
-      "model": "opencode-go/kimi-k2.5",
+      "model": "zai-coding-plan/glm-5.1",
       "fallback_models": [
-        { "model": "zai-coding-plan/glm-5.1" },
+        { "model": "opencode-go/glm-5.1" },
         { "model": "opencode/kimi-k2.5" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ],
@@ -45,9 +45,9 @@
       "prompt_append": "Think step-by-step. Identify root causes, not symptoms. Propose alternatives before recommending. Prioritize correctness and maintainability."
     },
     "librarian": {
-      "model": "opencode-go/minimax-m2.7",
+      "model": "zai-coding-plan/glm-4.7",
       "fallback_models": [
-        { "model": "zai-coding-plan/glm-4.7" },
+        { "model": "opencode-go/minimax-m2.7" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ],
       "prompt_append": "Focus on production-ready patterns and official documentation. Skip basic tutorials. Include version numbers, source URLs, and concrete code examples."
@@ -58,7 +58,7 @@
       "prompt_append": "Search thoroughly but efficiently. Return file paths with pattern descriptions. Skip test files unless specifically asked. Prioritize implementation files over config."
     },
     "multimodal-looker": {
-      "model": "opencode-go/mimo-v2.5-pro",
+      "model": "zai-coding-plan/glm-5v-turbo",
       "fallback_models": [
         { "model": "opencode-go/mimo-v2.5" },
         { "model": "opencode-go/mimo-v2-omni" },
@@ -66,7 +66,7 @@
       ]
     },
     "prometheus": {
-      "model": "opencode-go/kimi-k2.7-code",
+      "model": "zai-coding-plan/glm-5.1",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.6" },
         { "model": "opencode/glm-5.1" }
@@ -74,38 +74,35 @@
       "prompt_append": "file://~/.config/opencode/prompts/prometheus-guidance.md"
     },
     "metis": {
-      "model": "opencode-go/kimi-k2.7-code",
+      "model": "zai-coding-plan/glm-5.1",
       "fallback_models": [
         { "model": "opencode/kimi-k2.5" },
         { "model": "opencode-go/qwen3.7-plus" }
       ]
     },
     "momus": {
-      "model": "opencode-go/qwen3.7-max",
+      "model": "zai-coding-plan/glm-5.2",
       "fallback_models": [
         { "model": "zai-coding-plan/glm-5.2" },
         { "model": "opencode/gpt-5.4" }
       ]
     },
     "atlas": {
-      "model": "opencode-go/kimi-k2.6",
-      "fallback_models": [
-        { "model": "opencode/kimi-k2.5" },
-        { "model": "zai-coding-plan/glm-5.1" }
-      ]
+      "model": "zai-coding-plan/glm-5.1",
+      "fallback_models": [{ "model": "zai-coding-plan/glm-4.7" }]
     },
     "sisyphus-junior": {
-      "model": "opencode-go/kimi-k2.5",
+      "model": "zai-coding-plan/glm-5.1",
       "fallback_models": [
         { "model": "opencode-go/qwen3.7-plus" },
         { "model": "opencode/kimi-k2.6" }
       ]
     },
     "archivist": {
-      "model": "opencode-go/glm-5.1"
+      "model": "zai-coding-plan/glm-5.1"
     },
     "athena": {
-      "model": "opencode/deepseek-v4-flash-free"
+      "model": "zai-coding-plan/glm-4.7"
     },
     "auditor": {
       "model": "opencode/deepseek-v4-flash-free"
@@ -114,7 +111,7 @@
       "model": "opencode/deepseek-v4-flash-free"
     },
     "post-reviewer": {
-      "model": "opencode-go/glm-5.1",
+      "model": "zai-coding-plan/glm-5.2",
       "fallback_models": [
         { "model": "opencode-go/mimo-v2.5" },
         { "model": "zai-coding-plan/glm-5.1" },
@@ -122,7 +119,7 @@
       ]
     },
     "reviewer": {
-      "model": "opencode-go/mimo-v2.5-pro",
+      "model": "zai-coding-plan/glm-5.2",
       "fallback_models": [
         { "model": "opencode-go/glm-5.1" },
         { "model": "zai-coding-plan/glm-5.1" },
@@ -132,7 +129,7 @@
   },
   "categories": {
     "visual-engineering": {
-      "model": "opencode-go/mimo-v2.5-pro",
+      "model": "zai-coding-plan/glm-5v-turbo",
       "fallback_models": [
         { "model": "opencode-go/mimo-v2.5" },
         { "model": "opencode-go/mimo-v2-omni" },
@@ -140,7 +137,7 @@
       ]
     },
     "ultrabrain": {
-      "model": "opencode-go/deepseek-v4-pro",
+      "model": "zai-coding-plan/glm-5.2",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.7-code" },
         { "model": "opencode/glm-5.2" }
@@ -155,7 +152,7 @@
       ]
     },
     "artistry": {
-      "model": "opencode-go/mimo-v2.5-pro",
+      "model": "opencode/mimo-v2.5-free",
       "fallback_models": [
         { "model": "opencode-go/mimo-v2.5" },
         { "model": "opencode-go/mimo-v2-omni" },
@@ -184,7 +181,7 @@
       ]
     },
     "writing": {
-      "model": "opencode-go/kimi-k2.5",
+      "model": "zai-coding-plan/glm-4.7",
       "fallback_models": [
         { "model": "opencode-go/minimax-m3" },
         { "model": "opencode-go/glm-5.1" },
@@ -207,30 +204,9 @@
       "zai-coding-plan": 5
     },
     "modelConcurrency": {
-      "opencode-go/kimi-k2.7-code": 3,
-      "opencode-go/kimi-k2.6": 2,
-      "opencode-go/kimi-k2.5": 2,
-      "opencode-go/deepseek-v4-pro": 3,
-      "opencode-go/deepseek-v4-flash": 5,
-      "opencode-go/glm-5.2": 1,
-      "opencode-go/glm-5.1": 1,
-      "opencode-go/glm-5": 1,
-      "opencode/glm-5.1": 2,
-      "opencode/gemini-3.1-pro": 1,
-      "opencode/gemini-3-flash": 2,
-      "opencode-go/qwen3.7-max": 2,
-      "opencode-go/qwen3.7-plus": 2,
-      "opencode-go/qwen3.6-plus": 5,
-      "opencode-go/mimo-v2.5-pro": 3,
-      "opencode-go/mimo-v2.5": 5,
-      "opencode-go/mimo-v2-pro": 3,
-      "opencode-go/mimo-v2-omni": 5,
-      "opencode-go/minimax-m3": 2,
-      "opencode-go/minimax-m2.7": 5,
-      "opencode/deepseek-v4-flash-free": 20,
-      "opencode/nemotron-3-ultra-free": 5,
       "zai-coding-plan/glm-5.2": 1,
       "zai-coding-plan/glm-5.1": 2,
+      "zai-coding-plan/glm-5v-turbo": 2,
       "zai-coding-plan/glm-4.7": 5,
       "zai-coding-plan/glm-4.5-air": 10
     }
