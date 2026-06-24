@@ -9,29 +9,27 @@
   },
   "agents": {
     "sisyphus": {
-      "model": "opencode-go/kimi-k2.7-code",
+      "model": "opencode-go/glm-5.2",
       "variant": "high",
       "fallback_models": [
-        { "model": "opencode-go/kimi-k2.6" },
-        { "model": "opencode-go/kimi-k2.5" }
+        { "model": "opencode-go/kimi-k2.7-code" },
+        { "model": "zai-coding-plan/glm-5.2" }
       ],
       "prompt_append": "Intent gate: On each new user request, classify intent before acting. Analysis-oriented requests (analyze, research, compare, evaluate, audit, investigate, gather context, look into) default to exploration-first: gather context, do not modify files unless explicitly asked, then present findings and ask before implementing. Execution-oriented requests (implement, add, create, fix, change, write, build, deploy) proceed with normal planning and execution. If ambiguous, ask the user whether they want analysis first or implementation.",
       "ultrawork": {
-        "model": "opencode-go/kimi-k2.6",
+        "model": "opencode-go/kimi-k2.5",
         "variant": "high",
         "fallback_models": [
-          { "model": "opencode-go/glm-5.1" },
-          { "model": "opencode-go/kimi-k2.6" },
+          { "model": "zai-coding-plan/glm-5.1" },
           { "model": "opencode/deepseek-v4-flash-free" }
         ]
       }
     },
     "hephaestus": {
-      "model": "opencode-go/deepseek-v4-pro",
+      "model": "opencode-go/kimi-k2.5",
       "fallback_models": [
-        { "model": "opencode-go/glm-5.1" },
-        { "model": "opencode-go/kimi-k2.6" },
-        { "model": "opencode/kimi-k2.6" },
+        { "model": "zai-coding-plan/glm-5.1" },
+        { "model": "opencode/kimi-k2.5" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ],
       "prompt_append": "Explore thoroughly, then implement. Prefer small, testable changes."
@@ -42,28 +40,30 @@
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.7-code" },
         { "model": "opencode-go/qwen3.7-max" },
-        { "model": "opencode/glm-5.2" }
+        { "model": "zai-coding-plan/glm-5.2" }
       ],
       "prompt_append": "Think step-by-step. Identify root causes, not symptoms. Propose alternatives before recommending. Prioritize correctness and maintainability."
     },
     "librarian": {
       "model": "opencode-go/minimax-m2.7",
       "fallback_models": [
-        { "model": "opencode-go/deepseek-v4-flash" },
+        { "model": "zai-coding-plan/glm-4.7" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ],
       "prompt_append": "Focus on production-ready patterns and official documentation. Skip basic tutorials. Include version numbers, source URLs, and concrete code examples."
     },
     "explore": {
       "model": "opencode/deepseek-v4-flash-free",
-      "fallback_models": [{ "model": "opencode-go/deepseek-v4-flash" }],
+      "fallback_models": [{ "model": "zai-coding-plan/glm-4.7" }],
       "prompt_append": "Search thoroughly but efficiently. Return file paths with pattern descriptions. Skip test files unless specifically asked. Prioritize implementation files over config."
     },
     "multimodal-looker": {
       "model": "opencode-go/mimo-v2.5-pro",
       "fallback_models": [
         { "model": "opencode-go/mimo-v2.5" },
-        { "model": "opencode/mimo-v2.5-free" }
+        { "model": "opencode-go/mimo-v2-omni" },
+        { "model": "opencode/mimo-v2.5-free" },
+        { "model": "zai-coding-plan/glm-5v-turbo" }
       ]
     },
     "prometheus": {
@@ -76,22 +76,24 @@
       "prompt_append": "file://~/.config/opencode/prompts/prometheus-guidance.md"
     },
     "metis": {
-      "model": "opencode-go/glm-5.1",
+      "model": "opencode-go/kimi-k2.7-code",
       "fallback_models": [
         { "model": "opencode/kimi-k2.5" },
         { "model": "opencode-go/qwen3.7-plus" }
       ]
     },
     "momus": {
-      "model": "opencode-go/glm-5.1",
-      "fallback_models": [{ "model": "opencode/gpt-5.4" }]
+      "model": "opencode-go/qwen3.7-max",
+      "fallback_models": [
+        { "model": "zai-coding-plan/glm-5.2" },
+        { "model": "opencode/gpt-5.4" }
+      ]
     },
     "atlas": {
       "model": "opencode-go/kimi-k2.6",
       "fallback_models": [
-        { "model": "opencode-go/qwen3.5-plus" },
-        { "model": "opencode-go/deepseek-v4-flash" },
-        { "model": "opencode/kimi-k2.5" }
+        { "model": "opencode/kimi-k2.5" },
+        { "model": "zai-coding-plan/glm-5-turbo" }
       ]
     },
     "sisyphus-junior": {
@@ -117,6 +119,7 @@
       "model": "opencode-go/glm-5.1",
       "fallback_models": [
         { "model": "opencode-go/mimo-v2.5" },
+        { "model": "zai-coding-plan/glm-5.1" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ]
     },
@@ -124,18 +127,19 @@
       "model": "opencode-go/mimo-v2.5-pro",
       "fallback_models": [
         { "model": "opencode-go/glm-5.1" },
+        { "model": "zai-coding-plan/glm-5.1" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ]
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "opencode/gemini-3.1-pro",
+      "model": "opencode-go/mimo-v2.5-pro",
       "fallback_models": [
-        { "model": "opencode-go/mimo-v2.5-pro" },
         { "model": "opencode-go/mimo-v2.5" },
         { "model": "opencode-go/mimo-v2-omni" },
-        { "model": "opencode/qwen3.6-plus" }
+        { "model": "zai-coding-plan/glm-5v-turbo" },
+        { "model": "opencode/gemini-3.1-pro" }
       ]
     },
     "ultrabrain": {
@@ -148,8 +152,10 @@
     "deep": {
       "model": "opencode-go/glm-5.1",
       "fallback_models": [
-        { "model": "opencode-go/kimi-k2.6" },
-        { "model": "opencode/mimo-v2.5-free" }
+        { "model": "opencode-go/kimi-k2.5" },
+        { "model": "zai-coding-plan/glm-5.1" },
+        { "model": "opencode-go/deepseek-v4-flash" },
+        { "model": "opencode/deepseek-v4-flash-free" }
       ]
     },
     "artistry": {
@@ -157,29 +163,33 @@
       "fallback_models": [
         { "model": "opencode-go/mimo-v2.5" },
         { "model": "opencode-go/mimo-v2-omni" },
-        { "model": "opencode/qwen3.6-plus" }
+        { "model": "opencode/gemini-3-flash" }
       ]
     },
     "quick": {
       "model": "opencode/deepseek-v4-flash-free",
-      "fallback_models": [{ "model": "opencode-go/deepseek-v4-flash" }]
+      "fallback_models": [
+        { "model": "opencode-go/minimax-m2.7" },
+        { "model": "zai-coding-plan/glm-4.5-air" }
+      ]
     },
     "unspecified-low": {
       "model": "opencode/deepseek-v4-flash-free",
       "fallback_models": [
         { "model": "opencode-go/qwen3.5-plus" },
-        { "model": "opencode-go/deepseek-v4-flash" }
+        { "model": "zai-coding-plan/glm-4.7" }
       ]
     },
     "unspecified-high": {
-      "model": "opencode-go/glm-5.1",
+      "model": "opencode-go/kimi-k2.7-code",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.5" },
+        { "model": "zai-coding-plan/glm-5.1" },
         { "model": "opencode/kimi-k2.5" }
       ]
     },
     "writing": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "opencode-go/kimi-k2.5",
       "fallback_models": [
         { "model": "opencode-go/minimax-m3" },
         { "model": "opencode-go/glm-5.1" },
@@ -188,7 +198,7 @@
     },
     "git-commit-message": {
       "model": "opencode/deepseek-v4-flash-free",
-      "fallback_models": [{ "model": "opencode/deepseek-v4-flash-free" }],
+      "fallback_models": [{ "model": "zai-coding-plan/glm-4.5-air" }],
       "description": "All git operations — commits, branches, rebases, history searches",
       "prompt_append": "Focus on atomic commits, clear conventional commit messages, and safe operations. Never force-push or skip hooks unless explicitly requested."
     }
