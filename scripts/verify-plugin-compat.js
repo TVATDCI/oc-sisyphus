@@ -58,15 +58,26 @@ function readPinned() {
 }
 
 function parsePluginEntry(entry) {
-  // Matches "name", "name@version", "name@latest", "@scope/name@1.2.3"
+  // Handle array-form entries: ["./plugins/name", { options }]
+  // opencode supports both "name@version" strings and
+  // ["./path/or/name", { ...options }] arrays in the plugin config.
+  if (Array.isArray(entry)) {
+    const nameOrPath = typeof entry[0] === 'string' ? entry[0] : '';
+    if (nameOrPath.startsWith('./') || nameOrPath.startsWith('../')) {
+      return { raw: nameOrPath, name: nameOrPath, version: null, isLocalPath: true };
+    }
+    const m = nameOrPath.match(/^((?:@[^/]+\/)?[^@]+)(?:@(.*))?$/);
+    if (!m) return { raw: nameOrPath, name: nameOrPath, version: null };
+    return { raw: nameOrPath, name: m[1], version: m[2] || null };
+  }
+  // String-form entries: "name", "name@version", "@scope/name@1.2.3"
   const m = entry.match(/^((?:@[^/]+\/)?[^@]+)(?:@(.*))?$/);
   if (!m) return { raw: entry, name: entry, version: null };
   return { raw: entry, name: m[1], version: m[2] || null };
 }
 
 function isLocalPlugin(name) {
-  // Known local plugins. Add to this list when introducing new local plugins.
-  return name === 'sisyphus-gates' || name === 'oh-my-opencode';
+  return name === 'sisyphus-gates' || name === 'oh-my-opencode' || name === './plugins/sisyphus-gates';
 }
 
 function cacheDirsFor(name) {
