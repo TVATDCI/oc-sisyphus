@@ -13,11 +13,13 @@
  * the plugin runs in fail-closed mode (gates.js will refuse execution).
  */
 
-import { getState, syncStateWithDisk } from "./state.js";
+import { getState, syncStateWithDisk, setMemoryKey } from "./state.js";
 import { shouldBlockTool, shouldBlockCommand } from "./gates.js";
 import { advancePhaseIfNeeded, buildGateStatusPrompt } from "./phase-machine.js";
 import { loadWorkflowConfig } from "./workflow-loader.js";
 import { recordEvent } from "./metrics.js";
+import { loadMcpPrefixes } from "./mcp-classifier.js";
+import { resolveMemoryKey } from "./memory-key.js";
 
 export const server = async (_input, _options) => {
   // W1.E: load the workflow config up front so the yaml-driven phase
@@ -39,6 +41,25 @@ export const server = async (_input, _options) => {
     );
   }
 
+  // Load MCP server names from opencode.json so the classifier can identify
+  // MCP tools by {serverName}_{tool} prefix.
+  try {
+    loadMcpPrefixes(_input?.directory || process.cwd());
+  } catch {
+    // Non-fatal — MCP tools will be classified as unknown and denied by default.
+  }
+
+  // Resolve MEMORY_KEY from operator keyring at startup. If resolution
+  // fails, signing is disabled — all gates will be "unknown" → fail-closed.
+  const MEMORY_KEY = resolveMemoryKey(_options || {});
+  setMemoryKey(MEMORY_KEY);
+  if (!MEMORY_KEY) {
+    void(
+      "[sisyphus-gates] Verdict signing disabled — no verdict_key_command " +
+        "configured or resolution failed. Gate status will be 'unknown' for all sessions."
+    );
+  }
+
   return {
     "tool.execute.before": async (
       { tool, sessionID, callID },
@@ -46,28 +67,25 @@ export const server = async (_input, _options) => {
     ) => {
       const state = getState(sessionID);
 
-      if (tool === "write" || tool === "edit" || tool === "bash") {
-        const decision = shouldBlockTool(tool, output.args, state);
-        if (decision.blocked) {
-          output.args = {
-            ...output.args,
-            _sisyphus_gate_blocked: decision.reason,
-          };
-          if (decision.blockTool) {
-            output.parts = [
-              {
-                type: "text",
-                content: `⛔ Gate blocked: ${decision.reason}`,
-              },
-            ];
-          }
-          recordEvent({
-            sessionID,
-            tool,
-            phase: state.phase,
-            reason: decision.reason,
-            command: tool === "bash" ? output.args?.command : undefined,
-          });
+      // Route ALL tools through shouldBlockTool (not just write/edit/bash).
+      // MCP tools, task delegation, and any future tool category are gated.
+      const decision = shouldBlockTool(tool, output.args, state);
+      if (decision.blocked) {
+        output.args = {
+          ...output.args,
+          _sisyphus_gate_blocked: decision.reason,
+        };
+        recordEvent({
+          sessionID,
+          tool,
+          phase: state.phase,
+          reason: decision.reason,
+          command: tool === "bash" ? output.args?.command : undefined,
+        });
+        if (decision.blockTool) {
+          // output.parts does NOT block tool.execute.before. The working
+          // enforcement mechanism is throw — same pattern oh-my-openagent uses.
+          throw new Error(`⛔ Gate blocked: ${decision.reason}`);
         }
       }
     },
@@ -80,12 +98,6 @@ export const server = async (_input, _options) => {
       const decision = shouldBlockCommand(command, args, state);
 
       if (decision.blocked) {
-        output.parts = [
-          {
-            type: "text",
-            content: `⛔ Gate blocked: ${decision.reason}`,
-          },
-        ];
         output.args = {
           ...(output.args || {}),
           _sisyphus_gate_blocked: decision.reason,
@@ -97,6 +109,10 @@ export const server = async (_input, _options) => {
           reason: decision.reason,
           command,
         });
+        // ENFORCEMENT: throw, mirroring the tool.execute.before handler.
+        // output.parts does NOT block (confirmed empirically during P0a and
+        // via the oh-my-openagent prometheusMdOnly production precedent).
+        throw new Error(`⛔ Gate blocked: ${decision.reason}`);
       }
     },
 
@@ -117,7 +133,10 @@ export const server = async (_input, _options) => {
           reason: `gate-status-rendered prd=${freshState.prdGateStatus} plan=${freshState.planGateStatus} approval=${freshState.approvalStatus}`,
         });
       }
-      output.system.push(buildGateStatusPrompt(freshState));
+      // Gate status is tracked internally. The prompt block was removed
+      // because it injected visible text clutter into every agent response
+      // when combined with oh-my-openagent's UI layer. The gate still
+      // enforces tool/command blocking via tool.execute.before.
     },
 
     "experimental.session.compacting": async (

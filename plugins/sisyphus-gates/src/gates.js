@@ -55,6 +55,12 @@ import {
   isAlwaysBlocked,
 } from "./sudo-policy.js";
 import { getCachedWorkflowConfig } from "./workflow-loader.js";
+import {
+  matchTrustRootWrite,
+  matchTrustRootRead,
+  matchTrustRootBash,
+} from "./trust-root-paths.js";
+import { getMcpClassification } from "./mcp-classifier.js";
 
 // Re-export for backward compat with W1.A tests
 export { isDestructiveCommand };
@@ -135,6 +141,47 @@ export function mustBlockExecution(state) {
  * Returns { blocked: false } OR { blocked: true, reason: string, blockTool?: boolean }.
  */
 export function shouldBlockTool(tool, args, state) {
+  // Layer 0: Trust-root path-denylist (THE security boundary)
+  // Any tool — write, edit, bash, mcp__*, task — writing to or reading from
+  // a trust-root path is blocked unconditionally, all phases, no override.
+  if (args && typeof args === "object") {
+    const trustRootWrite = matchTrustRootWrite(args);
+    if (trustRootWrite) {
+      return {
+        blocked: true,
+        reason: `Trust-root path protected (write): ${trustRootWrite}`,
+        blockTool: true,
+      };
+    }
+    const trustRootRead = matchTrustRootRead(args);
+    if (trustRootRead) {
+      return {
+        blocked: true,
+        reason: `Trust-root path protected (read): ${trustRootRead}`,
+        blockTool: true,
+      };
+    }
+  }
+  // Tier 2: bash command-string trust-root destination check
+  if (tool === "bash" && args?.command) {
+    const bashMatch = matchTrustRootBash(args.command, "write");
+    if (bashMatch) {
+      return {
+        blocked: true,
+        reason: `Trust-root destination in command (Tier 2): ${bashMatch}`,
+        blockTool: true,
+      };
+    }
+    const bashReadMatch = matchTrustRootBash(args.command, "read");
+    if (bashReadMatch) {
+      return {
+        blocked: true,
+        reason: `Trust-root read in command (Tier 2): ${bashReadMatch}`,
+        blockTool: true,
+      };
+    }
+  }
+
   // Layer 1: Catastrophic denylist (always blocked, even in execution phase)
   if (tool === "bash" && args?.command && isAlwaysBlocked(args.command)) {
     return {
@@ -158,14 +205,35 @@ export function shouldBlockTool(tool, args, state) {
     return { blocked: false };
   }
 
+  // Layer 3.5: MCP classification
+  // MCP tools are named {serverName}_{toolName}. Classify by prefix + verb
+  // heuristic. Path-denylist (Layer 0) is the primary defense; this classifier
+  // determines how MCP tools flow through downstream layers.
+  const mcp = getMcpClassification(tool);
+  if (mcp) {
+    if (mcp.classification === "read") {
+      return { blocked: false };
+    }
+    if (mcp.classification === "write") {
+      tool = "write"; // normalize for downstream layers (Layer 5/6)
+    } else {
+      return {
+        blocked: true,
+        reason: `MCP tool '${tool}' classification unknown — deny by default`,
+        blockTool: true,
+      };
+    }
+  }
+
   // Layer 4: Safe read-only bash commands (always allowed, even when fail-closed)
   if (tool === "bash" && args?.command && isSafeReadOnlyCommand(args.command)) {
     return { blocked: false };
   }
 
-  // Layer 5: Fail-closed blocks write/edit/bash with non-safe commands
+  // Layer 5: Fail-closed blocks write/edit/bash/task with non-safe commands
+  // task added to prevent subagent escape during fail-closed
   const failClosed = mustBlockExecution(state);
-  if (failClosed.blocked && (tool === "write" || tool === "edit" || tool === "bash")) {
+  if (failClosed.blocked && (tool === "write" || tool === "edit" || tool === "bash" || tool === "task")) {
     return { ...failClosed, blockTool: true };
   }
 

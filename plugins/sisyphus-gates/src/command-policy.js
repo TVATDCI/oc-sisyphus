@@ -448,6 +448,12 @@ export function isDestructiveCommand(cmd) {
   // Layer 2: shell redirect metachars
   if (hasShellRedirect(cmd)) return true;
 
+  // P0d (G1/G2): chaining operators and command substitution are destructive
+  // regardless of the first token. "ls && rm -rf /" or "echo $(rm -rf /)"
+  // starts safe but contains destructive payloads.
+  if (/(?:&&|\|\||[;|])/.test(cmd)) return true;          // chaining operators
+  if (cmd.includes("$(") || cmd.includes("`")) return true; // cmd substitution
+
   const tokens = tokenize(cmd);
   if (tokens.length === 0) return false;
 
@@ -457,6 +463,12 @@ export function isDestructiveCommand(cmd) {
 
   // Layer 3: always-destructive first tokens
   if (ALWAYS_DESTRUCTIVE_FIRST_TOKEN.has(first)) return true;
+  // P0d (G1): bash -c, sh -c, eval, source, npx execute arbitrary commands
+  // beyond what the first-token check sees — always destructive.
+  const shellWrappersDestructive = new Set(["bash", "sh", "eval", "source", ".", "npx"]);
+  if (shellWrappersDestructive.has(first)) return true;
+  // P0d (G3): mkfs.* variants (mkfs.ext4, mkfs.ntfs, etc.)
+  if (first.startsWith("mkfs.")) return true;
 
   // Layer 4: subcommand-aware commands
   if (tokens.length >= 2) {
@@ -633,10 +645,21 @@ export function isSafeReadOnlyCommand(cmd) {
   // sudo is never safe
   if (containsSudo(cmd)) return false;
 
+  // P0d (G1/G2): reject shell metacharacters — chaining, substitution.
+  // "ls && rm -rf /" or "echo $(rm -rf /)" starts with a safe token but
+  // contains destructive operations. Scan BEFORE the first-token allowlist.
+  if (/(?:&&|\|\||[;|])/.test(cmd)) return false;          // chaining operators
+  if (cmd.includes("$(") || cmd.includes("`")) return false; // cmd substitution
+
   const tokens = tokenize(cmd);
   if (tokens.length === 0) return false;
   const first = extractCommandName(cmd);
   if (!first) return false;
+
+  // P0d (G1): reject shell wrappers. bash -c, sh -c, eval, source, npx all
+  // execute arbitrary commands beyond what the first-token check sees.
+  const shellWrappers = new Set(["bash", "sh", "eval", "source", ".", "npx"]);
+  if (shellWrappers.has(first)) return false;
 
   // git subcommand commands
   if (first === "git") {
