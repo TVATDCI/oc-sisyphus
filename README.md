@@ -7,4 +7,4 @@ Personal OpenCode configuration. See:
 - [oh-my-openagent.json](./oh-my-openagent.json) — agent + category routing
 - [opencode.json](./opencode.json) — entry-point config
 
-Last refresh: 2026-06-17 (W4 synthesis + absorption from remote opencode-config: intent gate, execution-receipt, reflection, check-completion-honesty).
+Last refresh: 2026-06-24 (Absorption from remote opencode-config: HMAC-SHA256 verdict signing, trust-root path protection, MCP classification, throw enforcement, adversarial test suite, CLI signing tool. Plugin 13→18 src modules, 180→322 tests.).

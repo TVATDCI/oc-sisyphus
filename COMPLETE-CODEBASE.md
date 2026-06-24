@@ -1,7 +1,7 @@
 # OpenCode Codebase — Complete Structure, Changes & Workflow
 
 > **Last reviewed:** 2026-06-24 | **Next review:** When agent routing changes or a new skill is added
-> **Drift-prone sections:** §Agent Routing, §Change Timeline, §Skill count
+> **Drift-prone sections:** §Agent Routing, §Change Timeline, §Skill count, §Plugin file count
 > **Stable sections:** §Directory Architecture, §Workflow State Machine, §Subagent Permissions
 
 1. Directory Architecture (7 layers)
@@ -32,7 +32,7 @@
    │
    ├── 6. INFRASTRUCTURE LAYER
    │ ├── scripts/ # 15 scripts (load-rules, regression-gate, validate-skills-v2.py, verify-plugin-compat.js, check-doc-claims.sh, check-completion-honesty.sh, etc.)
-   │ ├── plugins/sisyphus-gates/ # Compiled gate plugin (dist/index.js)
+    │ ├── plugins/sisyphus-gates/ # Governance gate plugin: 18 src modules + cli.js + dist/index.js + 15 test files (322 tests). HMAC-SHA256 verdict signing, trust-root path protection, MCP classification, throw enforcement, adversarial test suite
    │ ├── benchmark/ # 3 JSONL baseline runs (vs codegraph vs semble)
    │ └── .codegraph/codegraph.db # Search/index: semantic code index SQLite DB
    │
@@ -81,7 +81,8 @@
    Jun 8 Env Canonical path consolidation: .sisyphus/ → ~/.sisyphus/; HANDOFF.md/hotcache.md deleted; CLEANUP.md created; stale iteration-1 evals pruned
    Jun 8 Git 10 atomic commits across all 7 skills; doc-claims drift fixed (subagents 7→8, directories 38→43)
     Jun 17 Absorption from remote opencode-config repo: intent gate added to sisyphus agent prompt_append; execution-receipt and reflection skills created; check-completion-honesty.sh topology gate added; COMPLETE-CODEBASE.md counts reconciled (skills 43→45, scripts 14→15)
-    Jun 21 oh-my-openagent upgraded 4.7.5 → 4.12.1: opencode.json/plugin pin, package.json/package-lock.json, tui.json plugin entry, removed stale bun.lock; .codegraph/codegraph.db untracked (already gitignored); doctor clean except pre-existing mimo-v2.5-pro fallback
+     Jun 21 oh-my-openagent upgraded 4.7.5 → 4.12.1: opencode.json/plugin pin, package.json/package-lock.json, tui.json plugin entry, removed stale bun.lock; .codegraph/codegraph.db untracked (already gitignored); doctor clean except pre-existing mimo-v2.5-pro fallback
+     Jun 24 Absorption from remote opencode-config (TNTHNGVDYNND): Phase 0-6 security hardening + HMAC signing pivot. Oracle-consulted strategy (ses_106ac03b3ffe4Jc2iKnLVqiDNF). 6 phases: (1) adversarial tests ported, (2) behavioral hardening — throw enforcement, Layer 0 trust-root paths, Layer 3.5 MCP classification, task fail-closed, command-policy chaining/substitution/wrappers, (3) HMAC-SHA256 signing core — verdict-signing.js, memory-key.js, gate-logger.js, state.js pivot to signed verdicts, (4) CLI signing tool — cli.js with sign-verdict + approve commands, (5) workflow.yaml update — stale path fix, W1.B transition fix, forgeable auto-advance removed, schema 2.0.0→3.0.0, (6) doc update. Plugin src 13→18, tests 9→15 (180→322 tests), new: trust-root-paths.js, mcp-classifier.js, verdict-signing.js, memory-key.js, gate-logger.js, cli.js. opencode.json plugin config changed to array form with verdict_key_command. HMAC key at ~/.local/share/sisyphus-gate-key (chmod 600). Hard cutover: unsigned verdicts no longer trusted
 3. Complete Workflow — 9-Phase State Machine
    ╔══════════════════════════╗
    ║ GLOBAL BLOCKING RULES ║
@@ -89,6 +90,8 @@
    ║ • Fail-closed on no state║
    ║ • Gate fail = all blocked║
    ║ • Unapproved = no commit ║
+   ║ • Trust-root paths locked║
+   ║ • HMAC signing required  ║
    ╚══════════════════════════╝
 
 ┌────────────┐ auto on ┌────────────┐ auto on PRD write ┌────────────┐
@@ -103,9 +106,11 @@
 │ git commit │
 │ git push │
 └─────┬──────┘
-│ Gate Decision: PASS?
-│ prd_gate=PASS
-│ prd_approved=true
+│ Operator signs verdict:
+│ node cli.js sign-verdict prd <id> PASS
+│ → HMAC-signed artifact written
+│ → loadSignedVerdicts verifies
+│ → prd_gate=PASS, prd_approved=true
 ▼
 ┌────────────┐ auto on ┌────────────┐ manual ┌──────────────┐
 │Issue-Create│──skill:plan──►│Plan-Writing│──approve──►│ Plan-Review │
@@ -116,9 +121,13 @@
 │ │
 │ Blocks: same │
 └──────┬───────┘
-│ Gate Decision: PASS?
-│ plan_gate=PASS
-│ approval_status=approved
+│ Operator signs verdict:
+│ node cli.js sign-verdict plan <id> PASS
+│ → HMAC-signed artifact written
+│ → plan_gate=PASS, plan_approved=true
+│ Then operator approves:
+│ node cli.js approve <id>
+│ → approval_status=approved
 ▼
 ┌──────────────────────┐ evidence ┌──────────────┐ regression ┌────────────┐
 │ Execution (wave-exec)│──self-loop──► │ Validation │──script────► │ Close │
@@ -141,10 +150,10 @@ Phase Details
 
 1 discovery discovery-orchestrator none none skill:prd-writer or user approval
 2 prd-writing prd-writer none none Auto: path contains "prd"
-3 prd-review ⛔ momus-prd-reviewer momus-prd: "Gate Decision: PASS" write, edit, git commit/push Gate passes: prd_gate=PASS
+3 prd-review ⛔ momus-prd-reviewer HMAC-signed verdict (cli.js sign-verdict) write, edit, git commit/push Operator signs: node cli.js sign-verdict prd <id> PASS
 4 issue-creation issue-creator none none Auto: path contains "plan"
 5 plan-writing plan-writer none none Manual: plan_written
-6 plan-review ⛔ momus-plan-reviewer momus-plan: "Gate Decision: PASS" write, edit, git commit/push Gate passes: plan_gate=PASS
+6 plan-review ⛔ momus-plan-reviewer HMAC-signed verdict (cli.js sign-verdict) write, edit, git commit/push Operator signs: node cli.js sign-verdict plan <id> PASS, then: node cli.js approve <id>
 7 execution wave-executor checkpoint-3 (between waves) bash (non-destructive only) Manual: wave approval; self-loop on evidence
 8 validation regression-gate script: regression-gate.sh (exit 0) none Manual: user_confirms_validation
 9 close ⛔ plan-closer evidence_check: evidence_logged==true bd close unless logged Manual: user_confirms_close
@@ -154,4 +163,4 @@ Agent Routing (17 runtime agents × 9 categories)
 Provider mix: agents lean opencode-go (12 of 17 primaries), categories shift to opencode-go (6 of 9 primaries). Most constrained models: opencode-go/glm-5.2 (concurrency: 1); opencode-go/glm-5.1 (concurrency: 1). glm-5.2 is primary for 2 agents (sisyphus, prometheus). glm-5.1 is primary for 2 agents (archivist, post-reviewer) + 1 category (deep). gpt-5.4 is primary for 1 agent (oracle); mimo-v2.5-pro is primary for 2 agents (multimodal-looker, reviewer) + 2 categories (visual-engineering, artistry).
 
 8 Subagent .md Permissions (security boundaries)
-Only 2 agents have write access: archivist (write: ~/Main-vault/wiki/**, index.md, log.md, hotcache.md, .sisyphus/evidence/**, .sisyphus/plans/**, .sisyphus/boulder.json, .sisyphus/notepads/**, projects/**; deny: _.env_, _.pem, _.key, _credentials_, _secrets_, ~/Main-vault/raw/**) and fullstack-dev-tester (edit: \*: allow). All others are read-only or read+network. oracle is the most restricted (read-only, no bash, no edit).
+Only 2 agents have write access: archivist (write: ~/Main-vault/wiki/**, index.md, log.md, hotcache.md, .sisyphus/evidence/**, .sisyphus/plans/**, .sisyphus/boulder.json, .sisyphus/notepads/**, projects/**; deny: _.env_, _.pem, _.key, _credentials_, _secrets_, ~/Main-vault/raw/**) and fullstack-dev-tester (edit: \*: allow). All others are read-only or read+network. oracle is the most restricted (read-only, no bash, no edit). Plugin Layer 0 (trust-root-paths.js) additionally blocks ALL tools — including archivist and fullstack-dev-tester — from writing to ~/.sisyphus/state.json, workflow.yaml, verdict files, /proc, and plugin source. Trust-root protection is unconditional: no phase, no approval, no agent permission overrides it.

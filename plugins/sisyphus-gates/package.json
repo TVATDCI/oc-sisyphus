@@ -5,9 +5,11 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "test": "node --test test/*.test.js",
+    "test": "node --test test/*.test.js test/adversarial/*.test.js",
     "self-test": "node test/self-test/run.js",
     "test:all": "npm test && npm run self-test",
+    "sign": "node cli.js sign-verdict",
+    "approve": "node cli.js approve",
     "metrics:summary": "node tools/metrics-summary.js",
     "metrics:clear": "node -e \"import('./src/metrics.js').then(m => m.clearEvents())\""
   },
