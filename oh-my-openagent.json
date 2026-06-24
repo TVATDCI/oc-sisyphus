@@ -35,12 +35,12 @@
       "prompt_append": "Explore thoroughly, then implement. Prefer small, testable changes."
     },
     "oracle": {
-      "model": "opencode/gpt-5.4",
+      "model": "zai-coding-plan/glm-5.2",
       "variant": "high",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.7-code" },
         { "model": "opencode-go/qwen3.7-max" },
-        { "model": "zai-coding-plan/glm-5.2" }
+        { "model": "opencode/gpt-5.4" }
       ],
       "prompt_append": "Think step-by-step. Identify root causes, not symptoms. Propose alternatives before recommending. Prioritize correctness and maintainability."
     },
@@ -67,9 +67,8 @@
       ]
     },
     "prometheus": {
-      "model": "opencode-go/glm-5.2",
+      "model": "opencode-go/kimi-k2.7-code",
       "fallback_models": [
-        { "model": "opencode-go/glm-5.1" },
         { "model": "opencode-go/kimi-k2.6" },
         { "model": "opencode/glm-5.1" }
       ],
@@ -97,7 +96,7 @@
       ]
     },
     "sisyphus-junior": {
-      "model": "opencode-go/kimi-k2.6",
+      "model": "zai-coding-plan/glm-5-turbo",
       "fallback_models": [
         { "model": "opencode-go/qwen3.7-plus" },
         { "model": "opencode/kimi-k2.6" }
@@ -150,7 +149,7 @@
       ]
     },
     "deep": {
-      "model": "opencode-go/glm-5.1",
+      "model": "zai-coding-plan/glm-5-turbo",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.5" },
         { "model": "zai-coding-plan/glm-5.1" },
