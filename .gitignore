@@ -6,6 +6,9 @@ node_modules/
 # Backup dirs
 *.backup*
 *.backup-*
+COMPLETE-CODEBASE.md.backup
+oh-my-openagent.json.backup
+opencode.json.full
 
 # Logs
 *.log
