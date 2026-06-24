@@ -30,11 +30,35 @@
  */
 export function containsSudo(cmd) {
   if (typeof cmd !== "string") return false;
-  // Strip leading whitespace
   let s = cmd.replace(/^\s+/, "");
-  // Strip leading env-var assignments (one or more WORD=VALUE pairs)
+  // Peel benign `export KEY=VALUE ...; ` prefix opencode prepends to commands.
+  // Manual scan (regex cannot disambiguate `;` in values from the terminator).
+  if (s.startsWith("export ")) {
+    let i = "export ".length;
+    let ok = true;
+    while (i < s.length) {
+      const idStart = i;
+      while (i < s.length && /[A-Za-z0-9_]/.test(s[i])) i++;
+      if (i === idStart) { ok = false; break; }
+      if (s[i] !== "=") { ok = false; break; }
+      i++;
+      const valStart = i;
+      while (i < s.length && /[^\s;]/.test(s[i])) i++;
+      if (i === valStart) { ok = false; break; }
+      while (i < s.length && /\s/.test(s[i])) i++;
+      if (s[i] === ";") {
+        i++;
+        while (i < s.length && /\s/.test(s[i])) i++;
+        s = s.slice(i);
+        break;
+      }
+      if (i >= s.length) { ok = false; break; }
+    }
+    if (!ok) {
+      // Strip failed — leave s as-is (the chaining classifier will catch malformed prefixes).
+    }
+  }
   s = s.replace(/^((?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+)+)/, "");
-  // First non-env token must be "sudo" (followed by whitespace, end, or shell metachar)
   return /^sudo(\s|$|;|\||&)/.test(s);
 }
 
@@ -54,8 +78,7 @@ function tokenize(cmd) {
     const ch = cmd[i];
     if (ch === "\\" && i + 1 < cmd.length) {
       // Escape: include the next char literally
-      current += cmd[i + 1];
-      i += 2;
+      current += cmd[i + 1];      i += 2;
       continue;
     }
     if (ch === "'" && !inDouble) {

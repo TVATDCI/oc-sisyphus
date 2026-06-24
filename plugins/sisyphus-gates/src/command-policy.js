@@ -105,8 +105,7 @@ function normalize(cmd) {
  *   extractCommandName("")                            → ""
  */
 export function extractCommandName(cmd) {
-  if (typeof cmd !== "string") return "";
-  let s = cmd.replace(/^\s+/, "");
+  let s = stripLeadingEnvExport(cmd).replace(/^\s+/, "");
   // Strip leading env-var assignments
   s = s.replace(/^((?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+)+)/, "");
   // Strip leading sudo
@@ -173,7 +172,34 @@ export function hasShellRedirect(cmd) {
   }
   return false;
 }
-
+function stripLeadingEnvExport(cmd) {
+  if (typeof cmd !== "string") return cmd;
+  if (!cmd.startsWith("export ")) return cmd;
+  // Manual scanner — bash allows values to contain `;` (as in opencode's
+  // `VISUAL=''` followed by `;`), so a regex cannot disambiguate the
+  // separator `;` from `;` inside a value. Values may not contain unquoted
+  // whitespace or unquoted `;` — both terminate the assignment. Conservative:
+  // returns the original cmd if anything deviates from `export K=V K=V ...; cmd`.
+  let i = "export ".length;
+  while (i < cmd.length) {
+    const idStart = i;
+    while (i < cmd.length && /[A-Za-z0-9_]/.test(cmd[i])) i++;
+    if (i === idStart) return cmd;
+    if (cmd[i] !== "=") return cmd;
+    i++;
+    const valStart = i;
+    while (i < cmd.length && /[^\s;]/.test(cmd[i])) i++;
+    if (i === valStart) return cmd;
+    while (i < cmd.length && /\s/.test(cmd[i])) i++;
+    if (cmd[i] === ";") {
+      i++;
+      while (i < cmd.length && /\s/.test(cmd[i])) i++;
+      return cmd.slice(i);
+    }
+    if (i >= cmd.length) return cmd;
+  }
+  return cmd;
+}
 // ─── destructive detection ──────────────────────────────────────────────────
 
 /**
@@ -209,6 +235,19 @@ const ALWAYS_DESTRUCTIVE_FIRST_TOKEN = new Set([
 ]);
 
 /** Subcommand-aware commands. */
+const SUBCOMMAND_BD = {
+  safe: new Set([
+    "ready", "prime", "list", "show", "blocked", "search", "memories",
+    "remember", "stats", "doctor", "version", "config",
+    "dep", "help", "--help", "-h",
+  ]),
+  destructive: new Set([
+    "close", "defer", "supersede", "forget",
+    "create", "update", "mol", "human", "setup",
+    "dolt", "preflight", "stale", "orphans", "lint", "edit",
+  ]),
+};
+
 const SUBCOMMAND_GIT = {
   safe: new Set(["status", "log", "diff", "show"]),
   flagCheck: (_sub, rest) => {
@@ -441,6 +480,7 @@ function isInterpreterDestructive(cmd, tokens) {
  */
 export function isDestructiveCommand(cmd) {
   if (typeof cmd !== "string") return false;
+  cmd = stripLeadingEnvExport(cmd);
 
   // Layer 1: sudo (anywhere as a command → destructive)
   if (containsSudo(cmd)) return true;
@@ -488,6 +528,7 @@ export function isDestructiveCommand(cmd) {
       return true;
     }
     if (first === "npm" && SUBCOMMAND_NPM.destructive.has(sub)) return true;
+    if (first === "bd" && SUBCOMMAND_BD.destructive.has(sub)) return true;
     if (first === "kubectl" && SUBCOMMAND_KUBECTL.destructive.has(sub)) return true;
     if (first === "docker" && SUBCOMMAND_DOCKER.destructive.has(sub)) return true;
     if (first === "terraform" && SUBCOMMAND_TERRAFORM.destructive.has(sub)) return true;
@@ -640,6 +681,7 @@ const SAFE_GIT_SUBCOMMANDS = new Set(["status", "log", "diff", "show"]);
 
 export function isSafeReadOnlyCommand(cmd) {
   if (typeof cmd !== "string") return false;
+  cmd = stripLeadingEnvExport(cmd);
   // Any redirect is not "safe" (it can mutate files or pipe to sh)
   if (hasShellRedirect(cmd)) return false;
   // sudo is never safe
@@ -690,5 +732,9 @@ export function isSafeReadOnlyCommand(cmd) {
   if (first === "xargs") return false;
 
   // Other safe read-only commands
+ if (first === "bd") {
+ if (tokens.length < 2) return false;
+    return SUBCOMMAND_BD.safe.has(tokens[1]);
+  }
   return SAFE_READ_ONLY_TOKENS.has(first);
 }

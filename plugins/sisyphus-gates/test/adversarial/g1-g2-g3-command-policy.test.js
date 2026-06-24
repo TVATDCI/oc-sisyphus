@@ -187,3 +187,53 @@ test("REG: grep -r 'pattern' . → safe read-only", () => {
   assert.equal(isDestructiveCommand("grep -r 'pattern' ."), false);
   assert.equal(isAlwaysBlocked("grep -r 'pattern' ."), false);
 });
+
+// G4: opencode env-export prefix (auto-prepended to git commands) →
+// must not cause read-only git subs to be classified as destructive.
+// Bug found 2026-06-24 via ~/.sisyphus/metrics/gate-events.jsonl.
+const EXPORT_PREFIX =
+  "export CI=true DEBIAN_FRONTEND=noninteractive GIT_TERMINAL_PROMPT=0 " +
+  "GCM_INTERACTIVE=never HOMEBREW_NO_AUTO_UPDATE=1 GIT_EDITOR=: EDITOR=: " +
+  "VISUAL='' GIT_SEQUENCE_EDITOR=: GIT_MERGE_AUTOEDIT=no GIT_PAGER=cat " +
+  "PAGER=cat npm_config_yes=true PIP_NO_INPUT=1 " +
+  "YARN_ENABLE_IMMUTABLE_INSTALLS=false; ";
+
+test("G4: env-export prefix + git read-only subs → not destructive, safe read-only", () => {
+  for (const sub of ["git status", "git log --oneline -5", "git show HEAD", "git diff"]) {
+    assert.equal(isDestructiveCommand(EXPORT_PREFIX + sub), false, `prefix+${sub} must NOT be destructive`);
+    assert.equal(isSafeReadOnlyCommand(EXPORT_PREFIX + sub), true, `prefix+${sub} must be safe read-only`);
+  }
+});
+
+test("G4: env-export prefix must not mask real destructive commands", () => {
+  assert.equal(isDestructiveCommand(EXPORT_PREFIX + "rm -rf /"), true);
+  assert.equal(isDestructiveCommand(EXPORT_PREFIX + "git push --force origin main"), true);
+  assert.equal(isDestructiveCommand(EXPORT_PREFIX + "git checkout -- ."), true);
+  assert.equal(isDestructiveCommand(EXPORT_PREFIX + "git reset --hard"), true);
+});
+
+test("G4: command substitution inside env-export value → strip is no-op, classifier catches it", () => {
+  assert.equal(isDestructiveCommand("export FOO=$(rm /); ls"), true);
+  assert.equal(isDestructiveCommand("export X=`rm /`; cmd"), true);
+});
+
+// G5: bd subcommand classifier — closes the under-gate that auto-closed
+// brain-2q4 with no args on 2026-06-24.
+test("G5: bd destructive subs → destructive", () => {
+  for (const sub of ["close", "defer", "supersede", "forget", "create", "update", "dolt", "lint", "edit"]) {
+    assert.equal(isDestructiveCommand(`bd ${sub} arg`), true, `bd ${sub} must be destructive`);
+    assert.equal(isSafeReadOnlyCommand(`bd ${sub} arg`), false, `bd ${sub} must NOT be safe read-only`);
+  }
+});
+
+test("G5: bd safe subs → safe read-only, not destructive", () => {
+  for (const sub of ["ready", "prime", "list", "show", "stats", "doctor", "version", "memories", "remember"]) {
+    assert.equal(isDestructiveCommand(`bd ${sub}`), false, `bd ${sub} must NOT be destructive`);
+    assert.equal(isSafeReadOnlyCommand(`bd ${sub}`), true, `bd ${sub} must be safe read-only`);
+  }
+});
+
+test("G5: bd with unknown sub → not safe read-only (deny by default)", () => {
+  assert.equal(isSafeReadOnlyCommand("bd nopetinfo"), false);
+  assert.equal(isSafeReadOnlyCommand("bd"), false);
+});
