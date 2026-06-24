@@ -62,8 +62,7 @@
       "fallback_models": [
         { "model": "opencode-go/mimo-v2.5" },
         { "model": "opencode-go/mimo-v2-omni" },
-        { "model": "opencode/mimo-v2.5-free" },
-        { "model": "zai-coding-plan/glm-5v-turbo" }
+        { "model": "opencode/mimo-v2.5-free" }
       ]
     },
     "prometheus": {
@@ -92,11 +91,11 @@
       "model": "opencode-go/kimi-k2.6",
       "fallback_models": [
         { "model": "opencode/kimi-k2.5" },
-        { "model": "zai-coding-plan/glm-5-turbo" }
+        { "model": "zai-coding-plan/glm-5.1" }
       ]
     },
     "sisyphus-junior": {
-      "model": "zai-coding-plan/glm-5-turbo",
+      "model": "opencode-go/kimi-k2.5",
       "fallback_models": [
         { "model": "opencode-go/qwen3.7-plus" },
         { "model": "opencode/kimi-k2.6" }
@@ -137,22 +136,20 @@
       "fallback_models": [
         { "model": "opencode-go/mimo-v2.5" },
         { "model": "opencode-go/mimo-v2-omni" },
-        { "model": "zai-coding-plan/glm-5v-turbo" },
         { "model": "opencode/gemini-3.1-pro" }
       ]
     },
     "ultrabrain": {
       "model": "opencode-go/deepseek-v4-pro",
       "fallback_models": [
-        { "model": "opencode-go/kimi-k2.6" },
-        { "model": "opencode/glm-5.1" }
+        { "model": "opencode-go/kimi-k2.7-code" },
+        { "model": "opencode/glm-5.2" }
       ]
     },
     "deep": {
-      "model": "zai-coding-plan/glm-5-turbo",
+      "model": "zai-coding-plan/glm-5.1",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.5" },
-        { "model": "zai-coding-plan/glm-5.1" },
         { "model": "opencode-go/deepseek-v4-flash" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ]
@@ -180,10 +177,9 @@
       ]
     },
     "unspecified-high": {
-      "model": "opencode-go/kimi-k2.7-code",
+      "model": "zai-coding-plan/glm-5.1",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.5" },
-        { "model": "zai-coding-plan/glm-5.1" },
         { "model": "opencode/kimi-k2.5" }
       ]
     },
@@ -207,7 +203,8 @@
     "staleTimeoutMs": 180000,
     "providerConcurrency": {
       "opencode-go": 10,
-      "opencode": 10
+      "opencode": 10,
+      "zai-coding-plan": 5
     },
     "modelConcurrency": {
       "opencode-go/kimi-k2.7-code": 3,
@@ -231,7 +228,11 @@
       "opencode-go/minimax-m3": 2,
       "opencode-go/minimax-m2.7": 5,
       "opencode/deepseek-v4-flash-free": 20,
-      "opencode/nemotron-3-ultra-free": 5
+      "opencode/nemotron-3-ultra-free": 5,
+      "zai-coding-plan/glm-5.2": 1,
+      "zai-coding-plan/glm-5.1": 2,
+      "zai-coding-plan/glm-4.7": 5,
+      "zai-coding-plan/glm-4.5-air": 10
     }
   },
   "experimental": {
