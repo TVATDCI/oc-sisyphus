@@ -30,9 +30,16 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { getCanonicalStatePath, getLegacySidecarStatePath } from "./paths.js";
 import { getProjectName, getActiveStatePath, ensureProjectDir } from "./project-state.js";
-import { scanReviewFiles } from "./review-scanner.js";
+import { scanReviewFiles, loadSignedVerdicts } from "./review-scanner.js";
+import { logGateEvent } from "./gate-logger.js";
 
 export const CURRENT_SCHEMA_VERSION = "3.0.0";
+
+let MEMORY_KEY = null;
+
+export function setMemoryKey(key) {
+  MEMORY_KEY = key && typeof key === "string" ? key : null;
+}
 
 /**
  * Read the persistent state file.
@@ -64,11 +71,7 @@ export function readPersistentState() {
       );
     }
   } else {
-    // Missing schema_version: warn but accept (backward compat with v2.0.0)
-    console.warn(
-      `[sisyphus-gates] State file at ${path} has no schema_version. ` +
-        `Expected ${CURRENT_SCHEMA_VERSION}. Accepting as legacy.`
-    );
+    logGateEvent("state", "readPersistentState: no schema_version (accepting as legacy)", { path, expected: CURRENT_SCHEMA_VERSION });
   }
 
   return parsed;
@@ -89,20 +92,28 @@ export function writePersistentState(projectName, gateStatus, extra = {}) {
     ensureProjectDir(resolvedProjectName);
   }
 
-  const state = {
+  let existing = {};
+  try {
+    existing = JSON.parse(readFileSync(path, "utf-8"));
+  } catch {
+    // File doesn't exist or is corrupt — start fresh
+  }
+
+  const merged = {
+    ...existing,
     schema_version: CURRENT_SCHEMA_VERSION,
-    project: projectName,
-    phase: gateStatus.phase || "discovery",
-    prd_gate: gateStatus.prdGate || "unknown",
-    plan_gate: gateStatus.planGate || "unknown",
-    approval_status: gateStatus.approvalStatus || "pending",
+    project: projectName ?? existing.project,
+    phase: gateStatus.phase ?? existing.phase ?? "discovery",
+    prd_gate: gateStatus.prdGate ?? existing.prd_gate ?? "unknown",
+    plan_gate: gateStatus.planGate ?? existing.plan_gate ?? "unknown",
+    approval_status: gateStatus.approvalStatus ?? existing.approval_status ?? "pending",
     last_updated: new Date().toISOString(),
     ...extra,
   };
   try {
-    writeFileSync(path, JSON.stringify(state, null, 2) + "\n");
+    writeFileSync(path, JSON.stringify(merged, null, 2) + "\n");
   } catch (err) {
-    console.error(`[sisyphus-gates] Failed to write state to ${path}:`, err.message);
+    logGateEvent("state", "writePersistentState failed", { path, error: err.message });
   }
 }
 
@@ -175,34 +186,49 @@ export function syncStateWithDisk(sessionID) {
   try {
     persistent = readPersistentState();
   } catch (err) {
-    // Corrupt or future-schema state: treat as missing AND log.
-    console.error(`[sisyphus-gates] Persistent state unreadable:`, err.message);
+    logGateEvent("sync", "syncStateWithDisk: persistent state unreadable", { error: err.message });
     persistent = null;
   }
 
   const reviews = scanReviewFiles();
 
-  state.prdGateStatus = persistent?.prd_gate || reviews.prdGate || "unknown";
-  state.planGateStatus = persistent?.plan_gate || reviews.planGate || "unknown";
+  const prdVerdict = loadSignedVerdicts("prd", null, MEMORY_KEY);
+  const planVerdict = loadSignedVerdicts("plan", null, MEMORY_KEY);
+  state.prdGateStatus = prdVerdict.gate || "unknown";
+  state.planGateStatus = planVerdict.gate || "unknown";
   state.approvalStatus = persistent?.approval_status || "pending";
   state.stateFileExists = persistent !== null;
 
-  // Read persisted phase on init (W1.A bug #7 fix)
   if (persistent && typeof persistent.phase === "string") {
     state.phase = persistent.phase;
+  }
+
+  if (persistent) {
+    if (persistent.plan_id) state.planId = persistent.plan_id;
+    if (persistent.prd_id) state.prdId = persistent.prd_id;
   }
 
   if (state.prdGateStatus === "PASS") state.prdApproved = true;
   if (state.planGateStatus === "PASS") state.planApproved = true;
 
-  if (reviews.prdGate === "FAIL") {
+  if (reviews.prdGate === "FAIL" && state.prdGateStatus !== "PASS") {
     state.prdApproved = false;
     state.prdGateStatus = "FAIL";
   }
-  if (reviews.planGate === "FAIL") {
+  if (reviews.planGate === "FAIL" && state.planGateStatus !== "PASS") {
     state.planApproved = false;
     state.planGateStatus = "FAIL";
   }
+
+  logGateEvent("sync", "syncStateWithDisk", {
+    sessionID,
+    prdGate: state.prdGateStatus,
+    planGate: state.planGateStatus,
+    approval: state.approvalStatus,
+    phase: state.phase,
+    stateFileExists: state.stateFileExists,
+    memoryKeySet: !!MEMORY_KEY,
+  });
 
   return state;
 }
