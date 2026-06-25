@@ -24,4 +24,4 @@ build/
 coverage/
 
 # Auto-generated task tracking (OpenCode internal)
-tasks/opencode/
+tasks/
