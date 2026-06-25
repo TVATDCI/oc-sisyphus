@@ -69,9 +69,9 @@
       ]
     },
     "prometheus": {
-      "model": "opencode-go/kimi-k2.7-code",
+      "model": "zai-coding-plan/glm-5.1",
       "fallback_models": [
-        { "model": "zai-coding-plan/glm-5.2" },
+        { "model": "opencode-go/glm-5.1" },
         { "model": "opencode/glm-5.1" }
       ],
       "prompt_append": "file://~/.config/opencode/prompts/prometheus-guidance.md"
@@ -157,9 +157,9 @@
       ]
     },
     "ultrabrain": {
-      "model": "opencode-go/kimi-k2.7-code",
+      "model": "zai-coding-plan/glm-5.2",
       "fallback_models": [
-        { "model": "zai-coding-plan/glm-5.2" },
+        { "model": "opencode-go/kimi-k2.7-code" },
         { "model": "opencode/glm-5.2" }
       ]
     },
