@@ -85,7 +85,7 @@ The plugin verifies the HMAC signature using `crypto.timingSafeEqual` (prevents
 timing attacks). Unsigned, tampered, or wrong-key verdicts are rejected. If no
 signed verdicts exist, gates stay "unknown" → fail-closed.
 
-### 4. Skills (45 Instruction Modules)
+### 4. Skills (46 Instruction Modules)
 
 `SKILL.md` files that teach the AI specific tasks — reusable instruction
 manuals triggered by domain match:
@@ -93,7 +93,7 @@ manuals triggered by domain match:
 - **Planning**: `discovery-orchestrator`, `prd-writer`, `plan-writer`, `issue-creator`
 - **Review**: `momus-prd-reviewer`, `momus-plan-reviewer`, `code-review`, `security-auditor`
 - **Execution**: `wave-executor`, `tdd-executor`, `build-resolver`, `regression-gate`
-- **Research**: `athena-research`, `toolkit-lsp`, `toolkit-research`, `website-analyzer`
+- **Research**: `athena-research`, `teach`, `toolkit-lsp`, `toolkit-research`, `website-analyzer`
 - **Development**: `fullstack-dev`, `frontend-ui-ux`, `skill-creator`, `agent-development`
 - **System**: `session-close`, `shell-safety`, `system-reference`, `opencode-expert`
 
@@ -171,7 +171,7 @@ the cryptographic signature — never from forgeable text.
 │   ├── cli.js                 # Operator-only signing CLI
 │   ├── test/                  # 15 test files (328 tests) + 20 self-test scenarios
 │   └── THREAT-MODEL.md        # Attack surface analysis
-├── skills/                    # 45 skill packs
+├── skills/                    # 46 skill packs
 ├── rules/                     # Language + concern rules
 ├── scripts/                   # Git hooks, drift checks, validators
 ├── agents/                    # Subagent definitions with permissions
