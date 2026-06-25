@@ -50,13 +50,21 @@ The workspace holds these artifacts, each with its own format doc:
 ## Core Workflow
 
 0. **Check for an abort signal.** If the user's message contains "stop", "abort", "cancel", "do not proceed", or similar halt language, halt the curriculum immediately. Acknowledge in one sentence. Do not write files. Wait for further instruction. (See Hard Constraints: Honor abort signals.)
-1. **Read MISSION.md first.** Before doing anything else, read `<workspace>/MISSION.md` and check for the 4 required sections: `## Why`, `## Success looks like`, `## Constraints`, `## Out of scope`.
-   - **If MISSION.md exists and has all 4 sections:** the mission is established. Briefly summarize it back to the user in 1-2 sentences and ask: "Continue with the next lesson, or revise the mission?" Do NOT re-interview. Do NOT ask the user to restate Why / Success / Constraints / Out of scope. Proceed to step 4 (Write lessons).
-   - **If MISSION.md is missing, incomplete, or vague:** interview the user now. Use [MISSION-FORMAT.md](./MISSION-FORMAT.md). Push back on abstract framings; chase the concrete outcome. Write MISSION.md only after the interview produces concrete content. Then proceed to step 4.
-2. **Curate resources.** Delegate to `athena-research` or `toolkit-research` for high-trust sources. Annotate every entry. Group by Knowledge and Wisdom. Surface gaps in a `## Gaps` section. Do not invent. Format: [RESOURCES-FORMAT.md](./RESOURCES-FORMAT.md).
-3. **Seed the glossary.** Add terms to `GLOSSARY.md` only as the user demonstrates understanding of them. Be opinionated. Revise in place. Format: [GLOSSARY-FORMAT.md](./GLOSSARY-FORMAT.md).
-4. **Write lessons.** Each lesson ties to the mission, sits in the user's zone of proximal development, and teaches one tightly-scoped thing. Sequential 4-digit numbering. Cross-link to other lessons and reference docs. Recommend a primary source. End with an invitation for follow-up questions.
-5. **Write learning records.** Only when the user demonstrates genuine understanding, discloses prior knowledge, a misconception is corrected, or the mission shifts. Not for coverage, not for journaling, not for duplicating the glossary. Format: [LEARNING-RECORD-FORMAT.md](./LEARNING-RECORD-FORMAT.md).
+1. **Resolve the workspace path.** Before reading anything, work out which workspace this invocation belongs to:
+   - Run `ls ~/Main-vault/teach/` to enumerate existing workspaces.
+   - Derive candidate slug(s) from the user's message: lowercase, kebab-case, drop stopwords ("the", "a", "how to", "me", "please"). For "teach me how to optimize the current system" the candidate slug is `optimize-current-system` or close variants like `optimize-opencode-system`.
+   - **Exact match found**: use it. Skip all topic-scoping questions.
+   - **One close match found** (e.g., the user says "optimize the current system" and `optimize-opencode-system/` exists): use it. Mention the match explicitly in your first reply ("Using existing workspace at X — correct?") so the user can correct if wrong.
+   - **Multiple plausible matches**: ask ONE disambiguation question listing the candidates. Do not ask scope questions until the workspace is chosen.
+   - **No match found**: ask ONE topic-confirmation question ("I'll create a new workspace at ~/Main-vault/teach/<slug>/ — sound right?"). After confirmation, create the workspace lazily on first write.
+   - **Explicit override**: if the user names a workspace path or slug directly in their message, use it without asking.
+2. **Read MISSION.md first.** Before doing anything else, read `<workspace>/MISSION.md` and check for the 4 required sections: `## Why`, `## Success looks like`, `## Constraints`, `## Out of scope`.
+   - **If MISSION.md exists and has all 4 sections:** the mission is established. Briefly summarize it back to the user in 1-2 sentences and ask: "Continue with the next lesson, or revise the mission?" Do NOT re-interview. Do NOT ask the user to restate Why / Success / Constraints / Out of scope. Proceed to step 5 (Write lessons).
+   - **If MISSION.md is missing, incomplete, or vague:** interview the user now. Use [MISSION-FORMAT.md](./MISSION-FORMAT.md). Push back on abstract framings; chase the concrete outcome. Write MISSION.md only after the interview produces concrete content. Then proceed to step 5.
+3. **Curate resources.** Delegate to `athena-research` or `toolkit-research` for high-trust sources. Annotate every entry. Group by Knowledge and Wisdom. Surface gaps in a `## Gaps` section. Do not invent. Format: [RESOURCES-FORMAT.md](./RESOURCES-FORMAT.md).
+4. **Seed the glossary.** Add terms to `GLOSSARY.md` only as the user demonstrates understanding of them. Be opinionated. Revise in place. Format: [GLOSSARY-FORMAT.md](./GLOSSARY-FORMAT.md).
+5. **Write lessons.** Each lesson ties to the mission, sits in the user's zone of proximal development, and teaches one tightly-scoped thing. Sequential 4-digit numbering. Cross-link to other lessons and reference docs. Recommend a primary source. End with an invitation for follow-up questions.
+6. **Write learning records.** Only when the user demonstrates genuine understanding, discloses prior knowledge, a misconception is corrected, or the mission shifts. Not for coverage, not for journaling, not for duplicating the glossary. Format: [LEARNING-RECORD-FORMAT.md](./LEARNING-RECORD-FORMAT.md).
 
 ## Markdown Lesson Format
 
