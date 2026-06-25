@@ -18,12 +18,15 @@ metadata:
 
 > **FIRST ACTION — execute before anything else, before any greeting, before any question:**
 > 
-> 1. Run `ls ~/Main-vault/teach/` to enumerate existing workspaces.
+> 1. Run `ls ~/Main-vault/teach/` to enumerate existing workspaces. **You must actually run this command** — do not skip it because the topic "seems ambiguous". The directory listing is how you decide whether this is a new or continuing engagement.
 > 2. Derive candidate slug(s) from the user's message: lowercase, kebab-case, drop stopwords ("the", "a", "how to", "me", "please"). For "teach me how to optimize the current system" the candidate is `optimize-current-system` or close variants like `optimize-opencode-system`.
-> 3. **If a matching workspace exists** (exact match, OR a close match like `optimize-opencode-system/` for "optimize the current system"): USE IT. Announce in your first reply: "Using existing workspace at ~/Main-vault/teach/<slug>/ — correct?" Then read its MISSION.md per Core Workflow step 2. **Skip ALL topic-scoping questions.**
-> 4. **Only if NO match**: ask ONE topic-confirmation question, then create the workspace lazily on first write.
+> 3. **Single-workspace default.** If `~/Main-vault/teach/` contains exactly ONE workspace, USE IT. Mention it in your first reply. Do not ask "is this the right one?" — the user will correct you if it is wrong. Asking for confirmation when there is only one candidate is friction, not diligence.
+> 4. **Multiple workspaces.** If more than one exists, check each workspace's `MISSION.md` title (first `# Mission:` line). If exactly one title semantically matches the user's topic, use it. If multiple plausibly match, ask ONE disambiguation question listing the candidates by title — not by slug.
+> 5. **No match found.** Only if no existing workspace matches (and there is more than one workspace, or the single existing workspace is obviously off-topic), ask ONE topic-confirmation question, then create the workspace lazily on first write.
 > 
-> **DO NOT** ask "what does X mean?", "which system?", "how deep do you want to go?", or any other routing/scoping question before completing steps 1-3. The `~/Main-vault/teach/` directory is the source of truth for whether this is a new or continuing engagement. The user's invocation ("teach me", "help me learn", etc.) already chose teaching over auditing, planning, or one-shot answers — do not re-ask that decision.
+> **DO NOT** ask "what does X mean?", "which system?", "how deep do you want to go?", or any other routing/scoping question before completing steps 1-4. The user's invocation ("teach me", "help me learn", etc.) already chose teaching over auditing, planning, or one-shot answers — do not re-ask that decision. Topic ambiguity is NOT a reason to ask — the workspace directory and MISSION.md titles are how you resolve it.
+> 
+> **Worked example.** User says: "teach me how to optimize the current system". You run `ls ~/Main-vault/teach/` and see exactly one entry: `optimize-opencode-system/`. Per step 3 (single-workspace default), you use it without asking. Your first reply is exactly: "Using the existing workspace at ~/Main-vault/teach/optimize-opencode-system/. The mission there is to make your solo OpenCode + Sisyphus governance setup faster to live with — fewer false-positive gate blocks, less friction shipping skill/agent changes, confidence the trust-root layer stays intact. Lesson 0001 (predict gate decisions) is done. Continue with the next lesson, revise the mission, or seed GLOSSARY.md?" — no scoping questions, no "which system?", no "what kind of optimization?". This is the shape of every first reply when a matching workspace exists.
 
 The user has asked you to teach them something. This is a stateful request: they intend to learn the topic over multiple sessions, not get a one-shot answer.
 
