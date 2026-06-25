@@ -1,6 +1,6 @@
 # OpenCode Codebase — Complete Structure, Changes & Workflow
 
-> **Last reviewed:** 2026-06-24 | **Next review:** When agent routing changes or a new skill is added
+> **Last reviewed:** 2026-06-25 | **Next review:** When agent routing changes or a new skill is added
 > **Drift-prone sections:** §Agent Routing, §Change Timeline, §Skill count, §Plugin file count
 > **Stable sections:** §Directory Architecture, §Workflow State Machine, §Subagent Permissions
 
@@ -19,7 +19,7 @@
    │ └── commands/ # Slash-command definitions (reflection)
    │
    ├── 3. SKILL LAYER
-   │ ├── skills/ # 44 real skill directories + 1 \_shared refs (45 total)
+   │ ├── skills/ # 45 real skill directories + 1 \_shared refs (46 total)
    │ ├── └── each has SKILL.md + optional scripts/evals
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator
    │
@@ -73,6 +73,7 @@
    Jun 20 oh-my-openagent.json reset + doc sync: provider/model prefixes restored in §Agent Routing; MCP home path aligned to ~/Main-vault; tui.json plugin array cleared
    Jun 24 Provider switch: full zai-coding-plan reset (14 of 17 agent primaries on zai, 5 of 9 categories). Backup at oh-my-openagent.json.backup (mixed opencode-go + opencode scheme). §Agent Routing updated; includes coverage of sisyphus-gates classifier fixes (stripLeadingEnvExport + SUBCOMMAND_BD) landed same day.
    Jun 25 Provider strategy v3 (3-tier fallback): zai-coding-plan subscription (Tier 1, primary) → opencode-go lite subscription (Tier 2) → opencode pre-pay-as-you-go (Tier 3, free + paid). Trigger: prior mixed-provider scheme failed because OpenCode does not honor zai as cross-provider fallback target — forced opencode zen (paid extra) instead. 13 of 17 agents + 6 of 9 categories on zai primary; prometheus moved to opencode-go/kimi-k2.7-code; ultrabrain→opencode-go/kimi-k2.7-code, artistry→opencode-go/mimo-v2-omni, quick→zai/glm-4.5-air, unspecified-low→zai/glm-4.6, unspecified-high→zai/glm-4.7. §Agent Routing rewritten with 3-tier strategy rationale + fallback chain coverage gaps (atlas zai-only, archivist/athena no fallbacks, explore/auditor/explorer inverted). Concurrency hardening (same day, post-librarian research): modelConcurrency gap fixed (added glm-4.6v=2, glm-4.6=5, glm-5-turbo=3 — previously shared single 5-slot zai bucket via providerConcurrency fallthrough); restore_primary_after_cooldown=true added to runtime_fallback so post-fallback the runtime returns to primary zai after cooldown_seconds (15s); §Agent Routing documents queuing≠fallback distinction (concurrency cap queues task, only HTTP errors like 429/5xx trigger runtime_fallback to next tier).
+   Jun 25 teach skill added: Markdown-first, multi-session learning workspace under ~/Main-vault/teach/<topic>/. Adapted from Matt Pocock's productivity/teach skill; drops HTML/assets pipeline, switches to Markdown lessons + reference docs + learning records. First end-to-end test topic: "optimize the current system" with workspace at ~/Main-vault/teach/optimize-opencode-system/ containing MISSION.md, RESOURCES.md, 1 lesson, 1 reference, 1 learning record.
    Jun 7 W0 — Safety baseline: git init, .gitignore fix, .omo/ archive, plugin pin @4.7.5, benchmark/ removal
    Jun 7 W1 — Runtime hardening: MCP scoped to 4 paths, health-check.md, README.md, validate-skills-v2.py (37 PASS), 6 new agents added
    Jun 7 W2 — Contract migration: canonical state seeded (~/.sisyphus/state.json), plugin source restored (13 modules), 180 unit tests + 20 self-tests PASS, THREAT-MODEL.md
