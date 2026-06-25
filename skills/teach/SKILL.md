@@ -45,10 +45,14 @@ The workspace holds these artifacts, each with its own format doc:
 - No trust-root writes. Never write to or read from `~/.sisyphus/state.json`, `workflow.yaml`, verdict files, `/proc`, or `plugins/sisyphus-gates/src/`.
 - No inventing resources. Every entry in RESOURCES.md must come from `athena-research`, `toolkit-research`, or a source the user handed you.
 - No reusable assets or shared stylesheets. Markdown carries its own formatting.
+- Honor abort signals immediately. If the user says "stop", "abort", "cancel", "do not proceed", "halt", or otherwise clearly indicates they want the curriculum suspended, stop the current action at once. Do not write or modify any file. Do not ask "are you sure?" or attempt to negotiate. Acknowledge the stop in one sentence and wait for the user's next instruction. The user can resume later by re-invoking the skill; the workspace state is preserved on disk.
 
 ## Core Workflow
 
-1. **Elicit the mission.** If `MISSION.md` is missing, vague, or lacks Why / Success looks like / Constraints / Out of scope, interview the user before writing anything. Use [MISSION-FORMAT.md](./MISSION-FORMAT.md). Push back on abstract framings; chase the concrete outcome.
+0. **Check for an abort signal.** If the user's message contains "stop", "abort", "cancel", "do not proceed", or similar halt language, halt the curriculum immediately. Acknowledge in one sentence. Do not write files. Wait for further instruction. (See Hard Constraints: Honor abort signals.)
+1. **Read MISSION.md first.** Before doing anything else, read `<workspace>/MISSION.md` and check for the 4 required sections: `## Why`, `## Success looks like`, `## Constraints`, `## Out of scope`.
+   - **If MISSION.md exists and has all 4 sections:** the mission is established. Briefly summarize it back to the user in 1-2 sentences and ask: "Continue with the next lesson, or revise the mission?" Do NOT re-interview. Do NOT ask the user to restate Why / Success / Constraints / Out of scope. Proceed to step 4 (Write lessons).
+   - **If MISSION.md is missing, incomplete, or vague:** interview the user now. Use [MISSION-FORMAT.md](./MISSION-FORMAT.md). Push back on abstract framings; chase the concrete outcome. Write MISSION.md only after the interview produces concrete content. Then proceed to step 4.
 2. **Curate resources.** Delegate to `athena-research` or `toolkit-research` for high-trust sources. Annotate every entry. Group by Knowledge and Wisdom. Surface gaps in a `## Gaps` section. Do not invent. Format: [RESOURCES-FORMAT.md](./RESOURCES-FORMAT.md).
 3. **Seed the glossary.** Add terms to `GLOSSARY.md` only as the user demonstrates understanding of them. Be opinionated. Revise in place. Format: [GLOSSARY-FORMAT.md](./GLOSSARY-FORMAT.md).
 4. **Write lessons.** Each lesson ties to the mission, sits in the user's zone of proximal development, and teaches one tightly-scoped thing. Sequential 4-digit numbering. Cross-link to other lessons and reference docs. Recommend a primary source. End with an invitation for follow-up questions.
@@ -83,6 +87,8 @@ A good reference doc:
 - Includes glossary sections where terminology is dense.
 
 ## Mission Elicitation
+
+**Entry check — read before asking.** On every invocation, the first action is to read `<workspace>/MISSION.md`. If it exists and contains all 4 sections (`## Why`, `## Success looks like`, `## Constraints`, `## Out of scope`), the mission is established — do NOT re-interview. Summarize it back in 1-2 sentences and ask whether to continue with the next lesson or revise. Only if MISSION.md is missing, incomplete, or genuinely vague do you interview the user.
 
 If `MISSION.md` is missing, or if it is missing any of Why, Success looks like, Constraints, or Out of scope, stop and ask the user. Do not write lessons into a vacuum.
 
