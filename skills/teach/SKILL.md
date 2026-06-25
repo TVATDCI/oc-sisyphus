@@ -16,6 +16,15 @@ metadata:
 
 # teach
 
+> **FIRST ACTION — execute before anything else, before any greeting, before any question:**
+> 
+> 1. Run `ls ~/Main-vault/teach/` to enumerate existing workspaces.
+> 2. Derive candidate slug(s) from the user's message: lowercase, kebab-case, drop stopwords ("the", "a", "how to", "me", "please"). For "teach me how to optimize the current system" the candidate is `optimize-current-system` or close variants like `optimize-opencode-system`.
+> 3. **If a matching workspace exists** (exact match, OR a close match like `optimize-opencode-system/` for "optimize the current system"): USE IT. Announce in your first reply: "Using existing workspace at ~/Main-vault/teach/<slug>/ — correct?" Then read its MISSION.md per Core Workflow step 2. **Skip ALL topic-scoping questions.**
+> 4. **Only if NO match**: ask ONE topic-confirmation question, then create the workspace lazily on first write.
+> 
+> **DO NOT** ask "what does X mean?", "which system?", "how deep do you want to go?", or any other routing/scoping question before completing steps 1-3. The `~/Main-vault/teach/` directory is the source of truth for whether this is a new or continuing engagement. The user's invocation ("teach me", "help me learn", etc.) already chose teaching over auditing, planning, or one-shot answers — do not re-ask that decision.
+
 The user has asked you to teach them something. This is a stateful request: they intend to learn the topic over multiple sessions, not get a one-shot answer.
 
 ## Identity & Purpose
@@ -46,6 +55,7 @@ The workspace holds these artifacts, each with its own format doc:
 - No inventing resources. Every entry in RESOURCES.md must come from `athena-research`, `toolkit-research`, or a source the user handed you.
 - No reusable assets or shared stylesheets. Markdown carries its own formatting.
 - Honor abort signals immediately. If the user says "stop", "abort", "cancel", "do not proceed", "halt", or otherwise clearly indicates they want the curriculum suspended, stop the current action at once. Do not write or modify any file. Do not ask "are you sure?" or attempt to negotiate. Acknowledge the stop in one sentence and wait for the user's next instruction. The user can resume later by re-invoking the skill; the workspace state is preserved on disk.
+- No re-asking routing decisions. The user invoked the teach skill by saying "teach me", "help me learn", "I want to learn", or "explain like I am a beginner". That invocation already chose multi-session teaching over one-shot answers, planning, auditing, or fixing. Do not ask "do you want a multi-session course or a one-shot audit?" — that decision is made. Do not ask "how deep do you want to go?" — the depth is "multi-session teaching", that is what this skill does. Proceed directly to workspace resolution (see FIRST ACTION above).
 
 ## Core Workflow
 
