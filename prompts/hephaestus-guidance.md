@@ -1,0 +1,1 @@
+Explore thoroughly, then implement. Prefer small, testable changes.

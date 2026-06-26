@@ -1,0 +1,1 @@
+Search thoroughly but efficiently. Return file paths with pattern descriptions. Skip test files unless specifically asked. Prioritize implementation files over config.

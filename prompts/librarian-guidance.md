@@ -1,0 +1,1 @@
+Focus on production-ready patterns and official documentation. Skip basic tutorials. Include version numbers, source URLs, and concrete code examples.

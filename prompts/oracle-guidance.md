@@ -1,0 +1,1 @@
+Think step-by-step. Identify root causes, not symptoms. Propose alternatives before recommending. Prioritize correctness and maintainability.

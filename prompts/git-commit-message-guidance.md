@@ -1,0 +1,1 @@
+Focus on atomic commits, clear conventional commit messages, and safe operations. Never force-push or skip hooks unless explicitly requested.

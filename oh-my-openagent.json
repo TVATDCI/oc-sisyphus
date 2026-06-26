@@ -16,7 +16,7 @@
         { "model": "opencode-go/kimi-k2.7-code" },
         { "model": "opencode-go/glm-5.2" }
       ],
-      "prompt_append": "Intent gate: On each new user request, classify intent before acting. Analysis-oriented requests (analyze, research, compare, evaluate, audit, investigate, gather context, look into) default to exploration-first: gather context, do not modify files unless explicitly asked, then present findings and ask before implementing. Execution-oriented requests (implement, add, create, fix, change, write, build, deploy) proceed with normal planning and execution. If ambiguous, ask the user whether they want analysis first or implementation. Response discipline: (a) Never end a turn offering to retrieve or 'look into' something the request already asked for — if fully answering needs more retrieval, do it now, don't defer to a follow-up. (b) Accountability without self-abasement: on correction, acknowledge what went wrong, stay on the problem, keep your judgment — no apology spirals, no surrender of judgment to seem agreeable. (c) Avoid filler words: 'genuinely', 'honestly', 'actually'.",
+      "prompt_append": "file://~/.config/opencode/prompts/sisyphus-guidance.md",
       "ultrawork": {
         "model": "zai-coding-plan/glm-5.1",
         "variant": "high",
@@ -33,7 +33,7 @@
         { "model": "opencode/kimi-k2.5" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ],
-      "prompt_append": "Explore thoroughly, then implement. Prefer small, testable changes."
+      "prompt_append": "file://~/.config/opencode/prompts/hephaestus-guidance.md"
     },
     "oracle": {
       "model": "zai-coding-plan/glm-5.2",
@@ -43,7 +43,7 @@
         { "model": "opencode-go/qwen3.7-max" },
         { "model": "opencode/gpt-5.4" }
       ],
-      "prompt_append": "Think step-by-step. Identify root causes, not symptoms. Propose alternatives before recommending. Prioritize correctness and maintainability."
+      "prompt_append": "file://~/.config/opencode/prompts/oracle-guidance.md"
     },
     "librarian": {
       "model": "zai-coding-plan/glm-4.7",
@@ -51,7 +51,7 @@
         { "model": "opencode-go/minimax-m2.7" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ],
-      "prompt_append": "Focus on production-ready patterns and official documentation. Skip basic tutorials. Include version numbers, source URLs, and concrete code examples."
+      "prompt_append": "file://~/.config/opencode/prompts/librarian-guidance.md"
     },
     "explore": {
       "model": "opencode-go/minimax-m2.7",
@@ -59,7 +59,7 @@
         { "model": "zai-coding-plan/glm-4.7" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ],
-      "prompt_append": "Search thoroughly but efficiently. Return file paths with pattern descriptions. Skip test files unless specifically asked. Prioritize implementation files over config."
+      "prompt_append": "file://~/.config/opencode/prompts/explore-guidance.md"
     },
     "multimodal-looker": {
       "model": "zai-coding-plan/glm-4.6v",
@@ -211,7 +211,7 @@
       "model": "opencode/deepseek-v4-flash-free",
       "fallback_models": [{ "model": "zai-coding-plan/glm-4.5-air" }],
       "description": "All git operations — commits, branches, rebases, history searches",
-      "prompt_append": "Focus on atomic commits, clear conventional commit messages, and safe operations. Never force-push or skip hooks unless explicitly requested."
+      "prompt_append": "file://~/.config/opencode/prompts/git-commit-message-guidance.md"
     }
   },
   "background_task": {
