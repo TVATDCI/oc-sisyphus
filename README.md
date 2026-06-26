@@ -166,6 +166,7 @@ the cryptographic signature — never from forgeable text.
 ├── oh-my-openagent.json       # 17 agents + 9 categories + model routing
 ├── AGENTS.md                  # Root system prompt (compaction, routing, rules)
 ├── COMPLETE-CODEBASE.md       # Full system map (architecture, timeline, routing)
+├── RAW.md                     # Frontier-prompt absorption research reference
 ├── plugins/sisyphus-gates/    # Governance plugin
 │   ├── src/                   # 18 source modules
 │   ├── cli.js                 # Operator-only signing CLI
@@ -227,6 +228,7 @@ subagent escape, trust-root path traversal, and forged verdicts.
 ## Documentation
 
 - [COMPLETE-CODEBASE.md](./COMPLETE-CODEBASE.md) — full system map, timeline, routing
+- [RAW.md](./RAW.md) — frontier-prompt absorption research reference
 - [SYSTEM-OVERVIEW.md](./SYSTEM-OVERVIEW.md) — architecture doc
 - [THREAT-MODEL.md](./plugins/sisyphus-gates/THREAT-MODEL.md) — attack surface analysis
 - [oh-my-openagent.json](./oh-my-openagent.json) — agent + category routing
@@ -245,4 +247,4 @@ bash scripts/pre-push.sh      # full pre-push suite
 
 - 328/328 unit tests + 20/20 self-test scenarios passing
 - `oh-my-openagent` pinned to `4.12.1`; `sisyphus-gates` is a local plugin (`v0.2.0+CLI`)
-- CI runs on Node 22; last updated 2026-06-24
+- CI runs on Node 22; last updated 2026-06-26
