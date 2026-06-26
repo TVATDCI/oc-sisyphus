@@ -176,6 +176,7 @@ the cryptographic signature — never from forgeable text.
 ├── rules/                     # Language + concern rules
 ├── scripts/                   # Git hooks, drift checks, validators
 ├── agents/                    # Subagent definitions with permissions
+├── prompts/                   # External agent prompts (file:// archive for prompt_append)
 └── .github/workflows/ci.yml   # CI: test + nightly canary
 ```
 
