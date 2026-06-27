@@ -36,9 +36,24 @@ import { logGateEvent } from "./gate-logger.js";
 export const CURRENT_SCHEMA_VERSION = "3.0.0";
 
 let MEMORY_KEY = null;
+let sandboxConfig = null;
 
 export function setMemoryKey(key) {
   MEMORY_KEY = key && typeof key === "string" ? key : null;
+}
+
+/**
+ * Set the sandbox relaxation config (loaded once from _options at server
+ * startup). Called from plugin.js server(). Per-session state reads this
+ * via defaultSessionState().sandboxConfig.
+ *
+ * @param {{sandboxPaths: string[], sandboxAllowedCommands: string[]} | null} config
+ *   - Object: feature enabled (subject to path/command match in Layer 3.7)
+ *   - null:   validation failed or feature not configured — disabled
+ */
+export function setSandboxConfig(config) {
+  sandboxConfig =
+    config === null || (config && typeof config === "object") ? config : null;
 }
 
 /**
@@ -155,6 +170,9 @@ function defaultSessionState() {
     stateFileExists: false,
     planId: null,
     repairBriefPath: null,
+    // Slice A: sandbox relaxation config (null = feature disabled). Read-only
+    // for downstream layers; populated once at server() startup from _options.
+    sandboxConfig,
   };
 }
 

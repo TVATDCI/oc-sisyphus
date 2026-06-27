@@ -647,3 +647,102 @@ state, and update the threat model so the same bypass cannot recur silently.
 **End of threat model. Total length: 10 sections, designed to be reviewed at every
 plugin major version bump. Reference paths in this document use `~/` to mean
 `/home/vladi/` for readability.**
+
+
+## Sandbox relaxation threat model (v0.3.0 — Layer 3.7)
+
+Layer 3.7 adds path-scoped sandbox relaxation: when the agent's cwd resolves
+into a configured `sandbox_paths` prefix AND the bash command matches a
+`sandbox_allowed_commands` entry, the command is allowed without requiring
+Execution phase. This section documents the new attack surface.
+
+### 1. Symlink escape
+
+**Threat:** An attacker (or compromised agent) creates a symlink inside the
+sandbox prefix that points to a production location (e.g., `/tmp/sandbox/.escape
+→ ~/.config/opencode`). If `isSandboxPath` used a naive `startsWith` check
+on the raw cwd string, the symlink would grant sandbox privileges to the prod
+path.
+
+**Mitigation:** `isSandboxPath` reuses the same `canonicalize()` helper that
+Layer 0 uses for its HOLE 1b/c symlink-escape defense (`realpathSync`).
+`realpath` follows symlinks AND resolves path traversal (`..`, `.`, `//`).
+A sandbox cwd that symlinks to a production location resolves to the production
+location, which does NOT match the sandbox prefix — sandbox privileges are denied.
+
+**Residual risk:** TOCTOU (time-of-check-time-of-use). `realpath` resolves the
+cwd at check time; by the time the command actually executes, the symlink target
+may have changed. The plugin cannot control the `open()` call. Inherited from
+Layer 0 HOLE 1b documentation; documented here for completeness. Practical
+exploitability is low because the window is sub-millisecond.
+
+**Test coverage:** `test/sandbox-policy.test.js` AC-3.6 (3 symlink tests) +
+`test/adversarial/sandbox-bypass.test.js` ADV-1 through ADV-6 (direct escape,
+chained symlinks, path traversal, hidden-name masquerade, fake-trust-root).
+
+### 2. Sandbox config tampering
+
+**Threat:** An agent could rewrite `opencode.json` to widen its own
+`sandbox_paths` (e.g., add `/home/` or `~/.config/` as a sandbox prefix),
+then execute arbitrary commands in those paths without phase advancement.
+
+**Mitigation:** Slice G (brain-2ah) adds `opencode.json` to
+`TRUST_ROOT_WRITE_PATTERNS`. The gated `write`/`edit`/`bash` tools
+cannot modify `opencode.json`. Operators edit the file from their terminal
+(the existing workflow — unchanged). Reads remain allowed (via
+`READ_EXCEPTION_PATTERNS`) so diagnostic tools can inspect the config.
+
+**Residual risk:** A bash command like `echo '...' >> opencode.json` would
+be blocked by Layer 4's redirect detection (`hasShellRedirect`). A command
+like `cp evil.json opencode.json` would be blocked because `cp` with a
+trust-root destination triggers Tier 2 pattern match in
+`matchTrustRootBash`. No residual risk identified.
+
+### 3. Audit trail integrity
+
+**Threat:** Sandbox-allow events are invisible "silent allows" that bypass the
+normal phase ceremony. Without an audit trail, an operator cannot reconstruct
+what the agent did under sandbox relaxation.
+
+**Mitigation:** Every Layer 3.7 allow is recorded in
+`~/.sisyphus/metrics/gate-events.jsonl` with:
+- `event_subtype: "sandbox-allow"` (explicit override of auto-classifier)
+- `cwd`: the agent's literal cwd
+- `realpath_cwd`: the resolved cwd (post-symlink-resolution)
+- `command`: the bash command string
+- `matched_pattern`: the allowlist entry that matched
+- `matched_sandbox_path`: the sandbox_paths prefix that matched
+
+The JSONL file is append-only (`appendFileSync`). Rotation by rename
+(`.1`, `.2`). The file itself is outside Layer 0's write-denylist (it's in
+`~/.sisyphus/metrics/`, not a trust-root path) — but the plugin's own code
+is the only writer, and Layer 0 protects the plugin source from tampering.
+
+**Test coverage:** `test/self-test/scenarios.js` `scenario_sandbox_allow_npm_install`
+verifies exactly 1 event with `event_subtype: "sandbox-allow"` and
+`command: "npm install"`. The existing `metrics-allow-not-recorded`
+self-test verifies Layer 4 safe reads still produce 0 events (US-E3 invariant).
+
+**Known gap (future improvement):** The e2e scenario currently asserts only
+`e.command`, not the full 5-field forensic shape (`cwd`, `realpath_cwd`,
+`matched_pattern`, `matched_sandbox_path`). The field translation in
+`plugin.js` is verified correct at the unit level, but the e2e assertion
+should be expanded to cover all 5 fields for defense-in-depth.
+
+### 4. Trust-root pattern model (4-list architecture)
+
+The trust-root path protection uses 4 pattern lists. Future contributors adding
+new protected paths must understand which list(s) to update:
+
+| List | Purpose | Checked by | Example patterns |
+|------|---------|------------|-----------------|
+| `TRUST_ROOT_WRITE_PATTERNS` | Write-blocked paths | `matchTrustRootWrite` | `state.json`, `workflow.yaml`, `opencode.json` |
+| `TRUST_ROOT_READ_PATTERNS` | Read-blocked paths (auto-propagated from WRITE + read-only additions) | `matchTrustRootRead` | All WRITE patterns + `/proc`, `plugin src/`, `plugin dist/` |
+| `TRUST_ROOT_EXCEPTIONS` | Fully exempt (both read + write) | Both matchers | `.sisyphus/evidence/` |
+| `READ_EXCEPTION_PATTERNS` | Write-blocked but read-allowed | `matchTrustRootRead` only (NOT `matchTrustRootWrite`) | `opencode.json` (Slice G) |
+
+**Rule for new paths:**
+- Path should be **write-blocked AND read-blocked** → add to `TRUST_ROOT_WRITE_PATTERNS` only (auto-propagates to READ).
+- Path should be **write-blocked but read-allowed** → add to BOTH `TRUST_ROOT_WRITE_PATTERNS` AND `READ_EXCEPTION_PATTERNS`.
+- Path should be **fully exempt** → add to `TRUST_ROOT_EXCEPTIONS`.
+- Path should be **read-blocked only** (not writable anyway) → add to `TRUST_ROOT_READ_PATTERNS` directly (not via WRITE propagation).

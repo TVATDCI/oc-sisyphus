@@ -614,6 +614,104 @@ export async function scenario_chat_transform_stale_state_refresh() {
   }
 }
 
+
+// ─── Slice E (brain-9z9): Sandbox e2e scenarios ──────────────────────────
+
+const SANDBOX_OPTIONS = {
+  sandbox_paths: ["/tmp/"],
+  sandbox_allowed_commands: ["npm install", "npm test"],
+};
+
+export async function scenario_sandbox_allow_npm_install() {
+  const sb = createSandbox();
+  const originalCwd = process.cwd();
+  try {
+    writeState(sb.home, approvedState());
+    clearMetricsFile(sb.home);
+    process.chdir(sb.home);
+    const hooks = await bootServer(SANDBOX_OPTIONS);
+    const out = await callToolExecuteBefore(hooks, {
+      tool: "bash",
+      args: { command: "npm install" },
+      sessionID: "selftest-21",
+    });
+    const r = assertAllowed(out);
+    if (!r.ok) {
+      return { name: "sandbox-allow-npm-install", ok: false, message: "should allow npm install in sandbox", detail: r.reason };
+    }
+    const events = readMetricsEvents(sb.home);
+    const sandboxEvents = events.filter((e) => e.event_subtype === "sandbox-allow");
+    if (sandboxEvents.length !== 1) {
+      return { name: "sandbox-allow-npm-install", ok: false, message: `expected 1 sandbox-allow event, got ${sandboxEvents.length}`, detail: JSON.stringify(events) };
+    }
+    const e = sandboxEvents[0];
+    if (e.command !== "npm install") {
+      return { name: "sandbox-allow-npm-install", ok: false, message: `expected command=npm install, got ${e.command}` };
+    }
+    return {
+      name: "sandbox-allow-npm-install",
+      ok: true,
+      message: "npm install allowed in sandbox cwd + sandbox-allow event recorded",
+    };
+  } finally {
+    process.chdir(originalCwd);
+    sb.cleanup();
+  }
+}
+
+export async function scenario_sandbox_blocks_critical_layers() {
+  const sb = createSandbox();
+  const originalCwd = process.cwd();
+  try {
+    writeState(sb.home, approvedState());
+    clearMetricsFile(sb.home);
+    process.chdir(sb.home);
+    const hooks = await bootServer(SANDBOX_OPTIONS);
+
+    // sudo should be blocked by Layer 2
+    const out1 = await callToolExecuteBefore(hooks, {
+      tool: "bash",
+      args: { command: "sudo apt update" },
+      sessionID: "selftest-22a",
+    });
+    const r1 = assertBlocked(out1);
+    if (!r1.ok) {
+      return { name: "sandbox-blocks-critical", ok: false, message: "should block sudo in sandbox", detail: r1.reason };
+    }
+
+    // rm -rf / should be blocked by Layer 1
+    const out2 = await callToolExecuteBefore(hooks, {
+      tool: "bash",
+      args: { command: "rm -rf /" },
+      sessionID: "selftest-22b",
+    });
+    const r2 = assertBlocked(out2);
+    if (!r2.ok) {
+      return { name: "sandbox-blocks-critical", ok: false, message: "should block rm -rf / in sandbox", detail: r2.reason };
+    }
+
+    // write to state.json should be blocked by Layer 0
+    const statePath = sb.home + "/.sisyphus/state.json";
+    const out3 = await callToolExecuteBefore(hooks, {
+      tool: "write",
+      args: { filePath: statePath },
+      sessionID: "selftest-22c",
+    });
+    const r3 = assertBlocked(out3);
+    if (!r3.ok) {
+      return { name: "sandbox-blocks-critical", ok: false, message: "should block write to state.json in sandbox", detail: r3.reason };
+    }
+
+    return {
+      name: "sandbox-blocks-critical",
+      ok: true,
+      message: "sandbox allows npm install but blocks sudo/rm-rf/state.json-write",
+    };
+  } finally {
+    process.chdir(originalCwd);
+    sb.cleanup();
+  }
+}
 // ─── Scenario registry ─────────────────────────────────────────────────────
 
 export const SCENARIOS = [
@@ -637,4 +735,6 @@ export const SCENARIOS = [
   scenario_metrics_multi_event_subtypes,
   scenario_chat_transform_gate_failed_metric,
   scenario_chat_transform_stale_state_refresh,
+  scenario_sandbox_allow_npm_install,
+  scenario_sandbox_blocks_critical_layers,
 ];

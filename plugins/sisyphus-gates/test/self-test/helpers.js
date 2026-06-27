@@ -99,9 +99,9 @@ export function writeWorkflow(home, content) {
   return path;
 }
 
-export async function bootServer() {
+export async function bootServer(options = {}) {
   clearAllCaches();
-  return await server({}, {});
+  return await server({}, options);
 }
 
 export async function callToolExecuteBefore(hooks, { tool, args, sessionID }) {
