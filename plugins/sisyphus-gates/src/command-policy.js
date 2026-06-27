@@ -172,6 +172,36 @@ export function hasShellRedirect(cmd) {
   }
   return false;
 }
+/**
+ * Check if a command contains shell metacharacters that indicate chaining,
+ * substitution, or redirection. Used by both isDestructiveCommand (Layer 4
+ * destructive check) and isSandboxCommand (Layer 3.7 explicit deny before
+ * allowlist match).
+ *
+ * Consolidates the three checks that were previously inlined in both
+ * isDestructiveCommand and isSafeReadOnlyCommand:
+ *   1. Chaining operators: && || ; |
+ *   2. Command substitution: $( ) or backtick
+ *   3. Shell redirects: > >> < | & (single)
+ *
+ * This function is a pure consolidation — it does NOT add any new predicate
+ * beyond what the three original checks already tested. The 328-test
+ * regression sentinel verifies byte-identical behavior.
+ *
+ * Slice C (brain-ph1): extracted for reuse by Layer 3.7 sandbox command
+ * matching. Layer 3.7 must NOT bypass Layer 4's metachar protections.
+ */
+export function hasShellMetachar(cmd) {
+  if (typeof cmd !== "string") return false;
+  // Chaining operators (&&, ||, ;, |)
+  if (/(?:&&|\|\||[;|])/.test(cmd)) return true;
+  // Command substitution ($(...) or backtick)
+  if (cmd.includes("$(") || cmd.includes("`")) return true;
+  // Shell redirects (>, >>, <, |, single &) — reuse existing helper
+  if (hasShellRedirect(cmd)) return true;
+  return false;
+}
+
 function stripLeadingEnvExport(cmd) {
   if (typeof cmd !== "string") return cmd;
   if (!cmd.startsWith("export ")) return cmd;
@@ -485,14 +515,10 @@ export function isDestructiveCommand(cmd) {
   // Layer 1: sudo (anywhere as a command → destructive)
   if (containsSudo(cmd)) return true;
 
-  // Layer 2: shell redirect metachars
-  if (hasShellRedirect(cmd)) return true;
-
-  // P0d (G1/G2): chaining operators and command substitution are destructive
-  // regardless of the first token. "ls && rm -rf /" or "echo $(rm -rf /)"
-  // starts safe but contains destructive payloads.
-  if (/(?:&&|\|\||[;|])/.test(cmd)) return true;          // chaining operators
-  if (cmd.includes("$(") || cmd.includes("`")) return true; // cmd substitution
+  // Layer 2: shell metacharacters (redirects, chaining, substitution).
+  // Consolidated into hasShellMetachar() in Slice C — byte-identical to the
+  // previous inline checks (hasShellRedirect + chaining regex + substitution).
+  if (hasShellMetachar(cmd)) return true;
 
   const tokens = tokenize(cmd);
   if (tokens.length === 0) return false;
@@ -682,16 +708,12 @@ const SAFE_GIT_SUBCOMMANDS = new Set(["status", "log", "diff", "show"]);
 export function isSafeReadOnlyCommand(cmd) {
   if (typeof cmd !== "string") return false;
   cmd = stripLeadingEnvExport(cmd);
-  // Any redirect is not "safe" (it can mutate files or pipe to sh)
-  if (hasShellRedirect(cmd)) return false;
+  // Shell metacharacters (redirects, chaining, substitution) are not safe.
+  // Consolidated into hasShellMetachar() in Slice C — byte-identical to the
+  // previous inline checks.
+  if (hasShellMetachar(cmd)) return false;
   // sudo is never safe
   if (containsSudo(cmd)) return false;
-
-  // P0d (G1/G2): reject shell metacharacters — chaining, substitution.
-  // "ls && rm -rf /" or "echo $(rm -rf /)" starts with a safe token but
-  // contains destructive operations. Scan BEFORE the first-token allowlist.
-  if (/(?:&&|\|\||[;|])/.test(cmd)) return false;          // chaining operators
-  if (cmd.includes("$(") || cmd.includes("`")) return false; // cmd substitution
 
   const tokens = tokenize(cmd);
   if (tokens.length === 0) return false;
@@ -738,3 +760,18 @@ export function isSafeReadOnlyCommand(cmd) {
   }
   return SAFE_READ_ONLY_TOKENS.has(first);
 }
+
+// ─── Slice C: Exports for testing + Layer 3.7 reuse ───────────────────────
+
+/**
+ * Internal helpers exported for testing and for reuse by Layer 3.7
+ * (sandbox-policy.js). These are implementation details — the public
+ * API remains isDestructiveCommand + isSafeReadOnlyCommand.
+ *
+ * Layer 3.7 reuses normalize + stripLeadingEnvExport to ensure sandbox
+ * command matching uses the SAME normalization as Layer 4's safe-read check.
+ */
+export const _internal = {
+  normalize,
+  stripLeadingEnvExport,
+};

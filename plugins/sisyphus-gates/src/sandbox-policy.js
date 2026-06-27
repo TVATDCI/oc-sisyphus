@@ -1,33 +1,16 @@
 /**
  * sandbox-policy.js — Layer 3.7 sandbox allowlist policy.
  *
- * Wave 1 / Slice A (brain-vi1): config plumbing + validation only.
- * Wave 2 / Slice B (brain-99x): isSandboxPath (realpath-based prefix match).
- *
- * The sandbox relaxation is opt-in via the plugin's opencode.json config block:
- *
- *   [
- *     "./plugins/sisyphus-gates",
- *     {
- *       "verdict_key_command": "cat ~/.local/share/sisyphus-gate-key",
- *       "sandbox_paths": ["/tmp/"],
- *       "sandbox_allowed_commands": ["npm install", "npm test", ...]
- *     }
- *   ]
- *
- * Validation rules (PRD Decision D6):
- *   - Missing sandbox_paths key   → feature disabled (returns empty config)
- *   - Empty sandbox_paths array   → feature disabled (returns empty config)
- *   - Any entry without trailing "/" → reject the ENTIRE config (returns null).
- *   - sandbox_allowed_commands missing → treated as empty array.
- *   - Any malformed (non-array, non-string element) → reject entire config.
+ * Wave 1 / Slice A (brain-vi1): config plumbing + validation.
+ * Wave 2 / Slice B (brain-99x): isSandboxPath (realpath prefix match).
+ * Wave 3 / Slice C (brain-ph1): isSandboxCommand (regex prefix matcher).
  */
 
 import { _internal } from "./trust-root-paths.js";
+import { _internal as _commandPolicyInternal, hasShellMetachar } from "./command-policy.js";
 
-// Reused canonicalize (realpath-based, same defense as Layer 0 HOLE 1b/c).
-// trust-root-paths.js exports _internal with canonicalize already.
 const { canonicalize } = _internal;
+const { normalize, stripLeadingEnvExport } = _commandPolicyInternal;
 
 // ─── Slice A: Config plumbing ─────────────────────────────────────────────
 
@@ -42,7 +25,6 @@ function validatePathEntry(entry, index) {
     );
   }
   if (entry.length === 0) {
-    // Empty string is a special case of "no trailing slash".
     throw new Error(
       `sandbox_paths[${index}] is empty — must end with "/" (e.g. "/tmp/")`
     );
@@ -66,8 +48,6 @@ function validateCommandEntry(entry, index) {
       `sandbox_allowed_commands[${index}] must be a string, got ${typeof entry}`
     );
   }
-  // Empty string is allowed (will be trimmed to "" by the matcher later,
-  // but we don't reject here — operators might use it as a placeholder).
   return entry;
 }
 
@@ -86,7 +66,6 @@ function validateCommandEntry(entry, index) {
  *   - AC-3.9: entry without trailing slash → null
  */
 export function loadSandboxConfig(options) {
-  // No config block at all → feature disabled, empty config.
   if (options == null || typeof options !== "object") {
     return { sandboxPaths: [], sandboxAllowedCommands: [] };
   }
@@ -94,9 +73,7 @@ export function loadSandboxConfig(options) {
   const rawPaths = options.sandbox_paths;
   const rawCommands = options.sandbox_allowed_commands;
 
-  // sandbox_paths missing → feature disabled (treat as empty).
   if (rawPaths === undefined || rawPaths === null) {
-    // Still validate sandbox_allowed_commands if it was provided alongside.
     if (rawCommands !== undefined && rawCommands !== null) {
       try {
         const sandboxAllowedCommands = validateCommandArray(rawCommands);
@@ -108,7 +85,6 @@ export function loadSandboxConfig(options) {
     return { sandboxPaths: [], sandboxAllowedCommands: [] };
   }
 
-  // sandbox_paths present — must be array of strings each ending in "/".
   let sandboxPaths;
   try {
     sandboxPaths = validatePathArray(rawPaths);
@@ -116,7 +92,6 @@ export function loadSandboxConfig(options) {
     return null;
   }
 
-  // sandbox_allowed_commands optional — if missing, default to empty.
   let sandboxAllowedCommands = [];
   if (rawCommands !== undefined && rawCommands !== null) {
     try {
@@ -152,27 +127,11 @@ function validateCommandArray(rawCommands) {
  * sandbox path prefixes.
  *
  * Defense (PRD AC-3.6 / Decision D4): reuses the same canonicalize() helper
- * that Layer 0 uses for its HOLE 1b/c symlink-escape defense. realpath()
- * follows symlinks AND resolves path traversal (.., ., //). A sandbox cwd
- * that symlinks to a production location will resolve to the production
- * location, which will NOT match the sandbox prefix — sandbox privileges
- * are denied.
- *
- * Residual risk: TOCTOU on realpath (cwd valid at check, invalid at execute).
- * Inherited from Layer 0 HOLE 1b documentation; plugin cannot control the
- * open() call.
+ * that Layer 0 uses for its HOLE 1b/c symlink-escape defense.
  *
  * @param {string} cwd - the agent's current working directory
- * @param {string[]} sandboxPaths - validated sandbox path prefixes; each
- *   entry must end with "/" (enforced by loadSandboxConfig per D6).
+ * @param {string[]} sandboxPaths - validated sandbox path prefixes (each ending in "/")
  * @returns {{matchedSandboxPath: string} | null}
- *   - {matchedSandboxPath: <prefix>} on match (first matching prefix wins)
- *   - null on no match (including empty/null sandboxPaths, invalid cwd, etc.)
- *
- * Acceptance criteria covered:
- *   - AC-3.6: symlink escape — /tmp/foo symlinked to /home/user/.config
- *     resolves via realpath to the prod path, which doesn't match /tmp/
- *     → returns null
  */
 export function isSandboxPath(cwd, sandboxPaths) {
   if (typeof cwd !== "string" || cwd.length === 0) return null;
@@ -181,13 +140,6 @@ export function isSandboxPath(cwd, sandboxPaths) {
   const canonical = canonicalize(cwd);
   if (!canonical || canonical.length === 0) return null;
 
-  // Ensure canonical ends in "/" before prefix comparison. realpath() does
-  // not append trailing slashes, so /tmp/foo stays /tmp/foo. We add "/"
-  // to make the startsWith check well-defined: "/tmp/foo/" matches "/tmp/"
-  // but "/tmpfoobar/" does NOT (its 5th char is "o" not "/").
-  //
-  // Edge case: canonical is a directory root like "/" itself. "/" + "/" = "//"
-  // which still startsWith "/". Acceptable.
   const canonicalWithSlash = canonical.endsWith("/") ? canonical : canonical + "/";
 
   for (const sandboxPath of sandboxPaths) {
@@ -197,4 +149,115 @@ export function isSandboxPath(cwd, sandboxPaths) {
     }
   }
   return null;
+}
+
+// ─── Slice C: Command matching (regex prefix matcher) ─────────────────────
+
+/**
+ * Escape regex metacharacters in a string so it can be used as a literal
+ * pattern in a RegExp.
+ *
+ * Escapes: . * + ? ^ $ { } ( ) | [ ] \
+ *
+ * @param {string} str - the string to escape
+ * @returns {string} the escaped string (safe for RegExp construction)
+ */
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Build a regex from an allowlist entry that matches commands starting with
+ * that entry's token stream.
+ *
+ * Algorithm (PRD Decision D3):
+ *   1. Trim leading/trailing whitespace from the entry (trailing spaces are
+ *      stylistic, not semantic — the lookahead provides the token boundary).
+ *   2. Escape regex metacharacters via escapeRegExp (AC-3.18).
+ *   3. Replace space runs with \s+ for whitespace tolerance (AC-3.14 tab,
+ *      double-space, etc. all match).
+ *   4. Anchor with ^ and append (?=\s|$) lookahead for word boundary
+ *      (AC-3.10: "npm installx" does NOT match "npm install").
+ *
+ * @param {string} entry - the allowlist entry (e.g. "npm install")
+ * @returns {RegExp|null} the compiled regex, or null if entry is empty
+ */
+function buildCommandRegex(entry) {
+  const trimmed = entry.trim();
+  if (trimmed.length === 0) return null;
+
+  const escaped = escapeRegExp(trimmed);
+  const withWhitespace = escaped.replace(/ +/g, "\\s+");
+
+  return new RegExp("^" + withWhitespace + "(?=\\s|$)");
+}
+
+/**
+ * Test whether a bash command matches any of the configured allowlist entries.
+ *
+ * Defense sequence (PRD Decision D3):
+ *   1. If command contains shell metacharacters (chaining, substitution,
+ *      redirects) → deny immediately via hasShellMetachar(). Layer 3.7
+ *      must NOT bypass Layer 4's metachar protections (AC-3.11, AC-3.12,
+ *      AC-3.15).
+ *   2. Normalize the command: stripLeadingEnvExport (peels "export K=V;"
+ *      opencode prefixes) + normalize (strips leading whitespace + leading
+ *      env-var assignments). Same normalization as Layer 4 — so
+ *      "FOO=bar npm install" matches "npm install" (AC-3.13).
+ *   3. For each allowlist entry, build a regex via buildCommandRegex() and
+ *      test. First match wins.
+ *
+ * @param {string} command - the bash command string
+ * @param {string[]} allowedCommands - the allowlist entries
+ * @returns {{matchedPattern: string} | null}
+ */
+export function isSandboxCommand(command, allowedCommands) {
+  if (typeof command !== "string" || command.length === 0) return null;
+  if (!Array.isArray(allowedCommands) || allowedCommands.length === 0) return null;
+
+  // Defense: deny shell metacharacters before matching.
+  if (hasShellMetachar(command)) return null;
+
+  // Normalize using the same helpers as Layer 4 (isSafeReadOnlyCommand).
+  const normalized = normalize(stripLeadingEnvExport(command));
+  if (!normalized || normalized.length === 0) return null;
+
+  for (const entry of allowedCommands) {
+    if (typeof entry !== "string" || entry.length === 0) continue;
+    const regex = buildCommandRegex(entry);
+    if (regex && regex.test(normalized)) {
+      return { matchedPattern: entry };
+    }
+  }
+  return null;
+}
+
+// ─── Slice D: Orchestrator (combines path + command matching) ────────────
+
+/**
+ * Orchestrator: combine isSandboxPath + isSandboxCommand into a single
+ * decision. Called by gates.js Layer 3.7 for bash tool calls only.
+ *
+ * @param {{cwd: string, command: string, sandboxConfig: object}} params
+ * @returns {{cwd: string, realpathCwd: string, command: string,
+ *            matchedPattern: string, matchedSandboxPath: string} | null}
+ *   Full audit metadata on match, null on no match.
+ */
+export function isSandboxAllowed({ cwd, command, sandboxConfig }) {
+  if (!sandboxConfig || typeof sandboxConfig !== "object") return null;
+  if (!Array.isArray(sandboxConfig.sandboxPaths) || sandboxConfig.sandboxPaths.length === 0) return null;
+
+  const pathResult = isSandboxPath(cwd, sandboxConfig.sandboxPaths);
+  if (!pathResult) return null;
+
+  const cmdResult = isSandboxCommand(command, sandboxConfig.sandboxAllowedCommands || []);
+  if (!cmdResult) return null;
+
+  return {
+    cwd,
+    realpathCwd: canonicalize(cwd),
+    command,
+    matchedPattern: cmdResult.matchedPattern,
+    matchedSandboxPath: pathResult.matchedSandboxPath,
+  };
 }

@@ -61,6 +61,7 @@ import {
   matchTrustRootBash,
 } from "./trust-root-paths.js";
 import { getMcpClassification } from "./mcp-classifier.js";
+import { isSandboxAllowed } from "./sandbox-policy.js";
 
 // Re-export for backward compat with W1.A tests
 export { isDestructiveCommand };
@@ -221,6 +222,29 @@ export function shouldBlockTool(tool, args, state) {
         blocked: true,
         reason: `MCP tool '${tool}' classification unknown — deny by default`,
         blockTool: true,
+      };
+    }
+  }
+
+  // Layer 3.7: Sandbox allowlist (Slice D — brain-61r)
+  // If the agent's cwd is inside a configured sandbox_path AND the bash
+  // command matches a configured sandbox_allowed_commands entry, allow it
+  // (with audit metadata). Layers 0–3.5 have already run by this point,
+  // so catastrophic/sudo/trust-root protections are unconditional.
+  //
+  // Only applies to tool === "bash" (US-D2). Non-bash tools (write/edit/
+  // task/MCP) do not enter this block — Layer 3.7 only relaxes the command
+  // allowlist, never file mutation or delegation.
+  if (tool === "bash" && args?.command && state.sandboxConfig) {
+    const sandboxResult = isSandboxAllowed({
+      cwd: process.cwd(),
+      command: args.command,
+      sandboxConfig: state.sandboxConfig,
+    });
+    if (sandboxResult) {
+      return {
+        blocked: false,
+        sandboxAllow: sandboxResult,
       };
     }
   }

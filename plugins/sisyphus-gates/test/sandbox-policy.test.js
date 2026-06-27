@@ -19,7 +19,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, symlinkSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { loadSandboxConfig, isSandboxPath } from "../src/sandbox-policy.js";
+import { loadSandboxConfig, isSandboxPath, isSandboxCommand } from "../src/sandbox-policy.js";
 
 // ─── Helper: temp-dir fixture with cleanup ────────────────────────────────
 
@@ -361,4 +361,158 @@ test("Slice B / tilde expansion: ~/path resolves via HOME and matches sandbox pr
   const result = isSandboxPath("~", [home + "/"]);
   // canonicalize("~") = home (after expansion). home + "/" matches.
   assert.notEqual(result, null);
+});
+
+
+// ═══ Slice C (brain-ph1): Command matching — isSandboxCommand ═════════
+
+test("AC-3.10: npm installx does NOT match npm install (word boundary)", () => {
+  assert.equal(isSandboxCommand("npm installx", ["npm install"]), null);
+});
+
+test("AC-3.10: npm install DOES match npm install (EOL boundary)", () => {
+  const r = isSandboxCommand("npm install", ["npm install"]);
+  assert.notEqual(r, null);
+  assert.equal(r.matchedPattern, "npm install");
+});
+
+test("AC-3.11: chaining denies — npm install && rm -rf /tmp", () => {
+  assert.equal(isSandboxCommand("npm install && rm -rf /tmp", ["npm install"]), null);
+});
+
+test("AC-3.11: semicolon denies — npm install; rm /tmp/x", () => {
+  assert.equal(isSandboxCommand("npm install; rm /tmp/x", ["npm install"]), null);
+});
+
+test("AC-3.12: redirect denies — echo foo > /tmp/x", () => {
+  assert.equal(isSandboxCommand("echo foo > /tmp/x", ["echo"]), null);
+});
+
+test("AC-3.12: redirect denies — npm install > /tmp/log", () => {
+  assert.equal(isSandboxCommand("npm install > /tmp/log", ["npm install"]), null);
+});
+
+test("AC-3.13: env-var normalized — FOO=bar npm install matches npm install", () => {
+  const r = isSandboxCommand("FOO=bar npm install --save-dev foo", ["npm install"]);
+  assert.notEqual(r, null);
+  assert.equal(r.matchedPattern, "npm install");
+});
+
+test("AC-3.14: tab separator matches (\\s+ body)", () => {
+  assert.notEqual(isSandboxCommand("npm\tinstall foo", ["npm install"]), null);
+});
+
+test("AC-3.14: double space matches", () => {
+  assert.notEqual(isSandboxCommand("npm  install", ["npm install"]), null);
+});
+
+test("AC-3.15: pipe denies", () => {
+  assert.equal(isSandboxCommand("npm install | cat", ["npm install"]), null);
+});
+
+test("AC-3.15: ampersand denies", () => {
+  assert.equal(isSandboxCommand("npm install & wait", ["npm install"]), null);
+});
+
+test("AC-3.15: cmd substitution denies", () => {
+  assert.equal(isSandboxCommand("npm install $(evil)", ["npm install"]), null);
+});
+
+test("AC-3.15: backtick substitution denies", () => {
+  assert.equal(isSandboxCommand("npm install `evil`", ["npm install"]), null);
+});
+
+test("AC-3.15: input redirect denies", () => {
+  assert.equal(isSandboxCommand("npm install < /etc/passwd", ["npm install"]), null);
+});
+
+// ─── AC-3.18: REAL regex metachar escape tests ──────────────────────
+
+test("AC-3.18/dot: foo.bar literal, NOT any-char (fooXbar rejected)", () => {
+  assert.notEqual(isSandboxCommand("foo.bar", ["foo.bar"]), null);
+  assert.equal(isSandboxCommand("fooXbar", ["foo.bar"]), null);
+});
+
+test("AC-3.18/star: foo* literal, NOT quantifier", () => {
+  assert.notEqual(isSandboxCommand("foo*", ["foo*"]), null);
+  assert.equal(isSandboxCommand("foo", ["foo*"]), null);
+  assert.equal(isSandboxCommand("foooo", ["foo*"]), null);
+});
+
+test("AC-3.18/plus: foo+ literal, NOT quantifier", () => {
+  assert.notEqual(isSandboxCommand("foo+", ["foo+"]), null);
+  assert.equal(isSandboxCommand("foo", ["foo+"]), null);
+});
+
+test("AC-3.18/question: foo? literal, NOT optional", () => {
+  assert.notEqual(isSandboxCommand("foo?", ["foo?"]), null);
+  assert.equal(isSandboxCommand("foo", ["foo?"]), null);
+});
+
+test("AC-3.18/caret: ^foo literal, NOT anchor", () => {
+  assert.notEqual(isSandboxCommand("^foo", ["^foo"]), null);
+});
+
+test("AC-3.18/dollar: foo$ literal, NOT end anchor", () => {
+  assert.notEqual(isSandboxCommand("foo$", ["foo$"]), null);
+  assert.equal(isSandboxCommand("foo", ["foo$"]), null);
+});
+
+test("AC-3.18/parens: foo (bar) literal, NOT capture group", () => {
+  assert.notEqual(isSandboxCommand("foo (bar)", ["foo (bar)"]), null);
+  assert.equal(isSandboxCommand("foo bar", ["foo (bar)"]), null);
+});
+
+test("AC-3.18/brackets: foo [bar] literal, NOT char class", () => {
+  assert.notEqual(isSandboxCommand("foo [bar]", ["foo [bar]"]), null);
+  assert.equal(isSandboxCommand("foo a", ["foo [bar]"]), null);
+});
+
+test("AC-3.18/braces: foo{2} literal, NOT quantifier", () => {
+  assert.notEqual(isSandboxCommand("foo{2}", ["foo{2}"]), null);
+  assert.equal(isSandboxCommand("foofoo", ["foo{2}"]), null);
+});
+
+test("AC-3.18/pipe: foo|bar is DENIED by hasShellMetachar (pipe is shell metachar first)", () => {
+  // Pipe is caught by the chaining regex [;|] in hasShellMetachar BEFORE
+  // escapeRegExp even runs. This is correct defense-in-depth: a command
+  // containing | is a shell pipeline, not a literal string. The test verifies
+  // the DENIAL, not a regex escape — escapeRegExp is exercised by the
+  // regex-only metachars (., *, +, ?, ^, $, (, ), [, ], {, }, \) above.
+  assert.equal(isSandboxCommand("foo|bar", ["foo|bar"]), null);
+  assert.equal(isSandboxCommand("foo", ["foo|bar"]), null);
+  assert.equal(isSandboxCommand("bar", ["foo|bar"]), null);
+});
+
+test("AC-3.18/backslash: foo\\bar literal backslash", () => {
+  assert.notEqual(isSandboxCommand("foo\\bar", ["foo\\bar"]), null);
+});
+
+// ─── AC-3.19 + AC-3.20 + happy path + edges ─────────────────────────
+
+test("AC-3.19: exact match (no args) via EOL lookahead", () => {
+  assert.notEqual(isSandboxCommand("npm install", ["npm install"]), null);
+  assert.notEqual(isSandboxCommand("bunx", ["bunx"]), null);
+});
+
+test("AC-3.20: trailing space trimmed — bunx doctor matches bunx-space", () => {
+  assert.notEqual(isSandboxCommand("bunx doctor", ["bunx "]), null);
+  assert.notEqual(isSandboxCommand("npm run build", ["npm run "]), null);
+});
+
+test("happy: multi-arg match", () => {
+  assert.notEqual(isSandboxCommand("npm install --save-dev typescript", ["npm install"]), null);
+  assert.notEqual(isSandboxCommand("node bin/cli.js", ["node"]), null);
+});
+
+test("multi-entry: first match wins", () => {
+  const r = isSandboxCommand("npm install foo", ["echo", "npm install", "node"]);
+  assert.equal(r.matchedPattern, "npm install");
+});
+
+test("edge: empty/null inputs return null", () => {
+  assert.equal(isSandboxCommand("", ["npm install"]), null);
+  assert.equal(isSandboxCommand(null, ["npm install"]), null);
+  assert.equal(isSandboxCommand("npm install", []), null);
+  assert.equal(isSandboxCommand("npm install", null), null);
 });

@@ -22,7 +22,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, symlinkSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { isSandboxPath } from "../../src/sandbox-policy.js";
+import { isSandboxPath, isSandboxCommand } from "../../src/sandbox-policy.js";
 
 function makeTempDir(prefix) {
   return mkdtempSync(join(tmpdir(), prefix));
@@ -175,4 +175,25 @@ test("ADV-6 (negative): legitimate in-sandbox symlink still matches (defense doe
   } finally {
     cleanup(sandbox);
   }
+});
+
+
+// ─── Slice C: Command-injection adversarial tests ─────────────────────
+
+test("ADV-7: regex injection via .* entry must not match everything", () => {
+  assert.equal(isSandboxCommand("evil-command", [".*"]), null);
+  assert.notEqual(isSandboxCommand(".*", [".*"]), null);
+});
+
+test("ADV-8: unescaped ( would throw — escapeRegExp prevents", () => {
+  assert.notEqual(isSandboxCommand("(test)", ["(test)"]), null);
+});
+
+test("ADV-9: unescaped [ would throw — escapeRegExp prevents", () => {
+  assert.notEqual(isSandboxCommand("[test]", ["[test]"]), null);
+});
+
+test("ADV-10: ReDoS resistance — many spaces between tokens", () => {
+  const s = "npm" + " ".repeat(100) + "install";
+  assert.notEqual(isSandboxCommand(s, ["npm install"]), null);
 });
