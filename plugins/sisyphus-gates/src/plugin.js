@@ -112,6 +112,24 @@ export const server = async (_input, _options) => {
           // enforcement mechanism is throw — same pattern oh-my-openagent uses.
           throw new Error(`⛔ Gate blocked: ${decision.reason}`);
         }
+      } else if (decision.sandboxAllow) {
+        // Slice E (brain-9z9): audit Layer 3.7 sandbox-allow decisions.
+        // This is the FIRST allow-path that records events. Layer 4 safe reads
+        // (ls, cat, git status) still produce zero events — they return
+        // {blocked: false} without sandboxAllow metadata. The existing
+        // self-test 'metrics-allow-not-recorded' verifies this invariant.
+        recordEvent({
+          sessionID,
+          tool,
+          phase: state.phase,
+          event_subtype: "sandbox-allow",
+          reason: "Layer 3.7 sandbox allow",
+          command: output.args?.command,
+          cwd: decision.sandboxAllow.cwd,
+          realpath_cwd: decision.sandboxAllow.realpathCwd,
+          matched_pattern: decision.sandboxAllow.matchedPattern,
+          matched_sandbox_path: decision.sandboxAllow.matchedSandboxPath,
+        });
       }
     },
 

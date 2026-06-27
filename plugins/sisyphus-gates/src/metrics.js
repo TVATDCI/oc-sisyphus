@@ -89,6 +89,9 @@ function classifySubtype(reason) {
 export function recordEvent(event) {
   try {
     ensureDir();
+    // Note: ...event spread AFTER event_subtype means callers can pass an
+    // explicit event_subtype in the event object to override the classifier.
+    // Used by Slice E (brain-9z9) for 'sandbox-allow' events.
     const line =
       JSON.stringify({
         timestamp: new Date().toISOString(),
