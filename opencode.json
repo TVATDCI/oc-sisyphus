@@ -5,7 +5,21 @@
     [
       "./plugins/sisyphus-gates",
       {
-        "verdict_key_command": "cat ~/.local/share/sisyphus-gate-key"
+        "verdict_key_command": "cat ~/.local/share/sisyphus-gate-key",
+        "sandbox_paths": ["/tmp/"],
+        "sandbox_allowed_commands": [
+          "npm install",
+          "npm test",
+          "npm run ",
+          "bun add ",
+          "bun install",
+          "bunx ",
+          "node ",
+          "tsc --noEmit",
+          "git diff",
+          "git show",
+          "git log"
+        ]
       }
     ]
   ],
