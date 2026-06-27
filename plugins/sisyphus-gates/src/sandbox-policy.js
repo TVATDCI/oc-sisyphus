@@ -2,10 +2,8 @@
  * sandbox-policy.js — Layer 3.7 sandbox allowlist policy.
  *
  * Wave 1 / Slice A (brain-vi1): config plumbing + validation only.
- * Path matching (Slice B) and command matching (Slice C) are added in later waves.
+ * Wave 2 / Slice B (brain-99x): isSandboxPath (realpath-based prefix match).
  *
- * Design
- * ------
  * The sandbox relaxation is opt-in via the plugin's opencode.json config block:
  *
  *   [
@@ -21,21 +19,17 @@
  *   - Missing sandbox_paths key   → feature disabled (returns empty config)
  *   - Empty sandbox_paths array   → feature disabled (returns empty config)
  *   - Any entry without trailing "/" → reject the ENTIRE config (returns null).
- *     Rationale: "/tmp" (no slash) would silently match "/tmp-eslint-cache/",
- *     "/tmpfoo/", etc. Fail-closed validation prevents sandbox-escape-by-typo.
  *   - sandbox_allowed_commands missing → treated as empty array.
  *   - Any malformed (non-array, non-string element) → reject entire config.
- *
- * The returned object shape is the canonical "state.sandboxConfig" contract
- * referenced by Wave 4 (Slice D):
- *
- *   { sandboxPaths: string[], sandboxAllowedCommands: string[] }
- *
- * `null` means "validation failed — feature MUST be disabled". Callers treat
- * null and empty-paths identically: Layer 3.7 returns no relaxation. The
- * distinction is preserved for diagnostics: empty = operator opted out
- * cleanly; null = operator config has a typo they should fix.
  */
+
+import { _internal } from "./trust-root-paths.js";
+
+// Reused canonicalize (realpath-based, same defense as Layer 0 HOLE 1b/c).
+// trust-root-paths.js exports _internal with canonicalize already.
+const { canonicalize } = _internal;
+
+// ─── Slice A: Config plumbing ─────────────────────────────────────────────
 
 /**
  * Validate and normalize a single sandbox_paths entry.
@@ -149,4 +143,58 @@ function validateCommandArray(rawCommands) {
     );
   }
   return rawCommands.map(validateCommandEntry);
+}
+
+// ─── Slice B: Path matching (realpath canonicalization) ───────────────────
+
+/**
+ * Test whether a cwd resolves (via realpath) into any of the configured
+ * sandbox path prefixes.
+ *
+ * Defense (PRD AC-3.6 / Decision D4): reuses the same canonicalize() helper
+ * that Layer 0 uses for its HOLE 1b/c symlink-escape defense. realpath()
+ * follows symlinks AND resolves path traversal (.., ., //). A sandbox cwd
+ * that symlinks to a production location will resolve to the production
+ * location, which will NOT match the sandbox prefix — sandbox privileges
+ * are denied.
+ *
+ * Residual risk: TOCTOU on realpath (cwd valid at check, invalid at execute).
+ * Inherited from Layer 0 HOLE 1b documentation; plugin cannot control the
+ * open() call.
+ *
+ * @param {string} cwd - the agent's current working directory
+ * @param {string[]} sandboxPaths - validated sandbox path prefixes; each
+ *   entry must end with "/" (enforced by loadSandboxConfig per D6).
+ * @returns {{matchedSandboxPath: string} | null}
+ *   - {matchedSandboxPath: <prefix>} on match (first matching prefix wins)
+ *   - null on no match (including empty/null sandboxPaths, invalid cwd, etc.)
+ *
+ * Acceptance criteria covered:
+ *   - AC-3.6: symlink escape — /tmp/foo symlinked to /home/user/.config
+ *     resolves via realpath to the prod path, which doesn't match /tmp/
+ *     → returns null
+ */
+export function isSandboxPath(cwd, sandboxPaths) {
+  if (typeof cwd !== "string" || cwd.length === 0) return null;
+  if (!Array.isArray(sandboxPaths) || sandboxPaths.length === 0) return null;
+
+  const canonical = canonicalize(cwd);
+  if (!canonical || canonical.length === 0) return null;
+
+  // Ensure canonical ends in "/" before prefix comparison. realpath() does
+  // not append trailing slashes, so /tmp/foo stays /tmp/foo. We add "/"
+  // to make the startsWith check well-defined: "/tmp/foo/" matches "/tmp/"
+  // but "/tmpfoobar/" does NOT (its 5th char is "o" not "/").
+  //
+  // Edge case: canonical is a directory root like "/" itself. "/" + "/" = "//"
+  // which still startsWith "/". Acceptable.
+  const canonicalWithSlash = canonical.endsWith("/") ? canonical : canonical + "/";
+
+  for (const sandboxPath of sandboxPaths) {
+    if (typeof sandboxPath !== "string" || sandboxPath.length === 0) continue;
+    if (canonicalWithSlash.startsWith(sandboxPath)) {
+      return { matchedSandboxPath: sandboxPath };
+    }
+  }
+  return null;
 }
