@@ -13,13 +13,14 @@
  * the plugin runs in fail-closed mode (gates.js will refuse execution).
  */
 
-import { getState, syncStateWithDisk, setMemoryKey } from "./state.js";
+import { getState, syncStateWithDisk, setMemoryKey, setSandboxConfig } from "./state.js";
 import { shouldBlockTool, shouldBlockCommand } from "./gates.js";
 import { advancePhaseIfNeeded, buildGateStatusPrompt } from "./phase-machine.js";
 import { loadWorkflowConfig } from "./workflow-loader.js";
 import { recordEvent } from "./metrics.js";
 import { loadMcpPrefixes } from "./mcp-classifier.js";
 import { resolveMemoryKey } from "./memory-key.js";
+import { loadSandboxConfig } from "./sandbox-policy.js";
 
 export const server = async (_input, _options) => {
   // W1.E: load the workflow config up front so the yaml-driven phase
@@ -58,6 +59,30 @@ export const server = async (_input, _options) => {
       "[sisyphus-gates] Verdict signing disabled — no verdict_key_command " +
         "configured or resolution failed. Gate status will be 'unknown' for all sessions."
     );
+  }
+
+  // Slice A (brain-vi1): load + validate sandbox relaxation config from
+  // _options (opencode.json plugin config block). Loaded ONCE at server
+  // startup; per-session state picks it up via defaultSessionState().
+  // sandboxConfig is null if validation failed or no sandbox_paths key.
+  try {
+    const sandboxCfg = loadSandboxConfig(_options || {});
+    setSandboxConfig(sandboxCfg);
+    if (sandboxCfg === null) {
+      console.warn(
+        "[sisyphus-gates] sandbox_paths config is malformed — feature disabled. " +
+          "Check opencode.json (entries must end with '/')."
+      );
+    } else if (sandboxCfg.sandboxPaths.length > 0) {
+      console.log(
+        "[sisyphus-gates] Layer 3.7 sandbox relaxation enabled for " + sandboxCfg.sandboxPaths.length + " path(s)."
+      );
+    }
+  } catch (err) {
+    console.warn(
+      "[sisyphus-gates] Failed to load sandbox config: " + err.message + ". Feature disabled."
+    );
+    setSandboxConfig(null);
   }
 
   return {
