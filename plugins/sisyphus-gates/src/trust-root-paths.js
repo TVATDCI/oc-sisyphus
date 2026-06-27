@@ -47,6 +47,12 @@ const TRUST_ROOT_WRITE_PATTERNS = [
   // Audit logs (Decision D: outside MCP root, but still denied to gated tools)
   [/sisyphus-verdicts\.log$/i, "verdicts audit log"],
   [/sisyphus-approvals\.log$/i, "approvals audit log"],
+  // Slice G (brain-2ah): opencode plugin config — protects sandbox_paths
+  // itself from agent tampering. Without this, an agent could rewrite
+  // opencode.json to widen its own sandbox. Operators edit opencode.json
+  // from their terminal (outside opencode), so this does NOT change the
+  // existing operator workflow.
+  [/opencode\.json$/i, "opencode plugin config"],
 ];
 
 /**
@@ -74,6 +80,28 @@ const TRUST_ROOT_READ_PATTERNS = [
 const TRUST_ROOT_EXCEPTIONS = [
   /\.sisyphus\/evidence\//i,  // evidence writes/reads are legitimate
 ];
+
+/**
+ * Read-only exceptions — patterns that are WRITE-blocked but NOT
+ * read-blocked. Checked ONLY in matchTrustRootRead (not matchTrustRootWrite).
+ *
+ * Slice G (brain-2ah): opencode.json holds the sandbox_paths config that
+ * configures Layer 3.7 itself. Writes are blocked (prevent agent tampering
+ * with its own sandbox), but reads remain allowed so diagnostic tools and
+ * the customize-opencode skill can inspect the config. Operators edit
+ * opencode.json from their terminal (outside opencode), unchanged.
+ */
+const READ_EXCEPTION_PATTERNS = [
+  /opencode\.json$/i,  // Slice G: write-protected, read-allowed
+];
+
+/**
+ * Returns true if a canonical path matches a read-only exception.
+ * Used ONLY by matchTrustRootRead — matchTrustRootWrite ignores this.
+ */
+function isReadException(canonicalPath) {
+  return READ_EXCEPTION_PATTERNS.some((re) => re.test(canonicalPath));
+}
 
 // ─── Path canonicalization ──────────────────────────────────────────────────
 
@@ -193,7 +221,10 @@ export function matchTrustRootRead(args) {
   const inputPaths = typeof args === "string" ? [args] : extractPathValues(args);
   for (const inputPath of inputPaths) {
     const canonical = canonicalize(inputPath);
-    if (matchesAny(canonical, TRUST_ROOT_READ_PATTERNS) && !isException(canonical)) {
+    // Slice G: isReadException() exempts write-blocked-but-read-allowed
+    // patterns (e.g. opencode.json) from read blocking. matchTrustRootWrite
+    // does NOT check this — write protection is preserved.
+    if (matchesAny(canonical, TRUST_ROOT_READ_PATTERNS) && !isException(canonical) && !isReadException(canonical)) {
       return canonical;
     }
   }
