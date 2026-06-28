@@ -746,3 +746,19 @@ new protected paths must understand which list(s) to update:
 - Path should be **write-blocked but read-allowed** → add to BOTH `TRUST_ROOT_WRITE_PATTERNS` AND `READ_EXCEPTION_PATTERNS`.
 - Path should be **fully exempt** → add to `TRUST_ROOT_EXCEPTIONS`.
 - Path should be **read-blocked only** (not writable anyway) → add to `TRUST_ROOT_READ_PATTERNS` directly (not via WRITE propagation).
+
+### Known limitation: process.cwd() vs bash workdir
+
+Layer 3.7 checks `process.cwd()` — the opencode server process's working
+directory, set when opencode starts. The bash tool's `workdir` parameter
+changes the child shell's cwd but does NOT change `process.cwd()`.
+Therefore, sandbox relaxation only activates when opencode is started
+from within a sandbox_paths directory:
+
+    cd /tmp/opencode/some-clone
+    opencode  # process.cwd() is now /tmp/opencode/some-clone
+
+Starting opencode from outside a sandbox path and running bash commands
+with workdir pointing into /tmp/ does NOT activate the sandbox. This is
+by design — process.cwd() is the stable, unforgeable indicator of the
+agent's working context.
