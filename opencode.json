@@ -34,7 +34,8 @@
         "/home/vladi/Main-vault",
         "/home/vladi/AGENTS",
         "/home/vladi/.sisyphus",
-        "/home/vladi/.config/opencode"
+        "/home/vladi/.config/opencode",
+        "/home/vladi/developer/Reference/meta"
       ],
       "enabled": true
     },
