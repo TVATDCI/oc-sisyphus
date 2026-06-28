@@ -265,6 +265,7 @@ Always use non-interactive flags: `cp -f`, `mv -f`, `rm -f`, `scp -o BatchMode=y
 ## On-Demand Reference
 
 - **System map** → `./COMPLETE-CODEBASE.md` — full topology, routing, timeline, permissions
+- **Full system history + rationale** → `SYSTEM-NARRATIVE.md` — covers Apr 30–present, structured by era, cross-references deep archive at `/home/vladi/developer/Reference/meta/`
 - **Architecture / workflow / skills** → `skill:system-reference`
 - **Session close protocol** → `skill:session-close`
 - **System architecture, gates, hardening** → `skill:system-reference`

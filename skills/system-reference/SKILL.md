@@ -1,6 +1,6 @@
 ---
 name: system-reference
-description: "System architecture, workflow sequence, skill/agent directory, glossary, anti-patterns, and hardening changes. Use when: (1) 'how does the architecture work', (2) 'what's the phase sequence', (3) 'which skill handles X', (4) 'what are the gates', (5) 'what's new in vX'. Triggers: architecture question, workflow question, skill routing, system overview, version changes."
+description: "System architecture, workflow sequence, skill/agent directory, glossary, anti-patterns, and hardening changes. Use when: (1) 'how does the architecture work', (2) 'what's the phase sequence', (3) 'which skill handles X', (4) 'what are the gates', (5) 'what's new in vX', (6) 'system history', 'why was X decided', 'system report'. Triggers: architecture question, workflow question, skill routing, system overview, version changes, system history, design rationale, full system report. Loads SYSTEM-NARRATIVE.md for full system history and rationale (Apr 30–present, structured by era)."
 compatibility: opencode
 ---
 
@@ -213,6 +213,46 @@ Our custom system (oh-my-openagent + 44 real skills + 1 _shared reference) coexi
 | **Planning/design** | `discovery-orchestrator` → `prd-writer` → `issue-creator` → `plan-writer` (full Sisyphus workflow) | `plan` agent — quick one-shot analysis without custom workflow |
 
 **Rule of thumb:** If the task fits our custom workflow (discovery → PRD → issues → plan → waves), use our skills. If it's a one-off or quick task that OpenCode handles natively, use the built-in.
+
+---
+
+## System History & Full System Report
+
+### System History
+
+This skill is the entry point for questions about *why* the system is the way it
+is. For full developmental history and design rationale (the Governance Crisis,
+the monolith dissolution, HMAC signing adoption, etc.), **load
+`SYSTEM-NARRATIVE.md`** in the repo root — it covers Apr 30–present structured
+by ERA (Foundation → Growth → Hardening → Production), with cross-references to
+the deep archive at `/home/vladi/developer/Reference/meta/` for primary-source
+detail.
+
+Read `SYSTEM-NARRATIVE.md` whenever the question is historical or rationale-based
+rather than structural. Read `COMPLETE-CODEBASE.md` for current topology/routing.
+
+### Full System Report Capability
+
+When the user asks for a **system report** (e.g., "give me a system report",
+"what's the current state of the system", "system status"), produce a
+comprehensive status report by synthesizing these sources:
+
+| Source | What it provides |
+|--------|-----------------|
+| `SYSTEM-NARRATIVE.md` | History, eras, architecture principles, design rationale |
+| `COMPLETE-CODEBASE.md` | Current topology, routing, permissions, live timeline |
+| `opencode.json` | Entry-point config (plugin, MCP, permissions) |
+| `oh-my-openagent.json` | Agents, categories, model routing, provider fallback |
+
+**Report structure:**
+1. **Current state** — skill/agent/test counts, plugin version, provider strategy (from COMPLETE-CODEBASE.md "Current System State" + system narrative living section)
+2. **Architecture** — 9-phase workflow, gate layers, HMAC signing (from system-reference + COMPLETE-CODEBASE.md)
+3. **Recent changes** — last ~5 timeline entries from COMPLETE-CODEBASE.md
+4. **Architecture principles** — the 5 constitutional principles (from SYSTEM-NARRATIVE.md)
+5. **Known limitations / gaps** — from THREAT-MODEL.md and any open items in the timeline
+
+Keep the report scannable: lead with current state, then depth on demand. Do not
+dump full file contents — synthesize and point to sources for detail.
 
 ---
 
