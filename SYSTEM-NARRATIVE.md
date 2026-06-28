@@ -340,9 +340,14 @@ every decision since. When in doubt, return to these.
 (~170KB across 16 files). Outside the opencode sandbox by design — the archive
 is reference material, not agent-editable state. Do not move it; reference it.
 
-**Future consideration (not yet implemented):** potentially migrating the deep
-archive into Main-vault (Obsidian) for search/memory integration. Until then,
-`meta/` stays at its current path and this document points to it.
+**Vault migration (plan ready, execution pending):** the deep archive will
+become WikiLinked pages in Main-vault (Obsidian) — era pages carry WHEN/WHY,
+existing concept pages carry WHAT, WikiLinks connect them. Plan at
+`.omo/plans/main-vault-system-history-timeline.md` (8 era/event pages, 15 todos,
+4 waves, schema-correct per ~/Main-vault/AGENTS.md). Prerequisite: add
+`/home/vladi/developer/Reference/meta` + `/home/vladi/developer/test-artifacts`
+to opencode.json `mcp.home.command` array. `meta/` stays at its current path
+as primary source; vault pages link to it.
 
 ---
 
@@ -357,3 +362,11 @@ Keep it concise enough to read in one pass. Keep the cross-references accurate.*
 - Documentation bridge built: SYSTEM-NARRATIVE.md + AGENTS.md reference + system-reference Full System Report capability
 - Reflection analysis: 6 findings documented (understand-before-proposing, pipeline-vs-user-invoked skills, respect-evidence, depth-over-speed, document-for-continuity, resource-constraints)
 - Next: skill quality optimization, starting with Zone 1 (Review skills) + momus-reviewer deprecation
+
+### Session Log: 2026-06-29
+- System cleanup: stale backups + eval outputs deleted, evidence/notepads pruned, pushed
+- Skill quality mapping: 50+ skills surveyed, collision zones identified, approach corrected after operator feedback (pipeline skills are workflow-phase-specific, not competing with user-invoked skills; splits were deliberate and tested)
+- Reflection analysis: 6 findings (understand-before-proposing, pipeline-vs-user-invoked, respect-evidence, depth-over-speed, document-for-continuity, resource-constraints)
+- System mapped end-to-end: read full meta/ archive (MAIN-OPT-DOCS developmental history, pi-vs-sisyphus, pipeline improvement, HYBRID-PLAN, templates, case study methodology)
+- Vault migration planned: Obsidian Main-vault as knowledge graph (WikiLinks + tags + search). Prometheus produced corrected plan at .omo/plans/main-vault-system-history-timeline.md (8 WikiLinked pages, 15 todos, 4 waves, schema-correct per ~/Main-vault/AGENTS.md)
+- NEXT (fresh window): (1) MCP prerequisite — add /home/vladi/developer/Reference/meta + /home/vladi/developer/test-artifacts to opencode.json mcp.home.command. (2) Execute vault migration plan ($start-work). (3) Then skill quality optimization Zone 1 (Review skills)
