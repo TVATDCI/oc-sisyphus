@@ -349,3 +349,11 @@ archive into Main-vault (Obsidian) for search/memory integration. Until then,
 *This document is the bridge between the meticulous developmental archive
 (which agents cannot see) and the live system (which agents use every session).
 Keep it concise enough to read in one pass. Keep the cross-references accurate.*
+
+### Session Log: 2026-06-28
+- Layer 3.7 sandbox allowlist shipped (7 slices, 431+22 tests, full ceremony)
+- READ_EXCEPTION_PATTERNS gap fixed (3-line gates.js fix, AC-3.17 runtime pass)
+- System fully mapped from meta/ developmental archive (170KB, 16 files read)
+- Documentation bridge built: SYSTEM-NARRATIVE.md + AGENTS.md reference + system-reference Full System Report capability
+- Reflection analysis: 6 findings documented (understand-before-proposing, pipeline-vs-user-invoked skills, respect-evidence, depth-over-speed, document-for-continuity, resource-constraints)
+- Next: skill quality optimization, starting with Zone 1 (Review skills) + momus-reviewer deprecation
