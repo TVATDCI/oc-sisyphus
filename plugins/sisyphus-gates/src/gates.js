@@ -50,10 +50,7 @@ import {
   isDestructiveCommand,
   isSafeReadOnlyCommand,
 } from "./command-policy.js";
-import {
-  containsSudo,
-  isAlwaysBlocked,
-} from "./sudo-policy.js";
+import { containsSudo, isAlwaysBlocked } from "./sudo-policy.js";
 import { getCachedWorkflowConfig } from "./workflow-loader.js";
 import {
   matchTrustRootWrite,
@@ -146,13 +143,24 @@ export function shouldBlockTool(tool, args, state) {
   // Any tool — write, edit, bash, mcp__*, task — writing to or reading from
   // a trust-root path is blocked unconditionally, all phases, no override.
   if (args && typeof args === "object") {
-    const trustRootWrite = matchTrustRootWrite(args);
-    if (trustRootWrite) {
-      return {
-        blocked: true,
-        reason: `Trust-root path protected (write): ${trustRootWrite}`,
-        blockTool: true,
-      };
+    // Read-classified tools skip the write-pattern check and go directly to
+    // the read-pattern check (which honors READ_EXCEPTION_PATTERNS). This
+    // ensures write-protected-but-read-allowed paths (e.g. opencode.json)
+    // remain readable by read tools.
+    const isReadTool =
+      tool === "read" ||
+      tool === "grep" ||
+      tool === "glob" ||
+      tool === "websearch";
+    if (!isReadTool) {
+      const trustRootWrite = matchTrustRootWrite(args);
+      if (trustRootWrite) {
+        return {
+          blocked: true,
+          reason: `Trust-root path protected (write): ${trustRootWrite}`,
+          blockTool: true,
+        };
+      }
     }
     const trustRootRead = matchTrustRootRead(args);
     if (trustRootRead) {
@@ -187,7 +195,8 @@ export function shouldBlockTool(tool, args, state) {
   if (tool === "bash" && args?.command && isAlwaysBlocked(args.command)) {
     return {
       blocked: true,
-      reason: "Catastrophic command blocked in all phases (W1.C isAlwaysBlocked)",
+      reason:
+        "Catastrophic command blocked in all phases (W1.C isAlwaysBlocked)",
       blockTool: true,
     };
   }
@@ -202,7 +211,12 @@ export function shouldBlockTool(tool, args, state) {
   }
 
   // Layer 3: Safe read-only tools (always allowed)
-  if (tool === "read" || tool === "grep" || tool === "websearch" || tool === "glob") {
+  if (
+    tool === "read" ||
+    tool === "grep" ||
+    tool === "websearch" ||
+    tool === "glob"
+  ) {
     return { blocked: false };
   }
 
@@ -257,7 +271,10 @@ export function shouldBlockTool(tool, args, state) {
   // Layer 5: Fail-closed blocks write/edit/bash/task with non-safe commands
   // task added to prevent subagent escape during fail-closed
   const failClosed = mustBlockExecution(state);
-  if (failClosed.blocked && (tool === "write" || tool === "edit" || tool === "bash" || tool === "task")) {
+  if (
+    failClosed.blocked &&
+    (tool === "write" || tool === "edit" || tool === "bash" || tool === "task")
+  ) {
     return { ...failClosed, blockTool: true };
   }
 
@@ -267,37 +284,65 @@ export function shouldBlockTool(tool, args, state) {
   }
 
   if (state.phase === "prd-review") {
-    if (tool === "bash" && args?.command && isDestructiveCommand(args.command)) {
-      return { blocked: true, reason: "Destructive commands blocked during PRD review", blockTool: true };
+    if (
+      tool === "bash" &&
+      args?.command &&
+      isDestructiveCommand(args.command)
+    ) {
+      return {
+        blocked: true,
+        reason: "Destructive commands blocked during PRD review",
+        blockTool: true,
+      };
     }
     return { blocked: false };
   }
 
   if (state.prdApproved && !state.planApproved) {
     if (tool === "bash" && args?.command) {
-      if (args.command.includes("git commit") || args.command.includes("git push")) {
+      if (
+        args.command.includes("git commit") ||
+        args.command.includes("git push")
+      ) {
         return {
           blocked: true,
-          reason: "Cannot commit until plan gate passes. Run /skill:plan-writer first.",
+          reason:
+            "Cannot commit until plan gate passes. Run /skill:plan-writer first.",
           blockTool: true,
         };
       }
       if (isDestructiveCommand(args.command)) {
-        return { blocked: true, reason: "Destructive commands blocked", blockTool: true };
+        return {
+          blocked: true,
+          reason: "Destructive commands blocked",
+          blockTool: true,
+        };
       }
     }
     return { blocked: false };
   }
 
   if (state.planApproved) {
-    if (tool === "bash" && args?.command && isDestructiveCommand(args.command)) {
-      return { blocked: true, reason: "Destructive commands blocked", blockTool: true };
+    if (
+      tool === "bash" &&
+      args?.command &&
+      isDestructiveCommand(args.command)
+    ) {
+      return {
+        blocked: true,
+        reason: "Destructive commands blocked",
+        blockTool: true,
+      };
     }
     return { blocked: false };
   }
 
   if (tool === "bash" && args?.command && isDestructiveCommand(args.command)) {
-    return { blocked: true, reason: "Destructive commands blocked until gates pass", blockTool: true };
+    return {
+      blocked: true,
+      reason: "Destructive commands blocked until gates pass",
+      blockTool: true,
+    };
   }
 
   return { blocked: false };
@@ -319,7 +364,8 @@ export function shouldBlockCommand(command, args, state) {
   if (typeof command === "string" && isAlwaysBlocked(command)) {
     return {
       blocked: true,
-      reason: "Catastrophic command blocked in all phases (W1.C isAlwaysBlocked)",
+      reason:
+        "Catastrophic command blocked in all phases (W1.C isAlwaysBlocked)",
       blockTool: true,
     };
   }
@@ -340,19 +386,28 @@ export function shouldBlockCommand(command, args, state) {
 
   // Layer 4: Fail-closed
   const failClosed = mustBlockExecution(state);
-  if (failClosed.blocked && (command === "git commit" || command === "git push" || command === "bd close")) {
+  if (
+    failClosed.blocked &&
+    (command === "git commit" ||
+      command === "git push" ||
+      command === "bd close")
+  ) {
     return { ...failClosed, blockTool: true };
   }
 
   if (command === "bd close" && !state.evidenceLogged) {
     return {
       blocked: true,
-      reason: "Cannot close issue until evidence is logged. Run validation first.",
+      reason:
+        "Cannot close issue until evidence is logged. Run validation first.",
       blockTool: true,
     };
   }
 
-  if ((command === "git commit" || command === "git push") && !state.planApproved) {
+  if (
+    (command === "git commit" || command === "git push") &&
+    !state.planApproved
+  ) {
     return {
       blocked: true,
       reason: "Cannot commit/push until plan gate passes.",
