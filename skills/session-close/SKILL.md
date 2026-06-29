@@ -31,17 +31,41 @@ Work is NOT complete until `git push` succeeds.
    - Append one timeline entry for this session/wave
    - Fix any moved/renamed/canonical path references
    - If nothing relevant changed, note `"COMPLETE-CODEBASE check: no update needed"` in evidence
-4. **Update issue status** - Close finished work, update in-progress items
-5. **PUSH TO REMOTE**:
+4. **Log session (4-layer routing — MANDATORY)**
+
+   Route session output across 4 layers. Do NOT improvise; follow this exactly:
+
+   | Layer | Where | What | How much |
+   |---|---|---|---|
+   | 1 (Brief) | `SYSTEM-NARRATIVE.md` LIVING block Session log | One-line session summary | **≤3 lines, hard cap** |
+   | 2 (Detail) | `~/Main-vault/log.md` | Full bullets (files, decisions, evidence, next) | Delegate to `archivist` — path is outside main agent's write scope |
+   | 3 (Evidence) | `.omo/evidence/session-close-{YYYY-MM-DD}-{slug}.md` | Raw provenance, full session record | Direct write |
+   | 4 (Memory) | `bd remember` | Per-fact cross-session memory | Direct call, source-attributed |
+
+   **Hard rule:** if a session summary doesn't fit in 3 lines, the excess MUST go to Layer 2 — never to Layer 1. The skill enforces this; agent discretion does not.
+
+   **Layer 2 entry format** (delegate to archivist with this exact template):
+   ```markdown
+   ## [YYYY-MM-DD] session | {one-line summary}
+   - **Files touched:** {paths}
+   - **Decisions:** {key choices}
+   - **Evidence:** `.omo/evidence/session-close-{date}-*.md`
+   - **bd remember:** {key entry slugs}
+   - **Next:** {follow-up}
+   ```
+
+   **Layer 4 bd remember slug pattern:** `session-close:{YYYY-MM-DD}:{category}:{fact}` (matches existing convention — see `bd memories` for examples).
+5. **Update issue status** - Close finished work, update in-progress items
+6. **PUSH TO REMOTE**:
    ```bash
    git pull --rebase
    bd dolt push
    git push
    git status  # MUST show "up to date with origin"
    ```
-6. **Clean up** - Clear stashes, prune remote branches
-7. **Verify** - All changes committed AND pushed
-8. **Hand off** - Provide context for next session
+7. **Clean up** - Clear stashes, prune remote branches
+8. **Verify** - All changes committed AND pushed
+9. **Hand off** - Provide context for next session
 
 ### Critical Rules
 - NEVER stop before pushing — that leaves work stranded locally
@@ -78,4 +102,4 @@ When user says `checkpoint` or `save state`:
 
 ## Output Format
 
-Present when done: `"Session archived. State: [summary]. Next: [action]"`
+Present when done: `"Session archived. State: [summary]. Logged: L1 SN / L2 Main-vault-log / L3 evidence / L4 bd remember. Next: [action]"`

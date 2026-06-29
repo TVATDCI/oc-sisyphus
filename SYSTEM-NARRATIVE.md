@@ -304,7 +304,8 @@ every decision since. When in doubt, return to these.
 
 ## Current System State *(LIVING — update at session-close)*
 
-> Update this block at `skill:session-close`. Keep it to 2–3 lines per session.
+> Update this block at `skill:session-close`. **HARD CAP: ≤3 lines per session in the Session log below.**
+> Anything longer does NOT go here — route it to `~/Main-vault/log.md` (Layer 2 of the 4-layer log architecture; see `skill:session-close`).
 > If a counter changes materially, also update `COMPLETE-CODEBASE.md`.
 
 - **Skills:** 50+ user-installed + 15 oh-my-openagent built-in + 12 shared
@@ -315,11 +316,12 @@ every decision since. When in doubt, return to these.
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
 - **Provider:** `zai-coding-plan` primary (16/17 agents); `opencode-go` → `opencode` fallback
-- **Last reviewed:** 2026-06-28
+- **Last reviewed:** 2026-06-29
 
 ### Session log *(append, newest last)*
 
 - **2026-06-28** — SYSTEM-NARRATIVE.md created (3-layer documentation bridge). READ_EXCEPTION_PATTERNS gap closed (3-line gates.js fix, AC-3.17 runtime pass).
+- **2026-06-29** — Main-vault system-history timeline layer shipped (8 era/event WikiLinked pages, F1-F4 gates APPROVE). 4-layer log architecture refactored (this entry is now the canonical terse pattern; verbose detail → `~/Main-vault/log.md`).
 
 ---
 
@@ -334,6 +336,7 @@ every decision since. When in doubt, return to these.
 | Current topology, routing, permissions | `./COMPLETE-CODEBASE.md` |
 | Attack surface & threat model | `./plugins/sisyphus-gates/THREAT-MODEL.md` |
 | Live timeline (newest events) | `./COMPLETE-CODEBASE.md` timeline section |
+| Detailed session history (per-session) | `~/Main-vault/log.md` (entries tagged `session`) |
 | Architecture/workflow/skill directory | `skill:system-reference` |
 | Frontier-prompt absorption research | `./RAW.md` |
 
@@ -348,19 +351,3 @@ is reference material, not agent-editable state. Do not move it; reference it.
 *This document is the bridge between the meticulous developmental archive
 (which agents cannot see) and the live system (which agents use every session).
 Keep it concise enough to read in one pass. Keep the cross-references accurate.*
-
-### Session Log: 2026-06-28
-- Layer 3.7 sandbox allowlist shipped (7 slices, 431+22 tests, full ceremony)
-- READ_EXCEPTION_PATTERNS gap fixed (3-line gates.js fix, AC-3.17 runtime pass)
-- System fully mapped from meta/ developmental archive (170KB, 16 files read)
-- Documentation bridge built: SYSTEM-NARRATIVE.md + AGENTS.md reference + system-reference Full System Report capability
-- Reflection analysis: 6 findings documented (understand-before-proposing, pipeline-vs-user-invoked skills, respect-evidence, depth-over-speed, document-for-continuity, resource-constraints)
-- Next: skill quality optimization, starting with Zone 1 (Review skills) + momus-reviewer deprecation
-
-### Session Log: 2026-06-29
-- System cleanup: stale backups + eval outputs deleted, evidence/notepads pruned, pushed
-- Skill quality mapping: 50+ skills surveyed, collision zones identified, approach corrected after operator feedback (pipeline skills are workflow-phase-specific, not competing with user-invoked skills; splits were deliberate and tested)
-- Reflection analysis: 6 findings (understand-before-proposing, pipeline-vs-user-invoked, respect-evidence, depth-over-speed, document-for-continuity, resource-constraints)
-- System mapped end-to-end: read full meta/ archive (MAIN-OPT-DOCS developmental history, pi-vs-sisyphus, pipeline improvement, HYBRID-PLAN, templates, case study methodology)
-- Vault migration planned: Obsidian Main-vault as knowledge graph (WikiLinks + tags + search). Prometheus produced corrected plan at .omo/plans/main-vault-system-history-timeline.md (8 WikiLinked pages, 15 todos, 4 waves, schema-correct per ~/Main-vault/AGENTS.md)
-- NEXT (fresh window): (1) MCP prerequisite — add /home/vladi/developer/Reference/meta + /home/vladi/developer/test-artifacts to opencode.json mcp.home.command. (2) Execute vault migration plan ($start-work). (3) Then skill quality optimization Zone 1 (Review skills)
