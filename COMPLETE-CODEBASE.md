@@ -39,8 +39,25 @@
    │ └── .codegraph/codegraph.db # Search/index: semantic code index SQLite DB
    │
    └── 7. UI LAYER
-   ├── tui.json # Terminal UI config (plugin: [])
-   └── .vscode/settings.json # VS Code workspace settings
+      ├── tui.json # Terminal UI config (plugin: [])
+      └── .vscode/settings.json # VS Code workspace settings
+
+   ── MCP filesystem scoping (design property, not a bug) ──────────────────
+   The `home` MCP server (`@modelcontextprotocol/server-filesystem`) starts
+   with the 6 paths listed in `mcp.home.command`, but at runtime the MCP
+   **Roots protocol** overrides them: opencode advertises ONLY the current
+   workspace root as the MCP root, and the server replaces its allowed
+   directories with that single root. So:
+     - `cd ~/.config/opencode && opencode` → MCP sees only `~/.config/opencode`
+     - `cd ~/Main-vault && opencode`        → MCP sees only `~/Main-vault`
+   The 6 paths in `mcp.home.command` are startup args; runtime scoping is
+   workspace-root-bound. This is inherited from Claude Code's security model.
+   Cross-workspace file access does NOT go through MCP `home_*` tools — it
+   goes through **agent-level permissions** (e.g., `archivist` has explicit
+   `edit` allow rules for `~/Main-vault/log.md` regardless of workspace).
+   `permission.external_directory` (opencode.json) controls built-in file
+   tools only, not MCP roots; setting it does not change MCP scoping.
+
 2. What Changed — Full Timeline
    Date Event Artifact
    May 4 Security-auditor skill designed security-auditor-design-history.md
@@ -96,6 +113,7 @@
    Jun 28 READ_EXCEPTION_PATTERNS gap closed: 3-line fix in gates.js routes read tools through matchTrustRootRead; AC-3.17 passes at runtime (the known low-severity gap from Jun 27 ship is resolved). Same day: SYSTEM-NARRATIVE.md created as 3-layer documentation bridge (351 lines) — makes the deep developmental archive at /home/vladi/developer/Reference/meta/ (170KB, 16 files, was invisible to agents) reachable from AGENTS.md (1-line reference added in On-Demand Reference section) + system-reference skill (Full System Report capability added, description extended with system-history/report triggers + SYSTEM-NARRATIVE.md load directive). Narrative structured by ERA (Foundation Apr 30–May 7 / Growth May 7–22 / Hardening May 22–Jun 24 / Production Jun 24–present) with cross-references to primary sources; living "Current System State" section for session-close updates.
    Jun 29 System cleanup + skill quality mapping + vault migration planned. Cleanup: stale backups (COMPLETE-CODEBASE.md.backup, oh-my-openagent.json.backup) + raw eval outputs (fullstack-dev-workspace/iteration-2/eval-*) deleted, evidence/notepads pruned (May files removed), pushed to remote. Skill quality: mapped all 50+ skills, identified collision zones (Review 7, Research 4, Plan 5, Security 3, Frontend 4), approach corrected after operator feedback (pipeline skills ≠ user-invoked skills; splits were deliberate and tested — momus-split-test report from May 30 proves this). Reflection analysis: 6 findings (understand-before-proposing HIGH, pipeline-vs-user-invoked HIGH, respect-evidence HIGH, depth-over-speed MEDIUM, document-for-continuity MEDIUM, resource-constraints LOW). Read full meta/ developmental archive (170KB, 16 files: ARCHIVE-DEVELOPMENTAL-DOCUMENT 542 lines, pi-vs-sisyphus, sisyphus-pipeline-improvement, HYBRID-PLAN 1033 lines, DOCUMENTATION_INDEX, templates). Vault migration plan created by Prometheus at .omo/plans/main-vault-system-history-timeline.md (308 lines, 15 todos, 4 waves, 8 WikiLinked pages for Main-vault wiki/concepts/). Next: execute vault migration (MCP prerequisite: add /home/vladi/developer/Reference/meta + /home/vladi/developer/test-artifacts to opencode.json mcp.home.command), then continue skill quality optimization Zone 1 (Review skills).
    Jun 29 Session-log architecture refactored to 4-layer routing: SYSTEM-NARRATIVE.md L320 block (≤3 lines/session, hard cap) → ~/Main-vault/log.md (verbose, via archivist delegation) → .omo/evidence/session-close-{date}-*.md (raw) → bd remember (memory). Root cause: session-close/SKILL.md never mentioned SYSTEM-NARRATIVE.md, so agents improvised and dumped verbose content inline. Fix: skill now enforces the routing explicitly. Duplicate verbose block (former SN L352-365) migrated to Main-vault/log.md as Layer 2 entries.
+   Jun 29 MCP filesystem scoping investigated + documented. Symptom: `home_list_allowed_directories` returned only the workspace root despite `mcp.home.command` listing 6 paths and `pgrep` confirming server-filesystem process running with 6 path args. Root cause: MCP Roots protocol — opencode advertises only the workspace root as MCP root; server-filesystem then replaces its startup allowed directories with the client's roots response. `permission.external_directory` (string and object forms both tested) does not map to MCP roots. Conclusion: this is by design (inherited Claude Code security model), not a bug. `permission` section removed from opencode.json as non-functional. Cross-workspace access stays via archivist agent delegation (explicit edit permissions). MCP scoping property documented in §1 Directory Architecture above. Oracle consulted (ses_0ec2bd0e3ffe70q1QxBFi7jOBX, ses_0ec87e622ffeXvr0GpQUhGLg0G) — both routed to opencode-go/kimi-k2.7-code via fallback (Oracle routing issue, separate investigation).
 3. Complete Workflow — 9-Phase State Machine
    ╔══════════════════════════╗
    ║ GLOBAL BLOCKING RULES ║
