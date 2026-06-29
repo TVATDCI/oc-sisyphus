@@ -250,9 +250,14 @@ system-prompt level — the fix moved the override into the skill *description*
 
 ### oh-my-openagent Version Discipline
 
-Evaluated upgrading from 4.12.1. Assessment: 4.13.0 deferred for 4.13.1;
-dependencies verified identical. **Pinned to `4.12.1` exactly (no caret)** —
-the plugin is a load-bearing dependency and caret drift is a risk.
+Originally pinned to `4.12.1` exactly (no caret) — the plugin is a load-bearing
+dependency and caret drift is a risk. **Updated to `4.14.0` on Jun 29** after
+Oracle review (ses_0eb7d514dffeZqfHPAwH09VUkc) confirmed all 8 load-bearing
+surfaces COMPATIBLE: schema forward-compatible (4.14.0 adds
+`restore_primary_after_cooldown`), deps unchanged, MCP scope-filter identical,
+sisyphus-gates tuple form still supported. `auto_update: false` added to prevent
+drift. 4.13.0 (previously deferred) shipped a large feature delta (TeamMode v2,
+Ultimate Browsing, AST-grep MCP → sg resolver); 4.14.0 hardens it.
 
 ### Layer 3.7 Sandbox Allowlist SHIPPED (Jun 27)
 
@@ -311,7 +316,7 @@ every decision since. When in doubt, return to these.
 - **Skills:** 50+ user-installed + 15 oh-my-openagent built-in + 12 shared
 - **Agents:** 17 named agents, 9 task categories
 - **Gate plugin:** `sisyphus-gates` v0.2.0+, **19 src modules, 431 unit + 22 e2e tests**
-- **oh-my-openagent:** 4.12.1 (exact pin, no caret)
+- **oh-my-openagent:** 4.14.0 (exact pin, no caret, auto_update: false)
 - **Workflow:** 9-phase HMAC-signed state machine
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`

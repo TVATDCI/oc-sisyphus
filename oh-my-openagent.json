@@ -1,5 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
+  "auto_update": false,
   "runtime_fallback": {
     "enabled": true,
     "retry_on_errors": [400, 401, 403, 404, 429, 500, 502, 503, 504],
@@ -14,7 +15,8 @@
       "variant": "high",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.7-code" },
-        { "model": "opencode-go/glm-5.2" }
+        { "model": "opencode-go/glm-5.2" },
+        { "model": "opencode/glm-5.1" }
       ],
       "prompt_append": "file://~/.config/opencode/prompts/sisyphus-guidance.md",
       "ultrawork": {
