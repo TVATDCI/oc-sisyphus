@@ -3,6 +3,7 @@
 > **Last reviewed:** 2026-06-28 | **Next review:** When agent routing changes or a new skill is added
 > **Drift-prone sections:** §Agent Routing, §Change Timeline, §Skill count, §Plugin file count
 > **Stable sections:** §Directory Architecture, §Workflow State Machine, §Subagent Permissions
+> **Deep history + rationale (searchable):** Main-vault `wiki/concepts/` system-history pages (tags: `system-history`, `era-1`..`era-4`). Era pages WikiLink to event pages and the opencode-architecture concept pages.
 
 1. Directory Architecture (7 layers)
    ~/.config/opencode/

@@ -35,7 +35,8 @@
         "/home/vladi/AGENTS",
         "/home/vladi/.sisyphus",
         "/home/vladi/.config/opencode",
-        "/home/vladi/developer/Reference/meta"
+        "/home/vladi/developer/Reference/meta",
+        "/home/vladi/developer/test-artifacts"
       ],
       "enabled": true
     },

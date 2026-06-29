@@ -25,6 +25,7 @@
 | Needing full primary-source detail | The deep archive at `/home/vladi/developer/Reference/meta/` |
 | Checking current capabilities/counts | "Current System State" (living) + `COMPLETE-CODEBASE.md` |
 | Producing a system report | `skill:system-reference` → "Full System Report" capability |
+| Searching for connected context | Main-vault wiki/concepts/ system-history pages (tag system-history) — WikiLinked, searchable |
 
 **Related docs (do not confuse roles):**
 - `AGENTS.md` — root system prompt (compaction, routing, rules). Behavioral.
@@ -340,14 +341,7 @@ every decision since. When in doubt, return to these.
 (~170KB across 16 files). Outside the opencode sandbox by design — the archive
 is reference material, not agent-editable state. Do not move it; reference it.
 
-**Vault migration (plan ready, execution pending):** the deep archive will
-become WikiLinked pages in Main-vault (Obsidian) — era pages carry WHEN/WHY,
-existing concept pages carry WHAT, WikiLinks connect them. Plan at
-`.omo/plans/main-vault-system-history-timeline.md` (8 era/event pages, 15 todos,
-4 waves, schema-correct per ~/Main-vault/AGENTS.md). Prerequisite: add
-`/home/vladi/developer/Reference/meta` + `/home/vladi/developer/test-artifacts`
-to opencode.json `mcp.home.command` array. `meta/` stays at its current path
-as primary source; vault pages link to it.
+**Implemented 2026-06-29:** the deep archive is now linked from Main-vault via the system-history timeline layer (era-1-foundation, era-2-growth, era-3-hardening, era-4-production + event pages: governance-crisis, architecture-principles, momus-split-decision, layer-3-7-sandbox-allowlist). The archive itself stays at its path; the vault pages are the searchable entry layer.
 
 ---
 
