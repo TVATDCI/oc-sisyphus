@@ -321,7 +321,7 @@ every decision since. When in doubt, return to these.
 ### Session log *(append, newest last)*
 
 - **2026-06-28** — SYSTEM-NARRATIVE.md created (3-layer documentation bridge). READ_EXCEPTION_PATTERNS gap closed (3-line gates.js fix, AC-3.17 runtime pass).
-- **2026-06-29** — Main-vault system-history timeline layer shipped (8 era/event WikiLinked pages, F1-F4 gates APPROVE). 4-layer log architecture refactored (this entry is now the canonical terse pattern; verbose detail → `~/Main-vault/log.md`).
+- **2026-06-29** — Main-vault system-history timeline layer shipped (8 era/event WikiLinked pages, F1-F4 gates APPROVE). 4-layer log architecture refactored (terse → SN L320, verbose → `~/Main-vault/log.md`). MCP filesystem scoping documented (workspace-root bound by design, not a bug). Oracle routing fix: `glm-5.2` concurrency 1→2 (was forcing Oracle to kimi-k2.7-code when sisyphus held the slot); fallback chains updated for oracle/post-reviewer/reviewer/artistry.
 
 ---
 
