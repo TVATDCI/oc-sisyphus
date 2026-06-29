@@ -99,7 +99,7 @@ manuals triggered by domain match:
 
 ### 5. Agents (17 Specialized Personas)
 
-Different tasks need different AI models. The system routes work to 17 agents,
+Different tasks need different AI models. The system routes work to 18 agents,
 each with its own model, tools, and permissions. Most agents are read-only.
 Only 2 have write access, and even those are blocked by Layer 0 from touching
 governance files.
@@ -163,7 +163,7 @@ the cryptographic signature — never from forgeable text.
 ```
 ~/.config/opencode/
 ├── opencode.json              # Entry-point config (plugin, MCP, permissions)
-├── oh-my-openagent.json       # 17 agents + 9 categories + model routing
+├── oh-my-openagent.json       # 18 agents + 9 categories + model routing
 ├── AGENTS.md                  # Root system prompt (compaction, routing, rules)
 ├── COMPLETE-CODEBASE.md       # Full system map (architecture, timeline, routing)
 ├── RAW.md                     # Frontier-prompt absorption research reference
@@ -193,7 +193,7 @@ Operator state lives outside the repo at `~/.sisyphus/` (gitignored):
 | **HMAC verdict** | A cryptographic signature proving a human approved advancing a phase. The AI cannot forge it; produced by `cli.js`. |
 | **Trust-root** | The canonical state location (`~/.sisyphus/`) and protected paths the AI is never allowed to edit — enforced unconditionally by Layer 0. |
 | **Skill pack** | A `SKILL.md` file that teaches the AI one specific task. |
-| **Agent routing** | OpenCode dispatches work to 17 agents or 9 categories, each with its own model and permissions. |
+| **Agent routing** | OpenCode dispatches work to 18 agents or 9 categories, each with its own model and permissions. |
 
 ## Security Design
 

@@ -221,10 +221,10 @@ gate decisions required HMAC signatures from a key the agent cannot read.
 
 ### Provider Strategy v3
 
-Three-tier fallback: `zai-coding-plan` (primary) → `opencode-go` (fallback) →
+Three-tier fallback: `zhipuai-coding-plan` (primary) → `opencode-go` (fallback) →
 `opencode` pre-pay (final). Jun 24 reset consolidated **16 of 17 agent primaries
 onto zai**. Jun 26 model reset refined per-category: `ultrabrain` →
-`zai-coding-plan/glm-5.2`, `prometheus` → `zai-coding-plan/glm-5.1`,
+`zhipuai-coding-plan/glm-5.2`, `prometheus` → `zhipuai-coding-plan/glm-5.1`,
 `explore` → `opencode-go/minimax-m2.7`, etc. The provider strategy is
 cost-optimized, not model-maximalist — consistent with the Era 1 philosophy.
 
@@ -314,13 +314,13 @@ every decision since. When in doubt, return to these.
 > If a counter changes materially, also update `COMPLETE-CODEBASE.md`.
 
 - **Skills:** 50+ user-installed + 15 oh-my-openagent built-in + 12 shared
-- **Agents:** 17 named agents, 9 task categories
+- **Agents:** 18 named agents, 9 task categories
 - **Gate plugin:** `sisyphus-gates` v0.2.0+, **19 src modules, 431 unit + 22 e2e tests**
 - **oh-my-openagent:** 4.14.0 (exact pin, no caret, auto_update: false)
 - **Workflow:** 9-phase HMAC-signed state machine
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
-- **Provider:** `zai-coding-plan` primary (16/17 agents); `opencode-go` → `opencode` fallback
+- **Provider:** `zhipuai-coding-plan` primary (17/18 agents); `opencode-go` → `opencode` fallback
 - **Last reviewed:** 2026-06-29
 
 ### Session log *(append, newest last)*
