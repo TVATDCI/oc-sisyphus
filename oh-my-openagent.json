@@ -11,7 +11,7 @@
   },
   "agents": {
     "sisyphus": {
-      "model": "zai-coding-plan/glm-5.2",
+      "model": "zhipuai-coding-plan/glm-5.2",
       "variant": "high",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.7-code" },
@@ -20,7 +20,7 @@
       ],
       "prompt_append": "file://~/.config/opencode/prompts/sisyphus-guidance.md",
       "ultrawork": {
-        "model": "zai-coding-plan/glm-5.1",
+        "model": "zhipuai-coding-plan/glm-5.1",
         "variant": "high",
         "fallback_models": [
           { "model": "opencode-go/glm-5.1" },
@@ -29,7 +29,7 @@
       }
     },
     "hephaestus": {
-      "model": "zai-coding-plan/glm-5.1",
+      "model": "zhipuai-coding-plan/glm-5.1",
       "fallback_models": [
         { "model": "opencode-go/glm-5.1" },
         { "model": "opencode/kimi-k2.5" },
@@ -38,16 +38,13 @@
       "prompt_append": "file://~/.config/opencode/prompts/hephaestus-guidance.md"
     },
     "oracle": {
-      "model": "zai-coding-plan/glm-5.2",
+      "model": "zhipuai-coding-plan/glm-5.2",
       "variant": "high",
-      "fallback_models": [
-        { "model": "opencode-go/kimi-k2.7-code" },
-        { "model": "opencode/gpt-5.4" }
-      ],
+      "fallback_models": [{ "model": "opencode/gpt-5.4" }],
       "prompt_append": "file://~/.config/opencode/prompts/oracle-guidance.md"
     },
     "librarian": {
-      "model": "zai-coding-plan/glm-4.7",
+      "model": "zhipuai-coding-plan/glm-4.7",
       "fallback_models": [
         { "model": "opencode-go/minimax-m2.7" },
         { "model": "opencode/deepseek-v4-flash-free" }
@@ -57,20 +54,20 @@
     "explore": {
       "model": "opencode-go/minimax-m2.7",
       "fallback_models": [
-        { "model": "zai-coding-plan/glm-4.7" },
+        { "model": "zhipuai-coding-plan/glm-4.7" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ],
       "prompt_append": "file://~/.config/opencode/prompts/explore-guidance.md"
     },
     "multimodal-looker": {
-      "model": "zai-coding-plan/glm-4.6v",
+      "model": "zhipuai-coding-plan/glm-4.6v",
       "fallback_models": [
         { "model": "opencode-go/mimo-v2-omni" },
         { "model": "opencode/mimo-v2.5-free" }
       ]
     },
     "prometheus": {
-      "model": "zai-coding-plan/glm-5.1",
+      "model": "zhipuai-coding-plan/glm-5.1",
       "fallback_models": [
         { "model": "opencode-go/glm-5.1" },
         { "model": "opencode/glm-5.1" }
@@ -78,79 +75,86 @@
       "prompt_append": "file://~/.config/opencode/prompts/prometheus-guidance.md"
     },
     "metis": {
-      "model": "zai-coding-plan/glm-5.1",
+      "model": "zhipuai-coding-plan/glm-5.1",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.5" },
         { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "momus": {
-      "model": "zai-coding-plan/glm-5.2",
+      "model": "zhipuai-coding-plan/glm-5.2",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.7-code" },
         { "model": "opencode/gpt-5.4" }
       ]
     },
     "atlas": {
-      "model": "zai-coding-plan/glm-5-turbo",
+      "model": "zhipuai-coding-plan/glm-5-turbo",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.6" },
         { "model": "opencode/kimi-k2.6" }
       ]
     },
     "sisyphus-junior": {
-      "model": "zai-coding-plan/glm-5-turbo",
+      "model": "zhipuai-coding-plan/glm-5-turbo",
       "fallback_models": [
         { "model": "opencode-go/qwen3.7-plus" },
         { "model": "opencode/kimi-k2.6" }
       ]
     },
     "archivist": {
-      "model": "zai-coding-plan/glm-5.1",
+      "model": "zhipuai-coding-plan/glm-5.1",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.5" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ]
     },
     "athena": {
-      "model": "zai-coding-plan/glm-4.7",
+      "model": "zhipuai-coding-plan/glm-4.7",
       "fallback_models": [
         { "model": "opencode-go/minimax-m2.7" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ]
     },
     "auditor": {
-      "model": "zai-coding-plan/glm-4.7",
+      "model": "zhipuai-coding-plan/glm-4.7",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.5" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ]
     },
     "explorer": {
-      "model": "zai-coding-plan/glm-4.7",
+      "model": "zhipuai-coding-plan/glm-4.7",
       "fallback_models": [
         { "model": "opencode-go/minimax-m2.7" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ]
     },
     "post-reviewer": {
-      "model": "zai-coding-plan/glm-5.2",
+      "model": "zhipuai-coding-plan/glm-5.2",
       "fallback_models": [
         { "model": "opencode-go/glm-5.2" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ]
     },
     "reviewer": {
-      "model": "zai-coding-plan/glm-5.2",
+      "model": "zhipuai-coding-plan/glm-5.2",
       "fallback_models": [
         { "model": "opencode-go/glm-5.2" },
+        { "model": "opencode/deepseek-v4-flash-free" }
+      ]
+    },
+    "fullstack-dev-tester": {
+      "model": "zhipuai-coding-plan/glm-5.1",
+      "fallback_models": [
+        { "model": "opencode-go/glm-5.1" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ]
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "zai-coding-plan/glm-5v-turbo",
+      "model": "zhipuai-coding-plan/glm-5v-turbo",
       "fallback_models": [
         { "model": "opencode-go/mimo-v2.5" },
         { "model": "opencode-go/mimo-v2-omni" },
@@ -158,14 +162,14 @@
       ]
     },
     "ultrabrain": {
-      "model": "zai-coding-plan/glm-5.2",
+      "model": "zhipuai-coding-plan/glm-5.2",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.7-code" },
         { "model": "opencode/glm-5.2" }
       ]
     },
     "deep": {
-      "model": "zai-coding-plan/glm-5.1",
+      "model": "zhipuai-coding-plan/glm-5.1",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.5" },
         { "model": "opencode/deepseek-v4-flash-free" }
@@ -179,28 +183,28 @@
       ]
     },
     "quick": {
-      "model": "zai-coding-plan/glm-4.5-air",
+      "model": "zhipuai-coding-plan/glm-4.5-air",
       "fallback_models": [
         { "model": "opencode-go/minimax-m2.7" },
         { "model": "opencode/deepseek-v4-flash-free" }
       ]
     },
     "unspecified-low": {
-      "model": "zai-coding-plan/glm-4.6",
+      "model": "zhipuai-coding-plan/glm-4.6",
       "fallback_models": [
         { "model": "opencode-go/qwen3.5-plus" },
         { "model": "opencode/mimo-v2.5-free" }
       ]
     },
     "unspecified-high": {
-      "model": "zai-coding-plan/glm-4.7",
+      "model": "zhipuai-coding-plan/glm-4.7",
       "fallback_models": [
         { "model": "opencode-go/kimi-k2.5" },
         { "model": "opencode/kimi-k2.5" }
       ]
     },
     "writing": {
-      "model": "zai-coding-plan/glm-4.7",
+      "model": "zhipuai-coding-plan/glm-4.7",
       "fallback_models": [
         { "model": "opencode-go/glm-5.1" },
         { "model": "opencode/kimi-k2.5" },
@@ -209,7 +213,7 @@
     },
     "git-commit-message": {
       "model": "opencode/deepseek-v4-flash-free",
-      "fallback_models": [{ "model": "zai-coding-plan/glm-4.5-air" }],
+      "fallback_models": [{ "model": "zhipuai-coding-plan/glm-4.5-air" }],
       "description": "All git operations — commits, branches, rebases, history searches",
       "prompt_append": "file://~/.config/opencode/prompts/git-commit-message-guidance.md"
     }
@@ -220,17 +224,17 @@
     "providerConcurrency": {
       "opencode-go": 10,
       "opencode": 10,
-      "zai-coding-plan": 10
+      "zhipuai-coding-plan": 10
     },
     "modelConcurrency": {
-      "zai-coding-plan/glm-5.2": 2,
-      "zai-coding-plan/glm-5.1": 3,
-      "zai-coding-plan/glm-5v-turbo": 1,
-      "zai-coding-plan/glm-5-turbo": 3,
-      "zai-coding-plan/glm-4.7": 5,
-      "zai-coding-plan/glm-4.6v": 2,
-      "zai-coding-plan/glm-4.6": 5,
-      "zai-coding-plan/glm-4.5-air": 10,
+      "zhipuai-coding-plan/glm-5.2": 2,
+      "zhipuai-coding-plan/glm-5.1": 3,
+      "zhipuai-coding-plan/glm-5v-turbo": 1,
+      "zhipuai-coding-plan/glm-5-turbo": 3,
+      "zhipuai-coding-plan/glm-4.7": 5,
+      "zhipuai-coding-plan/glm-4.6v": 2,
+      "zhipuai-coding-plan/glm-4.6": 5,
+      "zhipuai-coding-plan/glm-4.5-air": 10,
       "opencode-go/kimi-k2.7-code": 1,
       "opencode-go/kimi-k2.6": 2,
       "opencode-go/kimi-k2.5": 3

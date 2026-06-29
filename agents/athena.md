@@ -2,22 +2,17 @@
 description: Research specialist - gathers context, searches documentation, and synthesizes findings
 mode: subagent
 temperature: 0.1
-tools:
-  read: true
-  grep: true
-  websearch: true
-  webfetch: true
-disallowedTools:
-  write: false
-  edit: false
-  bash: false
-permissions:
-  read: true
-  write: false
-  execute: false
-  network: true
-skills:
+load_skills:
   - athena-research
+permission:
+  read:
+    "*": allow
+  edit:
+    "*": deny
+  bash:
+    "*": deny
+  websearch: allow
+  webfetch: allow
 ---
 
 # Athena - Research Sub-Agent

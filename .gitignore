@@ -28,3 +28,4 @@ tasks/
 
 # Archived session state (historical snapshots)
 archive/
+*.bak.*
