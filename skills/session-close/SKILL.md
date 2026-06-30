@@ -28,6 +28,8 @@ Work is NOT complete until `git push` succeeds.
 >
 > **Prose claims of "closed" are non-authoritative — the state field is authoritative.** If the gate blocks `git push`, do NOT work around it by claiming "session closed" in text — run `complete` or escalate to the operator for `override`.
 
+> **NOTE (Phase 1.5 pending):** CLI dispatch for protocol commands is not yet wired. `node cli.js protocol complete session-close` is currently a no-op. Do NOT claim protocol completion until the command produces a success log line. The gate is dormant (fail-open, safe). See `.omo/drafts/session-close-gate-phase-1.5-wiring.md` for the activation plan.
+
 1. **File issues for remaining work** - Create beads issues for anything that needs follow-up
 2. **Run quality gates** (if code changed) - Tests, linters, builds
 3. **Run COMPLETE-CODEBASE.md drift check** — If this session touched skills, agents, routing, permissions, workflow docs, scripts, or canonical paths:
