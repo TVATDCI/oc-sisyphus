@@ -415,5 +415,22 @@ export function shouldBlockCommand(command, args, state) {
     };
   }
 
+  // Session-close gate (anti-drift MVP)
+  if (
+    (command === "git push" || command === "bd dolt push") &&
+    state &&
+    state.session_close &&
+    state.session_close.status === "open"
+  ) {
+    return {
+      blocked: true,
+      reason:
+        "Session-close protocol is OPEN but not complete. Run " +
+        "'node cli.js protocol complete session-close' after all 4 layers " +
+        "are done, or 'node cli.js protocol override session-close " +
+        "--reason \"...\"' to bypass.",
+    };
+  }
+
   return { blocked: false };
 }

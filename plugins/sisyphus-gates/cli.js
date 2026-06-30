@@ -407,6 +407,73 @@ export function cmdApprove(positional, opts) {
       `  Gate will open on plugin's next sync.\n`
   );
 }
+export function cmdProtocol(positional, opts) {
+  var action = positional[0];
+  var protocolName = positional[1];
+
+  if (action !== 'start' && action !== 'complete' && action !== 'override') {
+    fail("Unknown protocol action '" + action + "'. Use: start | complete | override.");
+  }
+  if (protocolName !== 'session-close') {
+    fail("Unknown protocol '" + protocolName + "'. MVP supports only 'session-close'.");
+  }
+  if (action === 'override' && !opts.reason) {
+    fail('--reason <text> is required for protocol override.');
+  }
+
+  var projectName = getProjectName(opts.cwd || process.cwd());
+
+  // Read current state to preserve session_close prior fields
+  var statePath = join(homedir(), '.sisyphus', 'state.json');
+  var currentSc = {};
+  if (existsSync(statePath)) {
+    try {
+      var state = JSON.parse(readFileSync(statePath, 'utf-8'));
+      currentSc = state.session_close || {};
+    } catch (e) { /* default empty */ }
+  }
+
+  var now = new Date().toISOString();
+  var newSc;
+  var summary;
+
+  if (action === 'start') {
+    newSc = Object.assign({}, currentSc, {
+      status: 'open',
+      started_at: now,
+      completed_at: undefined,
+      override_reason: undefined,
+      override_at: undefined
+    });
+    summary = 'OPEN (started_at=' + now + ')';
+  } else if (action === 'complete') {
+    newSc = Object.assign({}, currentSc, {
+      status: 'complete',
+      completed_at: now
+    });
+    summary = 'COMPLETE (completed_at=' + now + ')';
+  } else {
+    newSc = Object.assign({}, currentSc, {
+      status: 'overridden',
+      override_reason: opts.reason,
+      override_at: now
+    });
+    summary = 'OVERRIDDEN (reason="' + opts.reason + '")';
+  }
+
+  if (opts.dryRun) {
+    process.stdout.write('[dry-run] Would write: state.session_close = ' + JSON.stringify(newSc) + '\n');
+    return;
+  }
+
+  writePersistentState(projectName, {}, { session_close: newSc });
+
+  process.stdout.write(
+    '\u2713 Protocol ' + summary + '\n' +
+    '  Gate will ' + (newSc.status === 'open' ? 'BLOCK' : 'ALLOW') + ' git push / bd dolt push.\n'
+  );
+}
+
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
