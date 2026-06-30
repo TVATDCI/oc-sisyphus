@@ -321,12 +321,13 @@ every decision since. When in doubt, return to these.
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
 - **Provider:** `zhipuai-coding-plan` primary (17/18 agents); `opencode-go` → `opencode` fallback
-- **Last reviewed:** 2026-06-29
+- **Last reviewed:** 2026-06-30
 
 ### Session log *(append, newest last)*
 
 - **2026-06-28** — SYSTEM-NARRATIVE.md created (3-layer documentation bridge). READ_EXCEPTION_PATTERNS gap closed (3-line gates.js fix, AC-3.17 runtime pass).
 - **2026-06-29** — Main-vault system-history timeline shipped (8 pages). 4-layer log architecture refactored. MCP filesystem scoping documented (design property). oh-my-openagent 4.12.1→4.14.0 (Oracle-reviewed). **Root cause of ALL subagent fallback: provider name mismatch `zai` vs canonical `zhipuai-coding-plan`** — delegate-task resolver does exact string match; 35 occurrences fixed; concurrency settings were also silently broken by same mismatch. 18th agent (fullstack-dev-tester) added; athena.md + explorer.md schema migrated.
+- **2026-06-30** — Closed remaining agent-config gaps from `.omo/drafts/agents-gaps-followup.md`: explore/explorer tier distinction documented via YAML comment in `agents/explorer.md` only — initial JSON `_comment` attempt was schema-rejected (agent entries are `additionalProperties:false`; Oracle-confirmed ses_0e6772a69ffeaH1cWEfBkx5FWg); §Subagent Permissions rewritten with 18-agent = 8 user-defined + 10 plugin-bundled split; fullstack-dev-tester broad-edit rationale + auditor `temp: 0.0` deliberate exception documented; residual `zai` tokens cleaned from README L108 + COMPLETE-CODEBASE §Agent Routing prose L196 (Jun 29 global rename had missed these 5 spots). Operator integrity audit caught a false "session fully closed" claim from a prior instance — full 4-layer close executed here.
 
 ---
 
