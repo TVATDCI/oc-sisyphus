@@ -101,7 +101,7 @@ function fail(msg, code = 2) {
 
 export function parseArgs(argv) {
   const args = argv.slice(2);
-  const opts = { keyCommand: null, cwd: null, dryRun: false, help: false };
+  const opts = { keyCommand: null, cwd: null, dryRun: false, help: false, reason: null };
   const positional = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -118,6 +118,11 @@ export function parseArgs(argv) {
     }
     if (a === "--dry-run") {
       opts.dryRun = true;
+      continue;
+    }
+    if (a === "--reason") {
+      opts.reason = args[++i];
+      if (!opts.reason) fail("--reason requires a value");
       continue;
     }
     if (a === "-h" || a === "--help") {
@@ -505,6 +510,9 @@ function main() {
       break;
     case "approve":
       cmdApprove(rest, opts);
+      break;
+    case "protocol":
+      cmdProtocol(rest, opts);
       break;
     default:
       fail(`Unknown subcommand: ${subcommand}`);
