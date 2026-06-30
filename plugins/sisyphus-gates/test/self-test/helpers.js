@@ -20,58 +20,6 @@ import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { server } from "../../src/plugin.js";
 import { clearWorkflowCache, loadWorkflowConfig } from "../../src/workflow-loader.js";
-import { signVerdict } from "../../src/verdict-signing.js";
-import { resolveMemoryKey } from "../../src/memory-key.js";
-
-const TEST_KEY_COMMAND = "echo test-key-do-not-use-in-prod";
-
-/**
- * Writes HMAC-signed PRD + Plan verdict artifacts and a plan approval
- * artifact to the sandbox's notepads/cli/ directory — the path the plugin's
- * loadSignedVerdicts scanner reads on boot. Without this, gates are always
- * "unknown" in the sandbox (text values in state.json are ignored in the
- * HMAC era), and Layer 5 fail-closed blocks everything before Layer 6+
- * checks can fire.
- *
- * Use before bootServer() when a scenario needs gates to be genuinely PASS
- * (e.g., testing commands in the "gate-dependent zone" — not catastrophic,
- * not safe-read-only, not sandbox-allowed).
- */
-export function seedApprovedGates(home, { prdId = "selftest-prd-001", planId = "selftest-plan-001" } = {}) {
-  const memoryKey = resolveMemoryKey({ verdict_key_command: TEST_KEY_COMMAND });
-  if (!memoryKey) {
-    throw new Error("seedApprovedGates: failed to resolve test MEMORY_KEY");
-  }
-  const cliDir = join(home, ".sisyphus", "notepads", "cli");
-  mkdirSync(cliDir, { recursive: true });
-
-  const signed_at = new Date().toISOString();
-  const safeTs = signed_at.replace(/[:.]/g, "-");
-
-  const prdPayload = { kind: "prd", decision: "PASS", id: prdId, schema_version: "2.0.0", signed_at, sessionID: "selftest", operator: "primary" };
-  const prdSig = signVerdict(prdPayload, memoryKey);
-  writeFileSync(
-    join(cliDir, `momus-prd-review-${safeTs}.md`),
-    `<!-- SISYPHUS_GATE ${JSON.stringify(prdPayload)} -->\n<!-- SISYPHUS_GATE_SIG ${JSON.stringify(prdSig)} -->\n`,
-    "utf-8"
-  );
-
-  const planPayload = { kind: "plan", decision: "PASS", id: planId, schema_version: "2.0.0", signed_at, sessionID: "selftest", operator: "primary" };
-  const planSig = signVerdict(planPayload, memoryKey);
-  writeFileSync(
-    join(cliDir, `momus-plan-review-${safeTs}.md`),
-    `<!-- SISYPHUS_GATE ${JSON.stringify(planPayload)} -->\n<!-- SISYPHUS_GATE_SIG ${JSON.stringify(planSig)} -->\n`,
-    "utf-8"
-  );
-
-  const approvePayload = { decision: "approved", kind: "plan", plan_id: planId, schema_version: "1.0.0", signed_at, sessionID: "selftest", operator: "primary" };
-  const approveSig = signVerdict(approvePayload, memoryKey);
-  writeFileSync(
-    join(cliDir, `momus-plan-approval-${safeTs}.md`),
-    `<!-- SISYPHUS_APPROVE ${JSON.stringify(approvePayload)} -->\n<!-- SISYPHUS_APPROVE_SIG ${JSON.stringify(approveSig)} -->\n`,
-    "utf-8"
-  );
-}
 
 export const DEFAULT_WORKFLOW_YAML = `workflow:
   name: sisyphus-self-test

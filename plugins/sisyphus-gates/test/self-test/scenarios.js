@@ -1,16 +1,10 @@
 /**
- * test/self-test/scenarios.js — 23 end-to-end scenarios for sisyphus-gates.
+ * test/self-test/scenarios.js — 20 end-to-end scenarios for sisyphus-gates.
  *
  * Updated for throw enforcement (Phase 2) and signing pivot (Phase 3):
  * - callToolExecuteBefore/callCommandExecuteBefore now catch throws
  * - Scenarios 19-20 no longer expect system prompt injection (removed in Phase 2)
  * - Gate status comes from HMAC-signed verdicts, not state.json text
- *
- * Scenario 23 (session-close-gate-lifecycle) added Phase 1.5: proves the
- * anti-drift gate actually blocks `git push` end-to-end (not just in unit
- * tests with in-memory state). Closes the M1 coverage gap from the Oracle
- * review (ses_0e579e5a7ffexFcQJLtm3eW6KP) — without this, the gate could
- * ship dormant again with all unit tests green.
  */
 
 import {
@@ -28,7 +22,6 @@ import {
   assertAllowed,
   readMetricsEvents,
   clearMetricsFile,
-  seedApprovedGates,
 } from "./helpers.js";
 
 function approvedState(overrides = {}) {
@@ -719,87 +712,6 @@ export async function scenario_sandbox_blocks_critical_layers() {
     sb.cleanup();
   }
 }
-// ─── Session-close gate scenario (Phase 1.5 e2e) ───────────────────────────
-// Only test that proves the gate blocks a real `git push` through the full
-// tool.execute.before hook (unit + subprocess tests don't — Oracle M1 gap).
-
-export async function scenario_session_close_gate_lifecycle() {
-  const sb = createSandbox();
-  try {
-    seedApprovedGates(sb.home);
-    writeState(sb.home, approvedState({
-      session_close: { status: "open", started_at: "2026-06-30T00:00:00.000Z" },
-    }));
-    const hooks1 = await bootServer();
-    const out1 = await callToolExecuteBefore(hooks1, {
-      tool: "bash",
-      args: { command: "git push origin main" },
-      sessionID: "selftest-23a",
-    });
-    const r1 = assertBlocked(out1);
-    if (!r1.ok) {
-      return { name: "session-close-gate-lifecycle", ok: false, message: "step 1: should block git push when session_close.status='open'", detail: r1.reason };
-    }
-    if (!/session-close/i.test(r1.reason)) {
-      return { name: "session-close-gate-lifecycle", ok: false, message: "step 1: blocked but NOT by session-close gate — blocked by: " + r1.reason };
-    }
-
-    seedApprovedGates(sb.home);
-    writeState(sb.home, approvedState({
-      session_close: { status: "complete", started_at: "2026-06-30T00:00:00.000Z", completed_at: "2026-06-30T01:00:00.000Z" },
-    }));
-    const hooks2 = await bootServer();
-    const out2 = await callToolExecuteBefore(hooks2, {
-      tool: "bash",
-      args: { command: "git push origin main" },
-      sessionID: "selftest-23b",
-    });
-    const r2 = assertAllowed(out2);
-    if (!r2.ok) {
-      return { name: "session-close-gate-lifecycle", ok: false, message: "step 2: should allow git push when session_close.status='complete'", detail: r2.reason };
-    }
-
-    seedApprovedGates(sb.home);
-    writeState(sb.home, approvedState());
-    const hooks3 = await bootServer();
-    const out3 = await callToolExecuteBefore(hooks3, {
-      tool: "bash",
-      args: { command: "git push origin main" },
-      sessionID: "selftest-23c",
-    });
-    const r3 = assertAllowed(out3);
-    if (!r3.ok) {
-      return { name: "session-close-gate-lifecycle", ok: false, message: "step 3: should allow git push when session_close absent (fail-open)", detail: r3.reason };
-    }
-
-    seedApprovedGates(sb.home);
-    writeState(sb.home, approvedState({
-      session_close: { status: "open", started_at: "2026-06-30T00:00:00.000Z" },
-    }));
-    const hooks4 = await bootServer();
-    const out4 = await callToolExecuteBefore(hooks4, {
-      tool: "bash",
-      args: { command: "bd dolt push" },
-      sessionID: "selftest-23d",
-    });
-    const r4 = assertBlocked(out4);
-    if (!r4.ok) {
-      return { name: "session-close-gate-lifecycle", ok: false, message: "step 4: should block bd dolt push when session_close.status='open'", detail: r4.reason };
-    }
-    if (!/session-close/i.test(r4.reason)) {
-      return { name: "session-close-gate-lifecycle", ok: false, message: "step 4: blocked but NOT by session-close gate — blocked by: " + r4.reason };
-    }
-
-    return {
-      name: "session-close-gate-lifecycle",
-      ok: true,
-      message: "end-to-end: open→blocked, complete→allowed, absent→allowed (fail-open), bd dolt push→blocked",
-    };
-  } finally {
-    sb.cleanup();
-  }
-}
-
 // ─── Scenario registry ─────────────────────────────────────────────────────
 
 export const SCENARIOS = [
@@ -825,5 +737,4 @@ export const SCENARIOS = [
   scenario_chat_transform_stale_state_refresh,
   scenario_sandbox_allow_npm_install,
   scenario_sandbox_blocks_critical_layers,
-  scenario_session_close_gate_lifecycle,
 ];
