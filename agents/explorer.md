@@ -1,4 +1,5 @@
 ---
+# Tier distinction: 'explorer' (user-defined, zhipuai-coding-plan/glm-4.7, capable research) is intentionally separate from the plugin-bundled 'explore' agent (opencode-go/minimax-m2.7, cheap fast contextual grep). Different research tiers — do NOT merge or rename.
 description: "Research specialist — gathers context, searches codebase/documentation, and synthesizes findings. Use when: (1) unfamiliar codebase exploration, (2) external documentation lookup, (3) pattern discovery across modules, (4) technology research before implementation. Read-only — does not modify files."
 mode: subagent
 temperature: 0.1

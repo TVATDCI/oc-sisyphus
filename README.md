@@ -97,15 +97,20 @@ manuals triggered by domain match:
 - **Development**: `fullstack-dev`, `frontend-ui-ux`, `skill-creator`, `agent-development`
 - **System**: `session-close`, `shell-safety`, `system-reference`, `opencode-expert`
 
-### 5. Agents (17 Specialized Personas)
+### 5. Agents (18 Specialized Personas)
 
 Different tasks need different AI models. The system routes work to 18 agents,
-each with its own model, tools, and permissions. Most agents are read-only.
-Only 2 have write access, and even those are blocked by Layer 0 from touching
-governance files.
+each with its own model, tools, and permissions. Of these 18, **8 are user-defined**
+(`~/.config/opencode/agents/*.md`: oracle, archivist, athena, auditor, explorer,
+reviewer, post-reviewer, fullstack-dev-tester) and **10 are plugin-bundled** inside
+the oh-my-openagent plugin install (sisyphus, hephaestus, librarian, explore,
+multimodal-looker, prometheus, metis, momus, atlas, sisyphus-junior). Most agents
+are read-only. Only 2 have write access — archivist (scoped to vault paths) and
+fullstack-dev-tester (broad `edit: *`, needed to build apps anywhere in a project
+workspace) — and even those are blocked by Layer 0 from touching governance files.
 
 9 categories dispatch tasks by domain (deep, quick, visual-engineering, writing,
-etc.) using a 3-tier fallback strategy: zai-coding-plan subscription (primary)
+etc.) using a 3-tier fallback strategy: zhipuai-coding-plan subscription (primary)
 → opencode-go lite subscription (fallback) → opencode pre-pay-as-you-go (final
 fallback).
 
