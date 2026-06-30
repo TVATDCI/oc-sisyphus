@@ -35,7 +35,7 @@ Five layers work together:
 
 A Node.js plugin that sits between OpenCode and every tool call the AI tries.
 It inspects each action, blocks the dangerous ones, and enforces a phased
-workflow. 18 source modules, 328 unit tests, 20 end-to-end scenarios.
+workflow. 18 source modules, 446 unit tests across 21 test files, 22 end-to-end scenarios.
 
 **Decision stack** (checked in order, first match wins):
 
@@ -46,9 +46,11 @@ workflow. 18 source modules, 328 unit tests, 20 end-to-end scenarios.
 | 2 — Sudo | Never allowed, any phase | `sudo apt update` → blocked |
 | 3 — Safe read-only tools | `read`, `grep`, `glob`, `websearch` — always allowed | `read file.js` → allowed |
 | 3.5 — MCP classification | External MCP tools classified as read/write/unknown; unknown denied by default | `myfiles_unknown_tool` → blocked |
+| 3.7 — Sandbox allowlist | If cwd resolves into a `sandbox_paths` prefix AND command matches `sandbox_allowed_commands` → allowed with audit (Layers 0–3.5 still apply) | `npm install` in `/tmp/` → allowed |
 | 4 — Safe bash allowlist | `ls`, `cat`, `git status`, `git log` — allowed even when fail-closed | `ls -la` → allowed |
 | 5 — Fail-closed | If state missing, gates unknown, or config unavailable → block everything except reads | No state.json → blocked |
 | 6 — Phase-specific | During review phases: write/edit/git commit blocked. During execution: destructive commands blocked (stricter policy) | PRD review phase + `git commit` → blocked |
+| 6.5 — Session-close gate | `git push` / `bd dolt push` blocked when `session_close.status === "open"` (protocol started but not completed). Operator-side state field; prose claims of "closed" are non-authoritative | Agent claims "session closed" + `git push` without running `cli.js protocol complete session-close` → blocked |
 
 Enforcement is via `throw` — the tool call is aborted, not just annotated.
 
@@ -84,6 +86,17 @@ node cli.js approve my-plan-001
 The plugin verifies the HMAC signature using `crypto.timingSafeEqual` (prevents
 timing attacks). Unsigned, tampered, or wrong-key verdicts are rejected. If no
 signed verdicts exist, gates stay "unknown" → fail-closed.
+
+**Session-close protocol (anti-drift, Phase 1.5+):** `git push` and `bd dolt push`
+are blocked when `session_close.status === "open"`. The state field is the source
+of truth — prose claims of "closed" are non-authoritative.
+
+```bash
+cd ~/.config/opencode/plugins/sisyphus-gates
+node cli.js protocol start session-close                    # marks protocol active; gate will block push
+node cli.js protocol complete session-close                 # marks all 4 layers done; gate allows push
+node cli.js protocol override session-close --reason "..."  # operator bypass for legit cases
+```
 
 ### 4. Skills (46 Instruction Modules)
 
@@ -134,8 +147,8 @@ Verify everything works:
 
 ```bash
 cd plugins/sisyphus-gates
-npm test              # 328 unit tests (~5s)
-npm run self-test     # 20 end-to-end scenarios (~50ms)
+npm test              # 446 unit tests across 21 files (~5s)
+npm run self-test     # 22 end-to-end scenarios (~50ms)
 npm run test:all      # unit + self-test combined
 ```
 
@@ -174,8 +187,8 @@ the cryptographic signature — never from forgeable text.
 ├── RAW.md                     # Frontier-prompt absorption research reference
 ├── plugins/sisyphus-gates/    # Governance plugin
 │   ├── src/                   # 18 source modules
-│   ├── cli.js                 # Operator-only signing CLI
-│   ├── test/                  # 15 test files (328 tests) + 20 self-test scenarios
+│   ├── cli.js                 # Operator-only signing CLI (sign-verdict, approve, protocol)
+│   ├── test/                  # 21 test files (446 tests) + 22 self-test scenarios
 │   └── THREAT-MODEL.md        # Attack surface analysis
 ├── skills/                    # 46 skill packs
 ├── rules/                     # Language + concern rules
@@ -213,10 +226,11 @@ tool, no agent, no phase, and no approval can override.
 **The system is fail-closed by design.** Missing state, unknown gates, invalid
 config, or a missing signing key → block everything except read-only tools.
 
-**Everything is tested adversarially.** 328 unit tests include attack
+**Everything is tested adversarially.** 446 unit tests include attack
 simulations: chaining bypass (`ls && rm -rf /`), command substitution
 (`echo $(rm -rf /)`), shell wrappers (`bash -c`, `eval`, `npx`), MCP bypass,
-subagent escape, trust-root path traversal, and forged verdicts.
+subagent escape, trust-root path traversal, forged verdicts, and session-close
+gate regression (subprocess-based CLI dispatch verification).
 
 ## Known Limitations
 
@@ -243,14 +257,14 @@ subagent escape, trust-root path traversal, and forged verdicts.
 ## Verify
 
 ```bash
-npm test                      # 328 unit tests
-npm run self-test             # 20 end-to-end scenarios
+npm test                      # 446 unit tests
+npm run self-test             # 22 end-to-end scenarios
 npm run test:all              # unit + self-test combined
 bash scripts/pre-push.sh      # full pre-push suite
 ```
 
 ## Status
 
-- 328/328 unit tests + 20/20 self-test scenarios passing
-- `oh-my-openagent` pinned to `4.14.0`; `sisyphus-gates` is a local plugin (`v0.2.0+CLI`)
-- CI runs on Node 22; last updated 2026-06-29
+- 446/446 unit tests + 22/22 self-test scenarios passing
+- `oh-my-openagent` pinned to `4.14.0`; `sisyphus-gates` is a local plugin (`v0.2.0+CLI+protocol`)
+- CI runs on Node 22; last updated 2026-06-30

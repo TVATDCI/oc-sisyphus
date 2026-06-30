@@ -46,7 +46,7 @@ Work is NOT complete until `git push` succeeds.
    |---|---|---|---|
    | 1 (Brief) | `SYSTEM-NARRATIVE.md` LIVING block Session log | One-line session summary | **≤3 lines, hard cap** |
    | 2 (Detail) | `~/Main-vault/log.md` | Full bullets (files, decisions, evidence, next) | Delegate to `archivist` — path is outside main agent's write scope |
-   | 3 (Evidence) | `.omo/evidence/session-close-{YYYY-MM-DD}-{slug}.md` | Raw provenance, full session record | Direct write |
+   | 3 (Evidence) | `~/.sisyphus/evidence/session-close-{YYYY-MM-DD}-{slug}.md` | Raw provenance, full session record | Direct write |
    | 4 (Memory) | `bd remember` | Per-fact cross-session memory | Direct call, source-attributed |
 
    **Hard rule:** if a session summary doesn't fit in 3 lines, the excess MUST go to Layer 2 — never to Layer 1. The skill enforces this; agent discretion does not.
@@ -56,7 +56,7 @@ Work is NOT complete until `git push` succeeds.
    ## [YYYY-MM-DD] session | {one-line summary}
    - **Files touched:** {paths}
    - **Decisions:** {key choices}
-   - **Evidence:** `.omo/evidence/session-close-{date}-*.md`
+   - **Evidence:** `~/.sisyphus/evidence/session-close-{date}-*.md`
    - **bd remember:** {key entry slugs}
    - **Next:** {follow-up}
    ```
