@@ -221,10 +221,10 @@ gate decisions required HMAC signatures from a key the agent cannot read.
 
 ### Provider Strategy v3
 
-Three-tier fallback: `zhipuai-coding-plan` (primary) → `opencode-go` (fallback) →
+Three-tier fallback: `zai-coding-plan` (primary) → `opencode-go` (fallback) →
 `opencode` pre-pay (final). Jun 24 reset consolidated **16 of 17 agent primaries
 onto zai**. Jun 26 model reset refined per-category: `ultrabrain` →
-`zhipuai-coding-plan/glm-5.2`, `prometheus` → `zhipuai-coding-plan/glm-5.1`,
+`zai-coding-plan/glm-5.2`, `prometheus` → `zai-coding-plan/glm-5.1`,
 `explore` → `opencode-go/minimax-m2.7`, etc. The provider strategy is
 cost-optimized, not model-maximalist — consistent with the Era 1 philosophy.
 
@@ -320,8 +320,8 @@ every decision since. When in doubt, return to these.
 - **Workflow:** 9-phase HMAC-signed state machine
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
-- **Provider:** `zhipuai-coding-plan` primary (17/18 agents); `opencode-go` → `opencode` fallback
-- **Last reviewed:** 2026-06-30
+- **Provider:** `zai-coding-plan` primary (17/18 agents); `opencode-go` → `opencode` fallback
+- **Last reviewed:** 2026-07-01
 
 ### Session log *(append, newest last)*
 
@@ -329,6 +329,8 @@ every decision since. When in doubt, return to these.
 - **2026-06-29** — Main-vault system-history timeline shipped (8 pages). 4-layer log architecture refactored. MCP filesystem scoping documented (design property). oh-my-openagent 4.12.1→4.14.0 (Oracle-reviewed). **Root cause of ALL subagent fallback: provider name mismatch `zai` vs canonical `zhipuai-coding-plan`** — delegate-task resolver does exact string match; 35 occurrences fixed; concurrency settings were also silently broken by same mismatch. 18th agent (fullstack-dev-tester) added; athena.md + explorer.md schema migrated.
 - **2026-06-30** — Closed remaining agent-config gaps from `.omo/drafts/agents-gaps-followup.md`: explore/explorer tier distinction documented via YAML comment in `agents/explorer.md` only — initial JSON `_comment` attempt was schema-rejected (agent entries are `additionalProperties:false`; Oracle-confirmed ses_0e6772a69ffeaH1cWEfBkx5FWg); §Subagent Permissions rewritten with 18-agent = 8 user-defined + 10 plugin-bundled split; fullstack-dev-tester broad-edit rationale + auditor `temp: 0.0` deliberate exception documented; residual `zai` tokens cleaned from README L108 + COMPLETE-CODEBASE §Agent Routing prose L196 (Jun 29 global rename had missed these 5 spots). Operator integrity audit caught a false "session fully closed" claim from a prior instance — full 4-layer close executed here.
 - **2026-06-30** — Session-close gate MVP shipped (Phase 1 dormant + Phase 1.5 activation same-day, anti-drift response to the Jun 29 false-close claim): `git push` / `bd dolt push` blocked when `session_close.status === "open"`; cli.js `protocol start|complete|override session-close` commands (operator-side state, inherits Layer 0 protection via state.json); skills/session-close/SKILL.md protocol lifecycle (start before step 1 → complete step 6 before push); 8 unit + 6 subprocess regression tests added (431→446); 4 deviations from draft documented in `.omo/drafts/session-close-gate-handback.md`; Phase 1.5 closed the dispatch-wiring gap that shipped Phase 1 dormant — subprocess tests spawn the CLI end-to-end and would have caught the original gap.
+
+- **2026-07-01** — Provider auth login renamed `zhipuai-coding-plan` → `zai-coding-plan` (operator switched the provider login; same underlying GLM models, no routing/behavior change). oh-my-openagent.json already migrated (17 agent primaries + 7 category primaries + concurrency keys on `zai-coding-plan`). Current-state doc references updated: Provider Strategy v3 + Current System State (this file), README, agents/explorer.md, COMPLETE-CODEBASE §Agent Routing. Historical timeline entries (Jun 24–30) retained as accurate state-at-time records per convention.
 
 ---
 

@@ -123,7 +123,7 @@ fullstack-dev-tester (broad `edit: *`, needed to build apps anywhere in a projec
 workspace) — and even those are blocked by Layer 0 from touching governance files.
 
 9 categories dispatch tasks by domain (deep, quick, visual-engineering, writing,
-etc.) using a 3-tier fallback strategy: zhipuai-coding-plan subscription (primary)
+etc.) using a 3-tier fallback strategy: zai-coding-plan subscription (primary)
 → opencode-go lite subscription (fallback) → opencode pre-pay-as-you-go (final
 fallback).
 
