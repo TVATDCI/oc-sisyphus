@@ -37,11 +37,11 @@
       "prompt_append": "file://~/.config/opencode/prompts/hephaestus-guidance.md"
     },
     "oracle": {
-      "model": "opencode-go/kimi-k3",
+      "model": "opencode-go/kimi-k2.7-code",
       "variant": "high",
       "fallback_models": [
-        { "model": "zai-coding-plan/glm-5.2" },
-        { "model": "opencode-go/kimi-k2.7-code" }
+        { "model": "opencode-go/glm-5.2" },
+        { "model": "zai-coding-plan/glm-5.2" }
       ],
       "prompt_append": "file://~/.config/opencode/prompts/oracle-guidance.md"
     },
@@ -171,9 +171,9 @@
       ]
     },
     "deep": {
-      "model": "zai-coding-plan/glm-5.1",
+      "model": "opencode-go/glm-5.1",
       "fallback_models": [
-        { "model": "opencode-go/glm-5.1" },
+        { "model": "zai-coding-plan/glm-5.1" },
         { "model": "opencode/mimo-v2.5-free" }
       ]
     },
