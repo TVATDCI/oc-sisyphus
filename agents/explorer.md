@@ -1,5 +1,5 @@
 ---
-# Tier distinction: 'explorer' (user-defined, zai-coding-plan/glm-4.7, capable research) is intentionally separate from the plugin-bundled 'explore' agent (opencode-go/minimax-m2.7, cheap fast contextual grep). Different research tiers — do NOT merge or rename.
+# Tier distinction: 'explorer' (user-defined, opencode-go/minimax-m2.7, capable research specialist with websearch/webfetch) is intentionally separate from the plugin-bundled 'explore' agent (opencode/deepseek-v4-flash-free, cheap fast contextual grep). Different research tiers AND different models — explorer runs on the more capable opencode-go tier, explore on the cheap opencode/free tier. Do NOT merge or rename.
 description: "Research specialist — gathers context, searches codebase/documentation, and synthesizes findings. Use when: (1) unfamiliar codebase exploration, (2) external documentation lookup, (3) pattern discovery across modules, (4) technology research before implementation. Read-only — does not modify files."
 mode: subagent
 temperature: 0.1

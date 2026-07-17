@@ -223,10 +223,17 @@ gate decisions required HMAC signatures from a key the agent cannot read.
 
 Three-tier fallback: `zai-coding-plan` (primary) → `opencode-go` (fallback) →
 `opencode` pre-pay (final). Jun 24 reset consolidated **16 of 17 agent primaries
-onto zai**. Jun 26 model reset refined per-category: `ultrabrain` →
-`zai-coding-plan/glm-5.2`, `prometheus` → `zai-coding-plan/glm-5.1`,
-`explore` → `opencode-go/minimax-m2.7`, etc. The provider strategy is
-cost-optimized, not model-maximalist — consistent with the Era 1 philosophy.
+onto zai**. Jun 26 model reset refined per-category. **Jul 17 model refresh**
+shifted the mix to **14 of 18 agent primaries on zai**, with `oracle` →
+`opencode-go/kimi-k3`, `multimodal-looker` → `opencode-go/mimo-v2-omni`,
+`explorer` → `opencode-go/minimax-m2.7`, and `explore` →
+`opencode/deepseek-v4-flash-free` moving off the zai tier. The Jun 29
+`glm-5.2` Oracle/Sisyphus contention is fully resolved (oracle moved to
+opencode-go/kimi-k3, now the sole kimi-k3 consumer); the loaded model is
+`glm-5.1` (8 consumers on concurrency 4, raised from 3 to relieve load). A
+concurrency-hardening pass the same day made `modelConcurrency` comprehensive
+(22 entries across all 3 providers). The provider strategy is cost-optimized,
+not model-maximalist — consistent with the Era 1 philosophy.
 
 ### Frontier Prompt Absorption
 
@@ -320,8 +327,8 @@ every decision since. When in doubt, return to these.
 - **Workflow:** 9-phase HMAC-signed state machine
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
-- **Provider:** `zai-coding-plan` primary (17/18 agents); `opencode-go` → `opencode` fallback
-- **Last reviewed:** 2026-07-01
+- **Provider:** `zai-coding-plan` primary (14/18 agents + 7/9 categories); `opencode-go` (oracle, multimodal-looker, explorer, artistry) → `opencode` (explore, git-commit-message) fallback
+- **Last reviewed:** 2026-07-17
 
 ### Session log *(append, newest last)*
 
@@ -331,6 +338,8 @@ every decision since. When in doubt, return to these.
 - **2026-06-30** — Session-close gate MVP shipped (Phase 1 dormant + Phase 1.5 activation same-day, anti-drift response to the Jun 29 false-close claim): `git push` / `bd dolt push` blocked when `session_close.status === "open"`; cli.js `protocol start|complete|override session-close` commands (operator-side state, inherits Layer 0 protection via state.json); skills/session-close/SKILL.md protocol lifecycle (start before step 1 → complete step 6 before push); 8 unit + 6 subprocess regression tests added (431→446); 4 deviations from draft documented in `.omo/drafts/session-close-gate-handback.md`; Phase 1.5 closed the dispatch-wiring gap that shipped Phase 1 dormant — subprocess tests spawn the CLI end-to-end and would have caught the original gap.
 
 - **2026-07-01** — Provider auth login renamed `zhipuai-coding-plan` → `zai-coding-plan` (operator switched the provider login; same underlying GLM models, no routing/behavior change). oh-my-openagent.json already migrated (17 agent primaries + 7 category primaries + concurrency keys on `zai-coding-plan`). Current-state doc references updated: Provider Strategy v3 + Current System State (this file), README, agents/explorer.md, COMPLETE-CODEBASE §Agent Routing. Historical timeline entries (Jun 24–30) retained as accurate state-at-time records per convention.
+
+- **2026-07-17** — Agent/category model refresh + concurrency hardening (operator-driven, multi-pass): mix settled at zai 14 + opencode-go 3 (oracle→kimi-k3, multimodal-looker→mimo-v2-omni, explorer→minimax-m2.7) + opencode 1 (explore→deepseek-v4-flash-free). Jun 29 glm-5.2 contention fully resolved (oracle→kimi-k3, now sole consumer after sisyphus dropped it). glm-5.1 hotspot relieved (concurrency 3→4, 8 consumers). modelConcurrency made comprehensive (10→22 entries, all 3 providers); deepseek-v4-flash-free capped at 5 (free-tier); kimi-k2.7-code 1→2. All Jun 25 coverage gaps closed. Two cosmetic nits remain (opencode/kimi-k2.6 dead entry, opencode-go/glm-5.2 missing — both harmless). COMPLETE-CODEBASE §Agent Routing + tier note + Provider Strategy v3 + Current System State + agents/explorer.md synced.
 
 ---
 
