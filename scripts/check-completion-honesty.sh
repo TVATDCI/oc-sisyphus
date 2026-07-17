@@ -74,10 +74,10 @@ if [ -f "$OMA" ]; then
   AGENT_COUNT=$(node -e "const j=JSON.parse(require('fs').readFileSync('$OMA','utf8')); console.log(Object.keys(j.agents).length);" 2>/dev/null || echo "0")
   CAT_COUNT=$(node -e "const j=JSON.parse(require('fs').readFileSync('$OMA','utf8')); console.log(Object.keys(j.categories).length);" 2>/dev/null || echo "0")
 
-  if [ "$AGENT_COUNT" -eq 17 ]; then
-    add_pass "oh-my-openagent.json has 17 agents"
+  if [ "$AGENT_COUNT" -eq 18 ]; then
+    add_pass "oh-my-openagent.json has 18 agents"
   else
-    add_error "oh-my-openagent.json has $AGENT_COUNT agents (expected 17)"
+    add_error "oh-my-openagent.json has $AGENT_COUNT agents (expected 18)"
   fi
 
   if [ "$CAT_COUNT" -eq 9 ]; then
