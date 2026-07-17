@@ -264,5 +264,5 @@ bash scripts/pre-push.sh      # full pre-push suite
 ## Status
 
 - 446/446 unit tests + 22/22 self-test scenarios passing
-- `oh-my-openagent` pinned to `4.14.0`; `sisyphus-gates` is a local plugin (`v0.2.0+CLI+protocol`)
+- `oh-my-openagent` pinned to `4.18.2`; `sisyphus-gates` is a local plugin (`v0.2.0+CLI+protocol`)
 - CI runs on Node 22; last updated 2026-06-30

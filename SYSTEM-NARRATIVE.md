@@ -274,7 +274,12 @@ surfaces COMPATIBLE: schema forward-compatible (4.14.0 adds
 `restore_primary_after_cooldown`), deps unchanged, MCP scope-filter identical,
 sisyphus-gates tuple form still supported. `auto_update: false` added to prevent
 drift. 4.13.0 (previously deferred) shipped a large feature delta (TeamMode v2,
-Ultimate Browsing, AST-grep MCP → sg resolver); 4.14.0 hardens it.
+Ultimate Browsing, AST-grep MCP → sg resolver); 4.14.0 hardens it. **Bumped
+to `4.18.2` on Jul 17** — no breaking changes in 4.14.0→4.18.2 touch our gate
+surfaces; deliberately stopped short of `4.19.0` (`refactor!: drop shared/
+skill aliases` would break `skills/_shared/`). 4.18.2 notably fixes the
+category-skill-reminder tool-output corruption. Verified: 446 unit + 22
+self-test + verify-plugin-compat + check-completion-honesty all PASS.
 
 ### Layer 3.7 Sandbox Allowlist SHIPPED (Jun 27)
 
@@ -333,7 +338,7 @@ every decision since. When in doubt, return to these.
 - **Skills:** 50+ user-installed + 15 oh-my-openagent built-in + 12 shared
 - **Agents:** 18 named agents, 9 task categories
 - **Gate plugin:** `sisyphus-gates` v0.2.0+, **19 src modules, 446 unit + 22 e2e tests**; Layer 6.5 session-close gate active (blocks `git push` / `bd dolt push` when `session_close.status === "open"`)
-- **oh-my-openagent:** 4.14.0 (exact pin, no caret, auto_update: false)
+- **oh-my-openagent:** 4.18.2 (exact pin, no caret, auto_update: false; upgraded from 4.14.0 on Jul 17 — stops short of 4.19.0's `refactor!: drop shared/ skill aliases` breaking change)
 - **Workflow:** 9-phase HMAC-signed state machine
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
