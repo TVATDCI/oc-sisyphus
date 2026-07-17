@@ -356,6 +356,8 @@ every decision since. When in doubt, return to these.
 
 - **2026-07-17** — Agent/category model refresh + concurrency hardening (operator-driven, multi-pass): mix settled at zai 14 + opencode-go 3 (oracle→kimi-k3, multimodal-looker→mimo-v2-omni, explorer→minimax-m2.7) + opencode 1 (explore→deepseek-v4-flash-free). Jun 29 glm-5.2 contention fully resolved (oracle→kimi-k3, now sole consumer after sisyphus dropped it). glm-5.1 hotspot relieved (concurrency 3→4, 8 consumers). modelConcurrency made comprehensive (10→22 entries, all 3 providers); deepseek-v4-flash-free capped at 5 (free-tier); kimi-k2.7-code 1→2. All Jun 25 coverage gaps closed. Two cosmetic nits remain (opencode/kimi-k2.6 dead entry, opencode-go/glm-5.2 missing — both harmless). COMPLETE-CODEBASE §Agent Routing + tier note + Provider Strategy v3 + Current System State + agents/explorer.md synced.
 
+- **2026-07-17 (session 2)** — Parallel-repo absorption + toolchain fix. Shipped: `bd_remember.py` (gate-safe bd wrapper), check-completion-honesty tune (17→18), oh-my-openagent 4.14.0→4.18.2 (stops short of 4.19's `shared/`-alias breaking change). Oracle ran the dual-codebase analysis on opencode-go/kimi-k2.7-code (kimi-k3 failed 3× upstream → unreliable as oracle-primary). Caught + session-proofed a toolchain regression: a bun-add runbook violated the Jun 21 npm-only decision → reverted to npm, added `/bun.lock` gitignore + 🔧 TOOLCHAIN note so it can't flip across sessions. Evidence: `~/.sisyphus/evidence/session-close-2026-07-17-parallel-absorption-toolchain.md`.
+
 ---
 
 ## How to Go Deeper
