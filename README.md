@@ -184,7 +184,6 @@ the cryptographic signature — never from forgeable text.
 ├── oh-my-openagent.json       # 18 agents + 9 categories + model routing
 ├── AGENTS.md                  # Root system prompt (compaction, routing, rules)
 ├── COMPLETE-CODEBASE.md       # Full system map (architecture, timeline, routing)
-├── RAW.md                     # Frontier-prompt absorption research reference
 ├── plugins/sisyphus-gates/    # Governance plugin
 │   ├── src/                   # 18 source modules
 │   ├── cli.js                 # Operator-only signing CLI (sign-verdict, approve, protocol)
@@ -248,7 +247,6 @@ gate regression (subprocess-based CLI dispatch verification).
 ## Documentation
 
 - [COMPLETE-CODEBASE.md](./COMPLETE-CODEBASE.md) — full system map, timeline, routing
-- [RAW.md](./RAW.md) — frontier-prompt absorption research reference
 - [SYSTEM-OVERVIEW.md](./SYSTEM-OVERVIEW.md) — architecture doc
 - [THREAT-MODEL.md](./plugins/sisyphus-gates/THREAT-MODEL.md) — attack surface analysis
 - [oh-my-openagent.json](./oh-my-openagent.json) — agent + category routing

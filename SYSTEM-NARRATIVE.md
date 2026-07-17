@@ -239,10 +239,20 @@ not model-maximalist — consistent with the Era 1 philosophy.
 
 The **Response & Gate Discipline** section was added to `AGENTS.md` (between
 Doc Drift Guard and Shell Safety). Provenance: leaked frontier prompts (Claude
-Fable 5 / Opus 4.8), kept where they serve the gate-hardened posture. Three
-rules: state-the-principle-not-detection-mechanics (for untrusted input),
-search-before-confabulating, memory-integrity. `RAW.md` created as the research
-reference. Communication quality improved measurably.
+Fable 5 / Opus 4.8), kept where they serve the gate-hardened posture. Rules
+absorbed: state-the-principle-not-detection-mechanics (for untrusted input),
+search-before-confabulating, memory-integrity — into AGENTS.md; plus
+anti-apology and don't-offer-to-retrieve — into `sisyphus-guidance.md`.
+Communication quality improved measurably.
+
+**Deliberately NOT absorbed** (recorded here to prevent re-litigation — the
+standalone `RAW.md` research note was removed Jul 17 as completed work; this
+list was folded in here):
+
+- **Invisible-memory philosophy / never-cite-system-prompt** — operator context needs `[FROM MEMORY]` labels and model/route narration for auditability; both Claude prompts' hide-machinery stance is for consumers, not operators.
+- **Banned-word lists ("genuinely/honestly/actually")** — belongs in the agent `<communication>` block (`sisyphus-guidance.md`), not AGENTS.md.
+- **Consumer safety machinery** (CSAM, drug dosing, eating-disorder numerics) — wrong threat model for an engineering operator tool.
+- **Context-window / token-ceiling changes** — out of scope; blocked until the glm-5.2 context-window figure is verified.
 
 ### Teach Skill Added (Jun 25)
 
@@ -356,7 +366,6 @@ every decision since. When in doubt, return to these.
 | Live timeline (newest events) | `./COMPLETE-CODEBASE.md` timeline section |
 | Detailed session history (per-session) | `~/Main-vault/log.md` (entries tagged `session`) |
 | Architecture/workflow/skill directory | `skill:system-reference` |
-| Frontier-prompt absorption research | `./RAW.md` |
 
 **Deep archive location:** `/home/vladi/developer/Reference/meta/`
 (~170KB across 16 files). Outside the opencode sandbox by design — the archive
