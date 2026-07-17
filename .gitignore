@@ -3,6 +3,13 @@ node_modules/
 .omo/
 .codegraph/
 
+# Toolchain: npm-ONLY at repo root (package-lock.json is canonical).
+# bun.lock at root is gitignored — do NOT commit it. The Jun 21 decision
+# is npm-only (oh-my-openagent installed via `npm install`, NOT `bun add`).
+# (The website-analyzer skill has its own bun subproject — that NESTED
+# bun.lock is NOT matched by this root-anchored `/bun.lock` rule.)
+/bun.lock
+
 # Backup dirs
 *.backup*
 *.backup-*
