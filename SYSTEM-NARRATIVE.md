@@ -337,7 +337,7 @@ every decision since. When in doubt, return to these.
 - **Workflow:** 9-phase HMAC-signed state machine
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
-- **Provider:** `zai-coding-plan` primary (14/18 agents + 7/9 categories); `opencode-go` (oracle, multimodal-looker, explorer, artistry) → `opencode` (explore, git-commit-message) fallback
+- **Provider:** `zai-coding-plan` primary (14/18 agents + 6/9 categories); `opencode-go` (oracle, multimodal-looker, explorer, artistry, deep) → `opencode` (explore, git-commit-message) fallback
 - **Last reviewed:** 2026-07-17
 
 ### Session log *(append, newest last)*
