@@ -361,6 +361,8 @@ every decision since. When in doubt, return to these.
 
 - **2026-07-17 (session 2)** — Parallel-repo absorption + toolchain fix. Shipped: `bd_remember.py` (gate-safe bd wrapper), check-completion-honesty tune (17→18), oh-my-openagent 4.14.0→4.18.2 (stops short of 4.19's `shared/`-alias breaking change). Oracle ran the dual-codebase analysis on opencode-go/kimi-k2.7-code (kimi-k3 failed 3× upstream → unreliable as oracle-primary). Caught + session-proofed a toolchain regression: a bun-add runbook violated the Jun 21 npm-only decision → reverted to npm, added `/bun.lock` gitignore + 🔧 TOOLCHAIN note so it can't flip across sessions. Evidence: `~/.sisyphus/evidence/session-close-2026-07-17-parallel-absorption-toolchain.md`.
 
+- **2026-07-18** — Post-Jul-17 cleanup. Removed dead `opencode-go/kimi-k3: 1` from modelConcurrency; restored `kimi-k2.6` caps (both providers) — silently removed in 93e9c64 but still backing atlas/archivist/auditor fallbacks. Stripped hardcoded model IDs from 12 SKILL.md files per Oracle review (skill-body model mentions have zero routing influence — runtime resolves from oh-my-openagent.json by category). Added `^\*\*Category:\*\*.*→` FAIL guard to scripts/validate-skills.sh — caught a 12th drift case on first run. Validator: 43 PASS / 0 FAIL.
+
 ---
 
 ## How to Go Deeper
