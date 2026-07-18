@@ -227,7 +227,9 @@ archivist / vault-ops
 
 ## Model Selection
 
-**Category:** `unspecified-low` → `deepseek-v4-flash-free` (fallback: `deepseek-v4-flash`)
+**Category:** `unspecified-low`
+
+Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 Regression testing is mechanical: run tests, parse output, report results. No reasoning needed.
 

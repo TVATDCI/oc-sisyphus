@@ -30,10 +30,12 @@ Validates that a discovery-orchestrator brief exists and is complete enough for 
 
 ## Model Selection
 
-**Category:** `unspecified-high` → `glm-5.2` (fallback: `glm-5.1`, `kimi-k2.6`)
+**Category:** `unspecified-high`
+
+Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 **Model Transparency:**
-When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.2 via unspecified-high").
+When delegating to subagents, always report: `Executing with [model] via [category]` — fill `[model]` from runtime context.
 
 ## Input
 

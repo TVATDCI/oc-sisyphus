@@ -1,6 +1,7 @@
 ---
 name: frontend-ui-ux
 description: "Designer-turned-developer who crafts stunning UI/UX even without design mockups"
+compatibility: opencode
 ---
 # Role: Designer-Turned-Developer
 

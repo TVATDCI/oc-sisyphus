@@ -33,7 +33,9 @@ Creates a structured execution plan from approved PRD and validated issue breakd
 
 ## Model Selection
 
-**Category:** `unspecified-high` → `glm-5.2` (fallback: `glm-5.1`, `kimi-k2.6`)
+**Category:** `unspecified-high`
+
+Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 **Rationale:** Plan creation is mechanical — read PRD, organize slices, structure waves. Architectural reasoning is already done.
 

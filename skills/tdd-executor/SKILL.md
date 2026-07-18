@@ -235,11 +235,13 @@ wave-executor Wave 1
 
 ## Model Selection
 
-**Category:** `unspecified-high` → `kimi-k2.6`
+**Category:** `unspecified-high`
+
+Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 TDD execution is mechanical: write test, make it pass, clean up. No architectural reasoning needed — that's in the PRD.
 
-**Escalation:** If tests fail after 2 attempts, escalate to `category="deep"` → `gpt-5.4` for debugging.
+**Escalation:** If tests fail after 2 attempts, escalate to `category="deep"` for debugging.
 
 ## Commit Pattern
 

@@ -352,7 +352,7 @@ Orchestrator begins Workflow 1b (PRD creation):
 2. If category fallback chain selects expensive model, report: "Cost drift detected: {model} used for verification. Consider tuning category config."
 3. **Escape hatch (only if benchmarked drift >20% over 10+ tasks):**
    - Create custom `verification` category in `oh-my-openagent.json`
-   - Route: `opencode/glm-5.1` → `opencode/gpt-5.4-mini` → `opencode/claude-haiku-4-5`
+   - Route: cheapest available model in the catalog → next-cheapest fallback. Check the catalog at category-creation time — do not hardcode model identifiers in this skill, they drift.
    - Use only for reference-checker tasks, not general `unspecified-low`
 
 **Do not activate escape hatch without evidence.** Category routing is usually correct; manual overrides create brittleness.

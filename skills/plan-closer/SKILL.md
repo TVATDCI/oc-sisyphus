@@ -32,10 +32,12 @@ Closes execution plan, archives state, and closes beads tracking issues.
 
 ## Model Selection
 
-**Category:** `unspecified-high` → `kimi-k2.6` (fallback: `glm-5.1`)
+**Category:** `unspecified-high`
+
+Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 **Model Transparency:**
-When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with kimi-k2.6 via unspecified-high").
+When delegating to subagents, always report: `Executing with [model] via [category]` — fill `[model]` from runtime context.
 
 ## Input
 

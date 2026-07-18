@@ -104,11 +104,13 @@ High-level flow (stable across all invocations):
 
 ### Model Selection
 
-**Category:** `unspecified-high` → `glm-5.2` (fallback: `glm-5.1`, `kimi-k2.6`)
+**Category:** `unspecified-high`
+
+Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 **Rationale:** Wave execution is mechanical work — read PRD, follow specs, implement, test. The hard architectural reasoning is already done (in PRD approved by Momus). Using cheaper model reduces cost per wave by ~10x.
 
-**Escalation rule:** If tests fail after 2 attempts with glm-5.2, retry with `category="deep"` → `glm-5.1` for complex debugging.
+**Escalation rule:** If tests fail after 2 attempts, retry with `category="deep"` for complex debugging.
 
 **Model Transparency (MANDATORY):**
 When delegating to subagents, you MUST report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.2 via unspecified-high").

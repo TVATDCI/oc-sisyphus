@@ -235,8 +235,8 @@
       "zai-coding-plan/glm-5-turbo": 3,
       "zai-coding-plan/glm-4.7": 5,
       "zai-coding-plan/glm-4.5-air": 10,
-      "opencode-go/kimi-k3": 1,
       "opencode-go/kimi-k2.7-code": 2,
+      "opencode-go/kimi-k2.6": 2,
       "opencode-go/qwen3.6-plus": 1,
       "opencode-go/glm-5.2": 2,
       "opencode-go/glm-5.1": 3,
@@ -250,6 +250,7 @@
       "opencode/glm-5.2": 2,
       "opencode/glm-5.1": 3,
       "opencode/kimi-k2.5": 3,
+      "opencode/kimi-k2.6": 2,
       "opencode/kimi-k2.7-code": 2
     }
   },

@@ -141,7 +141,9 @@ Agent:
 
 ## Model Selection
 
-**Category:** `unspecified-low` → `glm-5.1`
+**Category:** `unspecified-low`
+
+Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 Purely mechanical: scan files, compare with evidence logs, report gaps.
 

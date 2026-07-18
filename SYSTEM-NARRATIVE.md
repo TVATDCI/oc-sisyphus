@@ -224,15 +224,18 @@ gate decisions required HMAC signatures from a key the agent cannot read.
 Three-tier fallback: `zai-coding-plan` (primary) → `opencode-go` (fallback) →
 `opencode` pre-pay (final). Jun 24 reset consolidated **16 of 17 agent primaries
 onto zai**. Jun 26 model reset refined per-category. **Jul 17 model refresh**
-shifted the mix to **14 of 18 agent primaries on zai**, with `oracle` →
-`opencode-go/kimi-k3`, `multimodal-looker` → `opencode-go/mimo-v2-omni`,
-`explorer` → `opencode-go/minimax-m2.7`, and `explore` →
-`opencode/deepseek-v4-flash-free` moving off the zai tier. The Jun 29
-`glm-5.2` Oracle/Sisyphus contention is fully resolved (oracle moved to
-opencode-go/kimi-k3, now the sole kimi-k3 consumer); the loaded model is
-`glm-5.1` (8 consumers on concurrency 4, raised from 3 to relieve load). A
-concurrency-hardening pass the same day made `modelConcurrency` comprehensive
-(22 entries across all 3 providers). The provider strategy is cost-optimized,
+shifted the mix to **14 of 18 agent primaries on zai**, with
+`multimodal-looker` → `opencode-go/mimo-v2-omni`, `explorer` →
+`opencode-go/minimax-m2.7`, and `explore` → `opencode/deepseek-v4-flash-free`
+moving off the zai tier. The Jun 29 `glm-5.2` Oracle/Sisyphus contention is
+fully resolved; `oracle` landed on `opencode-go/kimi-k2.7-code` (initially
+`kimi-k3` in the first pass, but kimi-k3 had 3 upstream failures same-session
+and was replaced — no agent or category currently consumes kimi-k3). The
+loaded model is `glm-5.1` (8 consumers on concurrency 4, raised from 3 to
+relieve load). A concurrency-hardening pass the same day made
+`modelConcurrency` comprehensive (22 entries across all 3 providers;
+`kimi-k2.6` capped at 2 on both providers as fallback capacity for the
+atlas/archivist/auditor chains). The provider strategy is cost-optimized,
 not model-maximalist — consistent with the Era 1 philosophy.
 
 ### Frontier Prompt Absorption
@@ -354,7 +357,7 @@ every decision since. When in doubt, return to these.
 
 - **2026-07-01** — Provider auth login renamed `zhipuai-coding-plan` → `zai-coding-plan` (operator switched the provider login; same underlying GLM models, no routing/behavior change). oh-my-openagent.json already migrated (17 agent primaries + 7 category primaries + concurrency keys on `zai-coding-plan`). Current-state doc references updated: Provider Strategy v3 + Current System State (this file), README, agents/explorer.md, COMPLETE-CODEBASE §Agent Routing. Historical timeline entries (Jun 24–30) retained as accurate state-at-time records per convention.
 
-- **2026-07-17** — Agent/category model refresh + concurrency hardening (operator-driven, multi-pass): mix settled at zai 14 + opencode-go 3 (oracle→kimi-k3, multimodal-looker→mimo-v2-omni, explorer→minimax-m2.7) + opencode 1 (explore→deepseek-v4-flash-free). Jun 29 glm-5.2 contention fully resolved (oracle→kimi-k3, now sole consumer after sisyphus dropped it). glm-5.1 hotspot relieved (concurrency 3→4, 8 consumers). modelConcurrency made comprehensive (10→22 entries, all 3 providers); deepseek-v4-flash-free capped at 5 (free-tier); kimi-k2.7-code 1→2. All Jun 25 coverage gaps closed. Two cosmetic nits remain (opencode/kimi-k2.6 dead entry, opencode-go/glm-5.2 missing — both harmless). COMPLETE-CODEBASE §Agent Routing + tier note + Provider Strategy v3 + Current System State + agents/explorer.md synced.
+- **2026-07-17** — Agent/category model refresh + concurrency hardening (operator-driven, multi-pass): mix settled at zai 14 + opencode-go 3 (oracle→kimi-k3, multimodal-looker→mimo-v2-omni, explorer→minimax-m2.7) + opencode 1 (explore→deepseek-v4-flash-free). Jun 29 glm-5.2 contention fully resolved (oracle→kimi-k3, now sole consumer after sisyphus dropped it). glm-5.1 hotspot relieved (concurrency 3→4, 8 consumers). modelConcurrency made comprehensive (10→22 entries, all 3 providers); deepseek-v4-flash-free capped at 5 (free-tier); kimi-k2.7-code 1→2. All Jun 25 coverage gaps closed. Two cosmetic nits remain (opencode/kimi-k2.6 dead entry, opencode-go/glm-5.2 missing — both harmless). COMPLETE-CODEBASE §Agent Routing + tier note + Provider Strategy v3 + Current System State + agents/explorer.md synced. **Corrections (same-day session 2 + Jul 18 operator review):** (1) The oracle→kimi-k3 routing was short-lived — kimi-k3 had 3 upstream failures and oracle moved to `opencode-go/kimi-k2.7-code` (see next entry); no agent or category currently consumes kimi-k3, and the standalone `opencode-go/kimi-k3: 1` modelConcurrency entry was removed Jul 18. (2) The "two cosmetic nits" are both resolved: `opencode-go/glm-5.2` was added to modelConcurrency in session 2; the `kimi-k2.6` entries (both providers) were de-nichified by restoring caps at 2 — they back the atlas/archivist/auditor fallback chains, not dead capacity. (3) The d4c47d6 commit message ("Move to oracle-agents-review.md.bak oracle-verdict.md.bak") was inaccurate — the diff was 153 deletions / 0 additions, no `.bak` files were ever created in the repo or on disk; the two review-artifact markdown files were deleted outright.
 
 - **2026-07-17 (session 2)** — Parallel-repo absorption + toolchain fix. Shipped: `bd_remember.py` (gate-safe bd wrapper), check-completion-honesty tune (17→18), oh-my-openagent 4.14.0→4.18.2 (stops short of 4.19's `shared/`-alias breaking change). Oracle ran the dual-codebase analysis on opencode-go/kimi-k2.7-code (kimi-k3 failed 3× upstream → unreliable as oracle-primary). Caught + session-proofed a toolchain regression: a bun-add runbook violated the Jun 21 npm-only decision → reverted to npm, added `/bun.lock` gitignore + 🔧 TOOLCHAIN note so it can't flip across sessions. Evidence: `~/.sisyphus/evidence/session-close-2026-07-17-parallel-absorption-toolchain.md`.
 

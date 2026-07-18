@@ -34,12 +34,14 @@ Transforms an approved brief into a structured PRD (Product Requirements Documen
 
 ## Model Selection
 
-**Category:** `deep` → `gpt-5.4`
+**Category:** `deep`
+
+Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 **Rationale:** PRD writing requires reasoning, asking questions, finding blockers. This is judgment work, not mechanical execution.
 
 **Model Transparency:**
-When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with gpt-5.4 via deep").
+When delegating to subagents, always report: `Executing with [model] via [category]` — fill `[model]` from runtime context.
 
 ## Input
 

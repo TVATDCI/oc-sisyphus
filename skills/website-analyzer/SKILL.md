@@ -112,7 +112,9 @@ The 9-step analysis pipeline — see `## Detailed Steps` below for per-step proc
 
 ## Model Selection
 
-**Category:** `deep` → `glm-5.2` (fallback: `glm-5.1`, `kimi-k2.6`)
+**Category:** `deep`
+
+Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 **Rationale:** Website analysis requires visual interpretation, tech stack inference, and design system extraction — tasks that benefit from strong multimodal and reasoning capabilities.
 
