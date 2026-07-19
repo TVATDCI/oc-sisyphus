@@ -555,54 +555,9 @@ If a loaded rule causes a deviation from the plan (e.g., naming convention requi
 
 ## Checkpoint Protocol
 
-**Checkpoints formalize human-in-the-loop points for verification and decisions, not manual work.**
+Checkpoints formalize human-in-the-loop points for verification and decisions, not manual work. The full protocol — type frequencies (`human-verify` 90% / `decision` 9% / `human-action` 1%), the `## CHECKPOINT REACHED` template, when-NOT-to-use rules, and `--auto` mode behavior — is documented in **`references/checkpoint-protocol.md`**.
 
-**Golden rule:** If the agent CAN automate it, the agent MUST automate it. Checkpoints are for what requires human judgment.
-
-### Checkpoint Types
-
-| Type | Frequency | Use For | Action |
-|------|-----------|---------|--------|
-| `human-verify` (90%) | After automated work complete | Visual/functional verification, UX evaluation | STOP → present verification steps → wait for "approved" or issues |
-| `decision` (9%) | When architectural choice needed | Technology selection, design choices, schema decisions | STOP → present options with pros/cons → wait for selection |
-| `human-action` (1%) | When no CLI/API exists | Auth gates, email verification, 2FA codes | STOP → present exact steps needed → wait for completion |
-
-### Checkpoint Format
-
-```markdown
-## CHECKPOINT REACHED
-
-**Type:** [human-verify | decision | human-action]
-**Progress:** {completed}/{total} tasks complete
-
-### Completed Tasks
-| Task | Status | Key Changes |
-|------|--------|-------------|
-| 1 | ✓ | [what was done] |
-
-### Current Task
-**Task {N}:** [name]
-**Status:** [blocked | awaiting verification | awaiting decision]
-**Blocked by:** [specific blocker]
-
-### Checkpoint Details
-[Type-specific content]
-
-### Awaiting
-[What user needs to do/provide]
-```
-
-### When NOT to Use Checkpoints
-- Things the agent can verify programmatically (tests, builds, lint)
-- File operations the agent can perform directly
-- Code correctness verifiable via static analysis
-- Anything automatable via CLI/API
-
-### Auto-Mode Behavior
-When user invokes with `--auto` or `workflow.auto_advance` is true:
-- `human-verify` checkpoints → auto-approve with log `⚡ Auto-approved: [what-built]`
-- `decision` checkpoints → auto-select first option (planners front-load recommended choice) with log `⚡ Auto-selected: [option]`
-- `human-action` checkpoints → always STOP (auth gates cannot be automated)
+**Golden rule (always applies):** If the agent CAN automate it, the agent MUST automate it. Checkpoints are for what requires human judgment.
 
  5. **Regression Gate (before marking wave complete)**
      If this is NOT the first wave:
@@ -780,3 +735,9 @@ When user invokes with `--auto` or `workflow.auto_advance` is true:
 ## Gate to Next Phase
 
 User explicitly approves ("continue", "next wave") → hand off to next `wave-executor` call (or self if same session)
+
+---
+
+## Length Exception
+
+This SKILL.md exceeds the 500-line guideline. **Reason:** 8-step wave execution workflow with mandatory state-file updates, QA handoff artifact schema, regression-gate integration, wave-validator hard gate, and summary template — each step has its own checklist and tables that downstream skills (regression-gate, code-review, security-auditor) depend on being inline. **Pruning done:** Checkpoint Protocol extracted to `references/checkpoint-protocol.md` (781→736, Tier 2b). Remaining body is the irreducible execution sequence. Validator WARN is expected and accepted per `skill-creator/SKILL.md` L265.

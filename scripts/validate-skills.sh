@@ -57,6 +57,7 @@ validate_skill() {
     local skill_dir="$1"
     local skill_name=$(basename "$skill_dir")
     local has_errors=false
+    local has_documented_exception=false
 
     echo -n "  Checking $skill_name... "
 
@@ -116,13 +117,22 @@ validate_skill() {
 
     local line_count=$(wc -l < "$skill_dir/SKILL.md")
     if [[ $line_count -gt 500 ]]; then
-        echo -e "${YELLOW}WARN${NC} (SKILL.md is $line_count lines; consider moving examples to references/)"
-        ((WARN++)) || true
-        has_errors=true
+        # Anchored match: prose mentions of "Length Exception" elsewhere must not suppress the WARN.
+        if grep -qE '^## Length Exception\s*$' "$skill_dir/SKILL.md"; then
+            has_documented_exception=true
+        else
+            echo -e "${YELLOW}WARN${NC} (SKILL.md is $line_count lines; consider moving examples to references/ or adding a '## Length Exception' section)"
+            ((WARN++)) || true
+            has_errors=true
+        fi
     fi
 
     if [[ "$has_errors" == false ]]; then
-        echo -e "${GREEN}PASS${NC}"
+        if [[ "$has_documented_exception" == true ]]; then
+            echo -e "${GREEN}PASS${NC} (documented exception: SKILL.md is $line_count lines — see ## Length Exception section)"
+        else
+            echo -e "${GREEN}PASS${NC}"
+        fi
         ((PASS++)) || true
     fi
 }

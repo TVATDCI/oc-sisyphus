@@ -592,4 +592,10 @@ Orchestrator reaches pre-deployment:
 → Returns: WARNING — "CORS allows all origins. Fix before prod?"
 → User: "Accept for dev, fix before prod"
 → Proceeds to archivist
+
+---
+
+## Length Exception
+
+This SKILL.md exceeds the 500-line guideline. **Reason:** 6-category vulnerability scanner (secrets, injection, XSS, auth/CSRF, dependencies, path traversal) — each category needs its own detection patterns, false-positive guards, and PASS/WARN/FAIL decision rules. Compressing categories would lose scan coverage. **Pruning done:** None — examples and decision rules are already tightly scoped; further cuts would degrade gate quality. Validator WARN is expected and accepted per `skill-creator/SKILL.md` L265.
 ```

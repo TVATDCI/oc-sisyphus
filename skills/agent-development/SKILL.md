@@ -669,3 +669,9 @@ Prompts for: location, description, tools, then generates the agent file.
 1. Create `~/.config/opencode/agents/agent-name.md` or `.opencode/agents/agent-name.md`
 2. Add frontmatter with configuration
 3. Write system prompt as markdown body
+
+---
+
+## Length Exception
+
+This SKILL.md exceeds the 500-line guideline. **Reason:** Two-format breadth — JSON (central `agents.json` / `opencode.json`) and Markdown (per-project `agents/*.md`) agent definitions, plus permissions, model selection, triggering rules, and system-prompt design patterns. Both complete format workflows must be inline so operators can pick the right one without a second lookup. **Pruning done:** Examples already extracted to `references/` (agent-creation-system-prompt.md, triggering-examples.md, opencode-agents-json-example.md, system-prompt-design.md). Validator WARN is expected and accepted per `skill-creator/SKILL.md` L265.

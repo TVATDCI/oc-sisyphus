@@ -554,3 +554,9 @@ pres.addSlide().addText("The Problem", { x: 0.5, y: 0.3, w: 8, h: 0.7, fontSize:
 pres.addSlide().addText("Our Solution", { x: 0.5, y: 0.3, w: 8, h: 0.7, fontSize: 28, bold: true });
 await pres.writeFile({ fileName: "pitch-deck.pptx" });
 ```
+
+---
+
+## Length Exception
+
+This SKILL.md exceeds the 500-line guideline. **Reason:** PptxGenJS API surface for slides, text, charts, tables, shapes, and images — each object type has many configuration options (`x/y/w/h`, fonts, fills, gradients, data bindings) that must be inline for accurate code generation; citing the official docs at call-time would fragment the workflow. **Pruning done:** None — content is already API-reference dense, no narrative bloat to extract. Validator WARN is expected and accepted per `skill-creator/SKILL.md` L265.

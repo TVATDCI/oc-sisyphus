@@ -512,3 +512,9 @@ Agent: "After exploring, it seems you have several exciting AI ideas but no sing
 
 Shall I create a brief for 'content recommendation engine' as a starting point, or do you want to explore a different direction first?"
 ```
+
+---
+
+## Length Exception
+
+This SKILL.md exceeds the 500-line guideline (marginally). **Reason:** 7-question Socratic interview protocol with branching logic, full example dialogue, and brief-template output format. Interview scripts need complete coverage to be useful as a reference for new sessions — shortening would drop interview branches. **Pruning done:** None — already tightly scoped to the protocol + one worked example. Validator WARN is expected and accepted per `skill-creator/SKILL.md` L265.

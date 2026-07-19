@@ -537,4 +537,10 @@ Agent: 1. Runs deterministic detection pass
       2. Verifies 0 critical, 0 major, 1 minor violation
       3. Minor: z-index token --z-tooltip not used (ad-hoc 45 found)
       4. Returns: PASS with caution note
+
+---
+
+## Length Exception
+
+This SKILL.md exceeds the 500-line guideline. **Reason:** 5-section post-execution validation gate (CSS architecture, accessibility, performance budget, theme system, DESIGN.md compliance) — each section has its own deterministic detection pass with concrete checks. Section checklists are non-compressible without losing audit coverage. **Pruning done:** Worked examples already in `references/examples.md`. Validator WARN is expected and accepted per `skill-creator/SKILL.md` L265.
 ```

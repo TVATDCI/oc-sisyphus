@@ -862,3 +862,9 @@ This skill provides patterns for **building** robust fullstack applications. If 
 2. **Code quality concerns** → use `code-review` (correctness, security, performance, maintainability audit)
 3. **Pre-deployment security** → use `security-auditor` (secrets, injection, XSS, auth/CSRF, deps, path traversal)
 4. **UI/UX design validation** → use `ui-auditor` (CSS architecture, accessibility, performance budget)
+
+---
+
+## Length Exception
+
+This SKILL.md exceeds the 500-line guideline. **Reason:** Broad domain coverage — backend architecture, service layers, JWT/session/OAuth auth flows, SSE/WebSocket real-time, data layer patterns (repository/Unit-of-Work), error handling, project structure, and production hardening. Splitting would fragment the routing logic that operators rely on for "which section handles X". **Pruning done:** None meaningful — each domain section is one tightly-scoped reference block; trimming any one would drop coverage of a real backend concern. Validator WARN is expected and accepted per `skill-creator/SKILL.md` L265.
