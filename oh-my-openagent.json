@@ -163,9 +163,9 @@
       ]
     },
     "ultrabrain": {
-      "model": "opencode-go/kimi-k2.7-code",
+      "model": "opencode-go/kimi-k3",
       "fallback_models": [
-        { "model": "opencode-go/glm-5.1" },
+        { "model": "opencode-go/glm-5.2" },
         { "model": "zai-coding-plan/glm-5.2" }
       ]
     },

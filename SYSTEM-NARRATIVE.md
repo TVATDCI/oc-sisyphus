@@ -227,16 +227,23 @@ onto zai**. Jun 26 model reset refined per-category. **Jul 17 model refresh**
 shifted the mix to **14 of 18 agent primaries on zai**, with
 `multimodal-looker` → `opencode-go/mimo-v2-omni`, `explorer` →
 `opencode-go/minimax-m2.7`, and `explore` → `opencode/deepseek-v4-flash-free`
-moving off the zai tier. The Jun 29 `glm-5.2` Oracle/Sisyphus contention is
-fully resolved; `oracle` landed on `opencode-go/kimi-k2.7-code` (initially
-`kimi-k3` in the first pass, but kimi-k3 had 3 upstream failures same-session
-and was replaced — no agent or category currently consumes kimi-k3). The
-loaded model is `glm-5.1` (8 consumers on concurrency 4, raised from 3 to
-relieve load). A concurrency-hardening pass the same day made
-`modelConcurrency` comprehensive (22 entries across all 3 providers;
-`kimi-k2.6` capped at 2 on both providers as fallback capacity for the
-atlas/archivist/auditor chains). The provider strategy is cost-optimized,
-not model-maximalist — consistent with the Era 1 philosophy.
+moving off the zai tier. The Jun 29 `glm-5.2` Oracle/Sisyphus contention was
+fully resolved by Jul 17. **Jul 19 routing rebalance** brought the mix to
+**11 of 18 agent primaries on zai**: `metis` → `opencode-go/glm-5.1`
+(cross-provider swap, same model), `reviewer` → `opencode-go/kimi-k2.7-code`,
+`oracle` → `opencode-go/kimi-k3` (returned to the model Jul 17 had abandoned
+as unreliable after 3 upstream failures; `opencode-go/kimi-k3` cap restored
+to 2 — had been removed Jul 18 as a dead entry). The `ultrabrain` category
+also moved to `opencode-go/kimi-k3` same-day, giving kimi-k3 two primary
+consumers (oracle + ultrabrain) on cap 2 — tight but matches the model's
+140 req/5hr upstream cap. Hotspot shift: zai `glm-5.1` halved (5 → 3 primary
+consumers: momus, auditor, fullstack-dev-tester); opencode-go `glm-5.1`
+doubled (1 → 2 primary + 2 categories: prometheus, metis, deep, artistry).
+The Jul 17 concurrency-hardening pass made `modelConcurrency` comprehensive
+(22 entries across all 3 providers; `kimi-k2.6` capped at 2 on both providers
+as fallback capacity for the atlas/archivist/auditor chains). The provider
+strategy is cost-optimized, not model-maximalist — consistent with the Era 1
+philosophy.
 
 ### Frontier Prompt Absorption
 
@@ -345,8 +352,8 @@ every decision since. When in doubt, return to these.
 - **Workflow:** 9-phase HMAC-signed state machine
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
-- **Provider:** `zai-coding-plan` primary (14/18 agents + 6/9 categories); `opencode-go` (oracle, multimodal-looker, explorer, artistry, deep) → `opencode` (explore, git-commit-message) fallback
-- **Last reviewed:** 2026-07-17
+- **Provider:** `zai-coding-plan` primary (11/18 agents + 5/9 categories); `opencode-go` (oracle — kimi-k3, multimodal-looker, prometheus, metis, explorer, reviewer + ultrabrain, artistry, deep categories) → `opencode` (explore, git-commit-message) fallback
+- **Last reviewed:** 2026-07-19
 
 ### Session log *(append, newest last)*
 
