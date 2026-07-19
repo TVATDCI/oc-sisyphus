@@ -32,6 +32,7 @@ coverage/
 
 # Auto-generated task tracking (OpenCode internal)
 tasks/
+lsp-install-dicision.json
 
 # Archived session state (historical snapshots)
 archive/
