@@ -35,7 +35,7 @@
       "required_facts": [
         "The registry file is `oh-my-openagent.json`.",
         "The agent key is `explore`.",
-        "Its model is `openrouter/deepseek/deepseek-v4-flash`.",
+        "Its model is `opencode/deepseek-v4-flash-free`.",
         "Its variant is `low`."
       ],
       "negative_requirements": [
@@ -307,14 +307,14 @@
       "id": "baseline",
       "description": "Current explore agent configuration — read + grep + websearch + webfetch. No semantic search, no semble.",
       "tools_available": ["read", "grep", "websearch", "webfetch"],
-      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "model": "opencode/deepseek-v4-flash-free",
       "variant": "low"
     },
     {
       "id": "semble-first",
       "description": "Same model and tools but with semble_search/semble_find_related added as preferred first pass, grep/read as fallback.",
       "tools_available": ["semble_search", "semble_find_related", "read", "grep", "websearch", "webfetch"],
-      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "model": "opencode/deepseek-v4-flash-free",
       "variant": "low"
     }
   ]

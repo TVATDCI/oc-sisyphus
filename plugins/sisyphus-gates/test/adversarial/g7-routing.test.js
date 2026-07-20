@@ -20,17 +20,25 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
+import { tmpdir, homedir } from "node:os";
 import { shouldBlockTool } from "../../src/gates.js";
-import { loadWorkflowConfig, clearWorkflowCache } from "../../src/workflow-loader.js";
-import { getMcpClassification, _internal as mcpInternal } from "../../src/mcp-classifier.js";
+import {
+  loadWorkflowConfig,
+  clearWorkflowCache,
+} from "../../src/workflow-loader.js";
+import {
+  getMcpClassification,
+  _internal as mcpInternal,
+} from "../../src/mcp-classifier.js";
 
 // ─── Stub for setMemoryKey ──────────────────────────────────────────────────
 // Our state.js doesn't export setMemoryKey yet (Phase 3 adds it).
 // This no-op stub allows tests that call setMemoryKey(null) to run without
 // errors. The stub does nothing — which is correct because our current
 // state.js doesn't use MEMORY_KEY at all.
-function setMemoryKey(_key) { /* no-op stub — replaced in Phase 3 */ }
+function setMemoryKey(_key) {
+  /* no-op stub — replaced in Phase 3 */
+}
 
 // ─── Workflow config loader (CI fallback) ───────────────────────────────────
 // Same pattern as remote: if no workflow.yaml in HOME, create a temp one.
@@ -59,15 +67,26 @@ const MINIMAL_WORKFLOW_YAML = `workflow:
 
 clearWorkflowCache();
 let _workflowCfg = null;
-try { _workflowCfg = loadWorkflowConfig(); } catch { /* no yaml in this HOME */ }
+try {
+  _workflowCfg = loadWorkflowConfig();
+} catch {
+  /* no yaml in this HOME */
+}
 if (!_workflowCfg) {
   const _ciHome = mkdtempSync(join(tmpdir(), "g7-routing-ci-"));
   mkdirSync(join(_ciHome, ".sisyphus"), { recursive: true });
-  writeFileSync(join(_ciHome, ".sisyphus", "workflow.yaml"), MINIMAL_WORKFLOW_YAML);
+  writeFileSync(
+    join(_ciHome, ".sisyphus", "workflow.yaml"),
+    MINIMAL_WORKFLOW_YAML,
+  );
   process.env.HOME = _ciHome;
   clearWorkflowCache();
   loadWorkflowConfig();
-  process.on("exit", () => { try { rmSync(_ciHome, { recursive: true, force: true }); } catch {} });
+  process.on("exit", () => {
+    try {
+      rmSync(_ciHome, { recursive: true, force: true });
+    } catch {}
+  });
 }
 
 // ─── Test helpers ───────────────────────────────────────────────────────────
@@ -137,16 +156,22 @@ test("G7-ε-d: built-in 'write' tool NOT classified as MCP", () => {
 test("G7-ε-e: myfiles_write_file blocked when fail-closed (was bypassed pre-P0a)", () => {
   setupMcpPrefixes();
   const st = freshSessionState();
-  const d = shouldBlockTool("myfiles_write_file",
-    { path: "/tmp/foo.txt", content: "x" }, st);
+  const d = shouldBlockTool(
+    "myfiles_write_file",
+    { path: "/tmp/foo.txt", content: "x" },
+    st,
+  );
   assert.equal(d.blocked, true);
 });
 
 test("G7-ε-f: myfiles_write_file to trust-root → blocked even in approved state", () => {
   setupMcpPrefixes();
   const st = approvedExecutionState();
-  const d = shouldBlockTool("myfiles_write_file",
-    { path: "/home/vladi/.sisyphus/state.json", content: "{}" }, st);
+  const d = shouldBlockTool(
+    "myfiles_write_file",
+    { path: `${homedir()}/.sisyphus/state.json`, content: "{}" },
+    st,
+  );
   assert.equal(d.blocked, true);
   assert.match(d.reason, /trust-root/i);
 });
@@ -177,7 +202,11 @@ test("G7-task: task tool blocked when fail-closed (subagent escape prevention)",
 test("G7-task: task tool allowed when gates passed + approved", () => {
   setMemoryKey(null);
   const st = approvedExecutionState();
-  const d = shouldBlockTool("task", { prompt: "hello", subagent_type: "explore" }, st);
+  const d = shouldBlockTool(
+    "task",
+    { prompt: "hello", subagent_type: "explore" },
+    st,
+  );
   // In execution phase, task is allowed (not destructive bash)
   assert.equal(d.blocked, false);
 });
@@ -188,38 +217,56 @@ test("G7-task: task tool allowed when gates passed + approved", () => {
 
 test("G7-trust-a: write tool to state.json → blocked", () => {
   const st = approvedExecutionState();
-  const d = shouldBlockTool("write",
-    { filePath: "/home/vladi/.sisyphus/state.json", content: "{}" }, st);
+  const d = shouldBlockTool(
+    "write",
+    { filePath: `${homedir()}/.sisyphus/state.json`, content: "{}" },
+    st,
+  );
   assert.equal(d.blocked, true);
   assert.match(d.reason, /trust-root/i);
 });
 
 test("G7-trust-b: write tool to workflow.yaml → blocked", () => {
   const st = approvedExecutionState();
-  const d = shouldBlockTool("write",
-    { filePath: "/home/vladi/.sisyphus/workflow.yaml", content: "evil" }, st);
+  const d = shouldBlockTool(
+    "write",
+    { filePath: `${homedir()}/.sisyphus/workflow.yaml`, content: "evil" },
+    st,
+  );
   assert.equal(d.blocked, true);
 });
 
 test("G7-trust-c: write tool to momus-plan-review path → blocked", () => {
   const st = approvedExecutionState();
-  const d = shouldBlockTool("write",
-    { filePath: "/home/vladi/.sisyphus/notepads/x/momus-plan-review-evil.md", content: "..." }, st);
+  const d = shouldBlockTool(
+    "write",
+    {
+      filePath: `${homedir()}/.sisyphus/notepads/x/momus-plan-review-evil.md`,
+      content: "...",
+    },
+    st,
+  );
   assert.equal(d.blocked, true);
 });
 
 test("G7-trust-d: write tool to evidence/ → ALLOWED (exception)", () => {
   setMemoryKey(null);
   const st = approvedExecutionState();
-  const d = shouldBlockTool("write",
-    { filePath: "/home/vladi/.sisyphus/evidence/test.md", content: "ok" }, st);
+  const d = shouldBlockTool(
+    "write",
+    { filePath: `${homedir()}/.sisyphus/evidence/test.md`, content: "ok" },
+    st,
+  );
   assert.equal(d.blocked, false);
 });
 
 test("G7-trust-e: bash 'cp /tmp/x ~/.sisyphus/state.json' → blocked (Tier 2)", () => {
   const st = approvedExecutionState();
-  const d = shouldBlockTool("bash",
-    { command: "cp /tmp/x /home/vladi/.sisyphus/state.json" }, st);
+  const d = shouldBlockTool(
+    "bash",
+    { command: `cp /tmp/x ${homedir()}/.sisyphus/state.json` },
+    st,
+  );
   assert.equal(d.blocked, true);
 });
 
@@ -228,8 +275,11 @@ test("G7-trust-e: bash 'cp /tmp/x ~/.sisyphus/state.json' → blocked (Tier 2)",
 test("G7-read-a: MCP read of state.json → blocked (HOLE 1f)", () => {
   setupMcpPrefixes();
   const st = approvedExecutionState();
-  const d = shouldBlockTool("myfiles_read_file",
-    { path: "/home/vladi/.sisyphus/state.json" }, st);
+  const d = shouldBlockTool(
+    "myfiles_read_file",
+    { path: `${homedir()}/.sisyphus/state.json` },
+    st,
+  );
   assert.equal(d.blocked, true);
   assert.match(d.reason, /trust-root/i);
 });
@@ -237,24 +287,31 @@ test("G7-read-a: MCP read of state.json → blocked (HOLE 1f)", () => {
 test("G7-read-b: MCP read of /proc/<pid>/environ → blocked (HOLE 1f)", () => {
   setupMcpPrefixes();
   const st = approvedExecutionState();
-  const d = shouldBlockTool("myfiles_read_file",
-    { path: `/proc/${process.pid}/environ` }, st);
+  const d = shouldBlockTool(
+    "myfiles_read_file",
+    { path: `/proc/${process.pid}/environ` },
+    st,
+  );
   assert.equal(d.blocked, true);
 });
 
 test("G7-read-c: MCP read of plugin dist/index.js → blocked (HOLE 1f)", () => {
   setupMcpPrefixes();
   const st = approvedExecutionState();
-  const d = shouldBlockTool("myfiles_read_file",
-    { path: "/home/vladi/.config/opencode/plugins/sisyphus-gates/dist/index.js" }, st);
+  const d = shouldBlockTool(
+    "myfiles_read_file",
+    {
+      path: `${homedir()}/.config/opencode/plugins/sisyphus-gates/dist/index.js`,
+    },
+    st,
+  );
   assert.equal(d.blocked, true);
 });
 
 test("G7-read-d: MCP read of /etc/passwd → allowed (not in denylist)", () => {
   setupMcpPrefixes();
   const st = approvedExecutionState();
-  const d = shouldBlockTool("myfiles_read_file",
-    { path: "/etc/passwd" }, st);
+  const d = shouldBlockTool("myfiles_read_file", { path: "/etc/passwd" }, st);
   assert.equal(d.blocked, false);
 });
 
@@ -262,8 +319,14 @@ test("G7-read-d: MCP read of /etc/passwd → allowed (not in denylist)", () => {
 
 test("G7-traversal-a: '~/Documents/../../.sisyphus/state.json' → blocked after realpath", () => {
   const st = approvedExecutionState();
-  const d = shouldBlockTool("write",
-    { filePath: "/home/vladi/Documents/../../.sisyphus/state.json", content: "x" }, st);
+  const d = shouldBlockTool(
+    "write",
+    {
+      filePath: `${homedir()}/Documents/../../.sisyphus/state.json`,
+      content: "x",
+    },
+    st,
+  );
   assert.equal(d.blocked, true);
 });
 
@@ -272,8 +335,11 @@ test("G7-traversal-a: '~/Documents/../../.sisyphus/state.json' → blocked after
 test("G7-regression-a: write to /tmp → allowed in approved state", () => {
   setMemoryKey(null);
   const st = approvedExecutionState();
-  const d = shouldBlockTool("write",
-    { filePath: "/tmp/foo.txt", content: "x" }, st);
+  const d = shouldBlockTool(
+    "write",
+    { filePath: "/tmp/foo.txt", content: "x" },
+    st,
+  );
   assert.equal(d.blocked, false);
 });
 

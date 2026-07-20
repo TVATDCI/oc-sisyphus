@@ -1,42 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": [
-    "oh-my-openagent@4.18.2",
-    [
-      "./plugins/sisyphus-gates",
-      {
-        "verdict_key_command": "cat ~/.local/share/sisyphus-gate-key",
-        "sandbox_paths": ["/tmp/"],
-        "sandbox_allowed_commands": [
-          "npm install",
-          "npm test",
-          "npm run ",
-          "bun add ",
-          "bun install",
-          "bunx ",
-          "node ",
-          "tsc --noEmit",
-          "git diff",
-          "git show",
-          "git log"
-        ]
-      }
-    ]
-  ],
+  "plugin": ["oh-my-openagent@4.18.2"],
   "default_agent": "sisyphus",
   "mcp": {
     "home": {
       "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/home/vladi/Main-vault",
-        "/home/vladi/.sisyphus",
-        "/home/vladi/.config/opencode",
-        "/home/vladi/developer/Reference/meta",
-        "/home/vladi/developer/test-artifacts"
-      ],
+      "command": ["bash", "scripts/mcp-home-wrapper.sh"],
       "enabled": true
     },
     "semble": {

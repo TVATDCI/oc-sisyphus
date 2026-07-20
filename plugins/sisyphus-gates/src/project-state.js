@@ -19,7 +19,11 @@
 
 import { existsSync, readFileSync, mkdirSync, readdirSync } from "node:fs";
 import { join, dirname, basename, resolve } from "node:path";
-import { getCanonicalStatePath, getProjectStatePath as getProjectStatePathFromPaths, getProjectStateDir as getProjectStateDirFromPaths } from "./paths.js";
+import {
+  getCanonicalStatePath,
+  getProjectStatePath as getProjectStatePathFromPaths,
+  getProjectStateDir as getProjectStateDirFromPaths,
+} from "./paths.js";
 
 /**
  * Look up the project name for a given working directory.
@@ -30,7 +34,7 @@ import { getCanonicalStatePath, getProjectStatePath as getProjectStatePathFromPa
  *   getProjectName("/path/to/repo-with-package")     → "bar" (from package.json)
  *   getProjectName("/path/to/just-a-dir")            → "just-a-dir" (basename)
  *   getProjectName("/")                              → "default" (empty basename)
- *   getProjectName("/home/vladi")                    → "vladi" (basename of HOME)
+ *   getProjectName("/home/user")                    → "vladi" (basename of HOME)
  *   getProjectName("/tmp/home")                      → "default" (basename == "home")
  */
 export function getProjectName(cwd) {
@@ -42,7 +46,11 @@ export function getProjectName(cwd) {
     try {
       const content = readFileSync(boulderPath, "utf-8");
       const parsed = JSON.parse(content);
-      if (parsed && typeof parsed.project_name === "string" && parsed.project_name.length > 0) {
+      if (
+        parsed &&
+        typeof parsed.project_name === "string" &&
+        parsed.project_name.length > 0
+      ) {
         return parsed.project_name;
       }
     } catch {

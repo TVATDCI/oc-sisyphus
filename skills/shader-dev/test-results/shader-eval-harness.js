@@ -1,4 +1,4 @@
-const { chromium } = require('/home/vladi/.config/opencode/skills/website-analyzer/node_modules/playwright');
+const { chromium } = require('../../website-analyzer/node_modules/playwright');
 const fs = require('fs');
 const path = require('path');
 

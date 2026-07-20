@@ -206,7 +206,7 @@ describe("W1.C — isDestructiveCommand: read-only commands must NOT match", () 
   });
 
   test("grep -r pattern /etc → not destructive", () => {
-    assert.equal(isDestructiveCommand("grep -r 'TODO' /home/vladi"), false);
+    assert.equal(isDestructiveCommand("grep -r 'TODO' /home/user"), false);
   });
 });
 

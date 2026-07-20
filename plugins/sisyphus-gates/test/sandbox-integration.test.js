@@ -17,7 +17,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { tmpdir, homedir } from "node:os";
 import { join } from "node:path";
 import { shouldBlockTool } from "../src/gates.js";
 
@@ -171,7 +171,7 @@ test("AC-3.5: write to state.json blocked even from sandbox cwd (Layer 0 fires f
   try {
     const state = stateWithSandbox();
     const result = shouldBlockTool("write", {
-      filePath: "/home/vladi/.sisyphus/state.json",
+      filePath: `${homedir()}/.sisyphus/state.json`,
     }, state);
     assert.equal(result.blocked, true, "must be blocked by Layer 0 trust-root");
     assert.ok(result.reason.includes("Trust-root"), "reason must mention trust-root");

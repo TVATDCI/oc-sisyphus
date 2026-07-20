@@ -2,7 +2,7 @@
 
 ## Project Conventions
 
-- **Project root:** `/home/vladi/Main-vault`
+- **Project root:** `~/Main-vault`
 - **Planning artifacts:** `.sisyphus/prds/*.md`, `.sisyphus/plans/*.md`, `.sisyphus/notepads/{plan}/`
 - **Evidence directory:** `.sisyphus/evidence/`
 - **Tracking:** `boulder.json` for active plan, beads issues for operational tracking
@@ -14,7 +14,7 @@
 - Default wave structure: Foundation → Features → Polish
 - Every PRD must have: Decision Log, Module Boundaries, Manual QA checkpoints
 - Every plan must have: Integration + Final Verification task (separately numbered, blocked by all prior)
-- project_root must be `/home/vladi/Main-vault` unless user explicitly specifies otherwise
+- project_root must be `~/Main-vault` unless user explicitly specifies otherwise
 
 ## Code Style
 

@@ -225,7 +225,7 @@ is. For full developmental history and design rationale (the Governance Crisis,
 the monolith dissolution, HMAC signing adoption, etc.), **load
 `SYSTEM-NARRATIVE.md`** in the repo root — it covers Apr 30–present structured
 by ERA (Foundation → Growth → Hardening → Production), with cross-references to
-the deep archive at `/home/vladi/developer/Reference/meta/` for primary-source
+the deep archive at `~/developer/Reference/meta/` for primary-source
 detail.
 
 Read `SYSTEM-NARRATIVE.md` whenever the question is historical or rationale-based

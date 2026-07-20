@@ -8,7 +8,7 @@
 > through distinct phases, not a continuous line).
 >
 > **Depth strategy:** Summary-level here, cross-references to the deep archive
-> at `/home/vladi/developer/Reference/meta/` for agents who need full detail.
+> at `~/developer/Reference/meta/` for agents who need full detail.
 > This document is **not** a dump — it is a **map**.
 >
 > **Living section:** "Current System State" (below) is updated at session-close,
@@ -22,7 +22,7 @@
 |------------|---------|
 | A new agent orienting to the system | This whole file (one pass, ~5 min) |
 | Investigating *why* a design choice exists | The relevant ERA section → its `**Source:**` link |
-| Needing full primary-source detail | The deep archive at `/home/vladi/developer/Reference/meta/` |
+| Needing full primary-source detail | The deep archive at `~/developer/Reference/meta/` |
 | Checking current capabilities/counts | "Current System State" (living) + `COMPLETE-CODEBASE.md` |
 | Producing a system report | `skill:system-reference` → "Full System Report" capability |
 | Searching for connected context | Main-vault wiki/concepts/ system-history pages (tag system-history) — WikiLinked, searchable |
@@ -31,13 +31,13 @@
 - `AGENTS.md` — root system prompt (compaction, routing, rules). Behavioral.
 - `COMPLETE-CODEBASE.md` — full system map, topology, permissions, timeline. Structural.
 - `SYSTEM-NARRATIVE.md` (this file) — *history and rationale*. Why decisions were made.
-- `/home/vladi/developer/Reference/meta/` — deep developmental archive (170KB, 16 files). Out-of-sandbox by design; reference, do not move.
+- `~/developer/Reference/meta/` — deep developmental archive (170KB, 16 files). Out-of-sandbox by design; reference, do not move.
 
 ---
 
 ## Era 1: Foundation (Apr 30 – May 7)
 
-**Source:** [`/home/vladi/developer/Reference/meta/MAIN-OPT-DOCS/Archive/ARCHIVE-DEVELOPMENTAL-DOCUMENT.md`](/home/vladi/developer/Reference/meta/MAIN-OPT-DOCS/Archive/ARCHIVE-DEVELOPMENTAL-DOCUMENT.md) (542 lines, the canonical developmental record)
+**Source:** [`~/developer/Reference/meta/MAIN-OPT-DOCS/Archive/ARCHIVE-DEVELOPMENTAL-DOCUMENT.md`](~/developer/Reference/meta/MAIN-OPT-DOCS/Archive/ARCHIVE-DEVELOPMENTAL-DOCUMENT.md) (542 lines, the canonical developmental record)
 
 ### Philosophy
 
@@ -115,10 +115,10 @@ Vertical Slices.
 ## Era 2: Growth (May 7 – May 22)
 
 **Sources:**
-- [`meta/README.md`](/home/vladi/developer/Reference/meta/README.md) — website-analyzer v1.5.0 record
-- [`meta/DOCUMENTATION_INDEX.md`](/home/vladi/developer/Reference/meta/DOCUMENTATION_INDEX.md) — navigation hub
-- [`meta/CASE_STUDY_TEMPLATE.md`](/home/vladi/developer/Reference/meta/CASE_STUDY_TEMPLATE.md) (503 lines)
-- [`meta/REPLICATION_PROMPT_TEMPLATE.md`](/home/vladi/developer/Reference/meta/REPLICATION_PROMPT_TEMPLATE.md) (505 lines)
+- [`meta/README.md`](~/developer/Reference/meta/README.md) — website-analyzer v1.5.0 record
+- [`meta/DOCUMENTATION_INDEX.md`](~/developer/Reference/meta/DOCUMENTATION_INDEX.md) — navigation hub
+- [`meta/CASE_STUDY_TEMPLATE.md`](~/developer/Reference/meta/CASE_STUDY_TEMPLATE.md) (503 lines)
+- [`meta/REPLICATION_PROMPT_TEMPLATE.md`](~/developer/Reference/meta/REPLICATION_PROMPT_TEMPLATE.md) (505 lines)
 
 ### Website-Analyzer Evolution
 
@@ -165,9 +165,9 @@ Some additions were tested and graduated; some accumulated through real use.
 ## Era 3: Hardening (May 22 – Jun 24)
 
 **Sources:**
-- [`meta/sisyphus-pipeline-improvement.md`](/home/vladi/developer/Reference/meta/sisyphus-pipeline-improvement.md) (168 lines) — forensic audit + root cause
-- [`meta/HYBRID-PLAN.md`](/home/vladi/developer/Reference/meta/HYBRID-PLAN.md) (1033 lines, 14 steps) — reproduction guide
-- [`meta/hybrid-setup.md`](/home/vladi/developer/Reference/meta/hybrid-setup.md) (1067 lines) — extended reproduction
+- [`meta/sisyphus-pipeline-improvement.md`](~/developer/Reference/meta/sisyphus-pipeline-improvement.md) (168 lines) — forensic audit + root cause
+- [`meta/HYBRID-PLAN.md`](~/developer/Reference/meta/HYBRID-PLAN.md) (1033 lines, 14 steps) — reproduction guide
+- [`meta/hybrid-setup.md`](~/developer/Reference/meta/hybrid-setup.md) (1067 lines) — extended reproduction
 
 ### Pipeline Gap Analysis — three forensic audits
 
@@ -386,7 +386,7 @@ every decision since. When in doubt, return to these.
 | Detailed session history (per-session) | `~/Main-vault/log.md` (entries tagged `session`) |
 | Architecture/workflow/skill directory | `skill:system-reference` |
 
-**Deep archive location:** `/home/vladi/developer/Reference/meta/`
+**Deep archive location:** `~/developer/Reference/meta/`
 (~170KB across 16 files). Outside the opencode sandbox by design — the archive
 is reference material, not agent-editable state. Do not move it; reference it.
 

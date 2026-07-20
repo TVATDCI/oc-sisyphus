@@ -77,7 +77,7 @@ This skill is loaded via `load_skills` into category-routed tasks:
 task(
   category="unspecified-low",
   load_skills=["security-auditor"],
-  prompt="Security review /home/vladi/projects/my-app"
+  prompt="Security review ~/projects/my-app"
 )
 ```
 
@@ -564,7 +564,7 @@ Create report at `.sisyphus/notepads/{plan-name}/security-audit-{YYYY-MM-DD-HHmm
 
 ### Example 1: PASS
 ```
-User: "Security audit /home/vladi/projects/my-api"
+User: "Security audit ~/projects/my-api"
 
 Agent:
 1. Scans 47 source files
@@ -588,7 +588,7 @@ Agent:
 ### Example 3: Auto-invoked Gate
 ```
 Orchestrator reaches pre-deployment:
-→ Delegates: "Security audit /home/vladi/projects/app"
+→ Delegates: "Security audit ~/projects/app"
 → Returns: WARNING — "CORS allows all origins. Fix before prod?"
 → User: "Accept for dev, fix before prod"
 → Proceeds to archivist

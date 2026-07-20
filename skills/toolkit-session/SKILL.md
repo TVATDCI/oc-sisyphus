@@ -30,7 +30,7 @@ session_list({ limit: 10 })
 session_list({ from_date: "2026-05-01", to_date: "2026-05-24" })
 
 // Sessions for current project
-session_list({ project_path: "/home/vladi/developer/projects/rotating-x" })
+session_list({ project_path: "~/developer/projects/rotating-x" })
 ```
 
 ### `session_read`

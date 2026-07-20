@@ -14,6 +14,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { homedir } from "node:os";
 import {
   matchTrustRootWrite,
   matchTrustRootRead,
@@ -23,7 +24,7 @@ import {
 
 test("AC-3.16: matchTrustRootWrite blocks write to canonical opencode.json via filePath", () => {
   const result = matchTrustRootWrite({
-    filePath: "/home/vladi/.config/opencode/opencode.json",
+    filePath: `${homedir()}/.config/opencode/opencode.json`,
   });
   assert.notEqual(result, null, "must return matched path (blocked)");
   assert.equal(
@@ -35,14 +36,14 @@ test("AC-3.16: matchTrustRootWrite blocks write to canonical opencode.json via f
 
 test("AC-3.16: matchTrustRootWrite blocks write via 'path' arg key", () => {
   const result = matchTrustRootWrite({
-    path: "/home/vladi/.config/opencode/opencode.json",
+    path: `${homedir()}/.config/opencode/opencode.json`,
   });
   assert.notEqual(result, null);
 });
 
 test("AC-3.16: matchTrustRootWrite blocks write via 'file_path' arg key", () => {
   const result = matchTrustRootWrite({
-    file_path: "/home/vladi/.config/opencode/opencode.json",
+    file_path: `${homedir()}/.config/opencode/opencode.json`,
   });
   assert.notEqual(result, null);
 });
@@ -58,21 +59,21 @@ test("AC-3.16: pattern matches any opencode.json (project-local too)", () => {
 
 test("AC-3.16: pattern does NOT match opencode.json.backup (extension differs)", () => {
   const result = matchTrustRootWrite({
-    filePath: "/home/vladi/.config/opencode/opencode.json.backup",
+    filePath: `${homedir()}/.config/opencode/opencode.json.backup`,
   });
   assert.equal(result, null, "must not match .json.backup (anchored to .json$)");
 });
 
 test("AC-3.16: pattern does NOT match opencode-json.txt (different filename)", () => {
   const result = matchTrustRootWrite({
-    filePath: "/home/vladi/.config/opencode/opencode-json.txt",
+    filePath: `${homedir()}/.config/opencode/opencode-json.txt`,
   });
   assert.equal(result, null);
 });
 
 test("AC-3.16: pattern is case-insensitive (OPENCODE.JSON also blocked)", () => {
   const result = matchTrustRootWrite({
-    filePath: "/home/vladi/.config/opencode/OPENCODE.JSON",
+    filePath: `${homedir()}/.config/opencode/OPENCODE.JSON`,
   });
   assert.notEqual(result, null);
 });
@@ -83,14 +84,14 @@ test("AC-3.17: matchTrustRootRead does NOT block read of opencode.json", () => {
   // Read protection is NOT added — operators and diagnostic tools must
   // still be able to inspect the config. Only writes are blocked.
   const result = matchTrustRootRead({
-    filePath: "/home/vladi/.config/opencode/opencode.json",
+    filePath: `${homedir()}/.config/opencode/opencode.json`,
   });
   assert.equal(result, null, "must NOT block reads of opencode.json");
 });
 
 test("AC-3.17: matchTrustRootRead with 'path' arg key also does NOT block opencode.json", () => {
   const result = matchTrustRootRead({
-    path: "/home/vladi/.config/opencode/opencode.json",
+    path: `${homedir()}/.config/opencode/opencode.json`,
   });
   assert.equal(result, null);
 });
@@ -99,28 +100,28 @@ test("AC-3.17: matchTrustRootRead with 'path' arg key also does NOT block openco
 
 test("regression: state.json write is still blocked", () => {
   const result = matchTrustRootWrite({
-    filePath: "/home/vladi/.sisyphus/state.json",
+    filePath: `${homedir()}/.sisyphus/state.json`,
   });
   assert.notEqual(result, null);
 });
 
 test("regression: workflow.yaml write is still blocked", () => {
   const result = matchTrustRootWrite({
-    filePath: "/home/vladi/.sisyphus/workflow.yaml",
+    filePath: `${homedir()}/.sisyphus/workflow.yaml`,
   });
   assert.notEqual(result, null);
 });
 
 test("regression: PRD verdict file write is still blocked", () => {
   const result = matchTrustRootWrite({
-    filePath: "/home/vladi/.sisyphus/notepads/cli/momus-prd-review-2026-06-27T12-04-01-558Z.md",
+    filePath: `${homedir()}/.sisyphus/notepads/cli/momus-prd-review-2026-06-27T12-04-01-558Z.md`,
   });
   assert.notEqual(result, null);
 });
 
 test("regression: plan verdict file write is still blocked", () => {
   const result = matchTrustRootWrite({
-    filePath: "/home/vladi/.sisyphus/notepads/cli/momus-plan-review-2026-06-27T13-57-58-349Z.md",
+    filePath: `${homedir()}/.sisyphus/notepads/cli/momus-plan-review-2026-06-27T13-57-58-349Z.md`,
   });
   assert.notEqual(result, null);
 });
