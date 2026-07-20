@@ -105,9 +105,14 @@ validate_skill() {
     fi
 
     if [[ -f "$skill_dir/README.md" ]]; then
-        echo -e "${YELLOW}WARN${NC} (README.md inside skill dir)"
-        ((WARN++)) || true
-        has_errors=true
+        # *-workspace skills hold eval iterations, not a skill body — README there is workspace state, not redundant docs.
+        if [[ "$skill_name" == *-workspace ]]; then
+            :
+        else
+            echo -e "${YELLOW}WARN${NC} (README.md inside skill dir)"
+            ((WARN++)) || true
+            has_errors=true
+        fi
     fi
     if [[ -f "$skill_dir/CHANGELOG.md" ]]; then
         echo -e "${YELLOW}WARN${NC} (CHANGELOG.md inside skill dir)"

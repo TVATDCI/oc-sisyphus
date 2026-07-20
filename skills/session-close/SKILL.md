@@ -91,7 +91,7 @@ Test artifacts in directories like `~/developer/test-artifacts/` do NOT need git
 ### Workflow:
 1. Close beads issues locally (`bd close <id>`)
 2. Update state file (`.sisyphus/state.json`)
-3. Run cleanup checklist (see `~/.config/opencode/CLEANUP.md`) — archive old iterations, prune stale memory entries
+3. Run cleanup checklist — archive old iterations, prune stale memory entries
 4. **Run COMPLETE-CODEBASE.md drift check** — If this session touched skills, agents, routing, permissions, workflow docs, scripts, or canonical paths, update the relevant sections (see Real Projects step 3 for the sub-check list). If nothing changed, note `"COMPLETE-CODEBASE check: no update needed"` in evidence.
 5. Document evidence in `.sisyphus/evidence/`
 6. **SKIP git push** — test artifacts are local-only
