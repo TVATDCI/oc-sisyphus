@@ -35,7 +35,7 @@
    │ └── tasks/ # Beads per project (aino, dropDeadDev, opencode, pienso, vladi...)
    │
    ├── 6. INFRASTRUCTURE LAYER
-   │ ├── scripts/ # 16 scripts (load-rules, regression-gate, validate-skills-v2.py, verify-plugin-compat.js, check-doc-claims.sh, check-completion-honesty.sh, bd_remember.py, etc.)
+   │ ├── scripts/ # 17 scripts (load-rules, regression-gate, validate-skills-v2.py, verify-plugin-compat.js, check-doc-claims.sh, check-completion-honesty.sh, bd_remember.py, mcp-home-wrapper.sh, etc.)
    │ ├── plugins/sisyphus-gates/ # Governance gate plugin: 19 src modules + cli.js + dist/index.js + 21 test files (446 tests). HMAC-SHA256 verdict signing, trust-root path protection (incl. opencode.json write-protect + READ_EXCEPTION_PATTERNS), MCP classification, Layer 3.7 sandbox allowlist (path-scoped command relaxation for /tmp/), Layer 6.5 session-close gate (blocks git push / bd dolt push when session_close.status === "open"; protocol start/complete/override CLI), hasShellMetachar metachar denial, throw enforcement, adversarial test suite, stripLeadingEnvExport + SUBCOMMAND_BD classifier
    │ ├── benchmark/ # 3 JSONL baseline runs (vs codegraph vs semble)
    │ └── .codegraph/codegraph.db # Search/index: semantic code index SQLite DB
