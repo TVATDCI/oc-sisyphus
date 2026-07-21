@@ -4,6 +4,9 @@ node_modules/
 .codegraph/
 .sisyphus/
 
+# vs code workspace files
+.vscode/*
+.vscode/settings.json
 # Toolchain: npm-ONLY at repo root (package-lock.json is canonical).
 # bun.lock at root is gitignored — do NOT commit it. The Jun 21 decision
 # is npm-only (oh-my-openagent installed via `npm install`, NOT `bun add`).
