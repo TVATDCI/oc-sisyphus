@@ -1,41 +1,175 @@
-# OpenCode + Sisyphus Config
+# Sisyphus — a production-grade AI agent platform with governance baked in
 
-> A governance system that makes AI coding agents safe enough to trust with
-> real work — by forcing them through a review workflow with cryptographic
-> gates that the AI cannot forge.
+> 46 skills that can clone a website, write a PRD, build a full-stack app,
+> ship a fragment shader, generate a PPTX, or run a security audit — paired
+> with a cryptographic governance layer that makes the agent trustworthy
+> enough to actually deploy.
 
-## What is this?
+## Table of contents
 
-This repo configures [OpenCode](https://github.com/sst/opencode) — an AI agent
-that can read, write, and run code on your machine. An AI with that much power
-is risky on its own: it can delete files, run destructive commands, or commit
-unfinished work. This config adds a **safety and structure layer** on top so the
-agent stays powerful but can't cause damage.
+- [The 30-second version](#the-30-second-version)
+- [What can it actually do?](#what-can-it-actually-do)
+- [What makes it safe?](#what-makes-it-safe)
+- [Who is this for?](#who-is-this-for)
+- [Quick start](#quick-start)
+- [How does it work? (deep dive)](#how-does-it-work-deep-dive)
+- [Signing verdicts (operator guide)](#signing-verdicts-operator-guide)
+- [Repository layout](#repository-layout)
+- [Key concepts](#key-concepts)
+- [Security design](#security-design)
+- [Known limitations](#known-limitations)
+- [How does this differ from typical agent safety patterns?](#how-does-this-differ-from-typical-agent-safety-patterns)
+- [Documentation](#documentation)
+- [Verify](#verify)
+- [Status](#status)
 
-Think of it as seatbelts and traffic lights for your AI coding assistant.
+---
 
-## Why does it exist?
+## The 30-second version
 
-AI coding agents are useful, but they move fast, don't always understand
-context, and can't be fully trusted with destructive operations. This config
-solves three problems:
+Most AI coding agent configs are one of two things:
 
-1. **Damage control** — block `rm -rf`, force-pushes, and other catastrophic
-   commands before they ever run.
-2. **Process discipline** — force the AI through a review workflow
-   (plan → review → build → verify) instead of letting it improvise.
-3. **Accountability** — require a human's cryptographic signature to advance
-   key phases, so the AI can never "self-approve" its own work.
+- **Powerful but unsafe** — the agent can read, write, and execute anything;
+  you trust it not to destroy your work. Eventually it does.
+- **Safe but crippled** — the agent asks for confirmation on every action;
+  you end up doing the work yourself.
 
-## How does it work?
+Sisyphus is a third option: **an agent that retains its full power, but
+cannot self-approve destructive work or advance past review phases without
+your cryptographic signature.** You get the productivity; the agent can't
+cause damage.
 
-Five layers work together:
+Built on [OpenCode](https://github.com/sst/opencode) (the agent runtime),
+Sisyphus sits between the agent and every tool call:
+
+```
+agent: bash("rm -rf node_modules/ && git push --force")
+  ↓
+sisyphus-gates plugin: ⛔ blocked — catastrophic denylist + not in approved phase
+  ↓
+you: unaffected. The agent tries a safer path or asks for direction.
+```
+
+```
+agent: "PRD review phase complete, advancing to plan-writing."
+  ↓
+sisyphus-gates plugin: ⛔ blocked — no signed verdict in ~/.sisyphus/notepads/
+  ↓
+you (in your terminal): node cli.js sign-verdict prd my-prd-001 PASS
+  ↓
+agent: advances. Cannot forge this on its own — the HMAC key is outside its reach.
+```
+
+## What can it actually do?
+
+A non-exhaustive list of what the 46 skills produce. None of these are demos —
+each is a working `SKILL.md` with evals.
+
+**Build end-to-end artifacts:**
+- **Clone a website** — `website-analyzer` reverse-engineers a site into a
+  21-section DESIGN.md + structured content inventory + tech detections, then
+  planning + execution skills reproduce it
+- **Run a full software project** — `discovery-orchestrator` → `prd-writer` →
+  `plan-writer` → `wave-executor` → `regression-gate` → `plan-closer` walks
+  a project from idea to shipped through 9 HMAC-gated phases
+- **Build full-stack apps** — `fullstack-dev` designs services, auth flows
+  (JWT/session/OAuth), real-time layers (SSE/WebSocket); `frontend-ui-ux`
+  ships UI/UX work without design mocks
+- **Write shaders** — `shader-dev` produces compile-checked WebGL2 fragment
+  shaders via a fixed harness
+- **Generate presentations** — `document-builder` emits PPTX via PptxGenJS
+
+**Review and audit existing work:**
+- **Security audit** — `security-auditor` scans 6 vulnerability categories
+  (secrets, injection, XSS, auth/CSRF, dependencies, path traversal) with
+  PASS/WARN/FAIL verdicts
+- **Code review** — `code-review` produces structured reviews covering
+  correctness, security, performance, maintainability
+- **UI/UX audit** — `ui-auditor` validates CSS architecture, accessibility,
+  performance budget, theme system against DESIGN.md specs
+- **PRD / plan review** — `momus-prd-reviewer` and `momus-plan-reviewer`
+  ruthlessly audit planning docs for contradictions, scope creep, missing
+  verification before a human signs off
+
+**Research and learn:**
+- **Gather context** — `athena-research`, `toolkit-research` (web/docs/GitHub),
+  `toolkit-lsp` (LSP-powered code analysis)
+- **Multi-session curricula** — `teach` builds Markdown learning workspaces
+  anchored to a mission, with lessons, glossary, and learning records
+
+**Plan and orchestrate:**
+- **Discovery** — `discovery-orchestrator` turns vague requests into planning
+  briefs via Socratic Q&A
+- **Issue creation** — `issue-creator` breaks PRDs into vertical-slice issues
+- **Plan writing** — `plan-writer` produces structured execution plans
+- **Wave execution** — `wave-executor` runs slices in waves with evidence
+  logging, goal-backward verification, QA handoffs
+
+## What makes it safe?
+
+Three properties, enforced cryptographically:
+
+1. **The agent cannot self-approve.** Advancing the workflow requires an HMAC
+   signature from a key at `~/.local/share/sisyphus-gate-key` — produced by
+   you in your terminal, not through the agent's tool API. The agent cannot
+   read this file, cannot read `/proc` to extract the key from memory, and
+   cannot read the plugin source to study the algorithm.
+2. **The agent cannot tamper with the rules.** State files, plugin source,
+   the workflow definition, `/proc`, and the signing key itself are all in
+   trust-root paths that no tool, no agent, no phase can override.
+3. **The system fails closed.** Missing state, unknown gates, broken config,
+   or a missing signing key → block everything except reads. The safe
+   default is "no."
+
+## Who is this for?
+
+- **Operators deploying AI agents for real work** — fork this, adapt the
+  workflow + agents + skill routing to your stack, get a working governance
+  layer for free. The plugin is local; pin it to whatever OpenCode runtime
+  you're running.
+- **AI safety / governance researchers** — the
+  [THREAT-MODEL.md](./plugins/sisyphus-gates/THREAT-MODEL.md) documents the
+  attack surface; the plugin's 10-layer decision stack is a reference
+  implementation of fail-closed agent gating with HMAC-signed verdicts.
+- **Builders wanting a starting skill library** — 46 skills spanning planning,
+  review, execution, research, development, system operations. Each is a
+  readable `SKILL.md` you can fork, study, or rewrite.
+
+## Quick start
+
+**Prerequisites:** Node.js 22, npm, OpenCode.
+
+```bash
+npm install            # install dependencies
+npm run install:hooks  # install the git pre-push hook
+```
+
+Generate the HMAC signing key:
+
+```bash
+openssl rand -hex 32 > ~/.local/share/sisyphus-gate-key
+chmod 600 ~/.local/share/sisyphus-gate-key
+```
+
+Verify everything works:
+
+```bash
+cd plugins/sisyphus-gates
+npm test              # 446 unit tests across 21 files (~5s)
+npm run self-test     # 22 end-to-end scenarios (~50ms)
+npm run test:all      # unit + self-test combined
+```
+
+## How does it work? (deep dive)
+
+Five layers work together.
 
 ### 1. Governance Plugin (`sisyphus-gates`)
 
 A Node.js plugin that sits between OpenCode and every tool call the AI tries.
 It inspects each action, blocks the dangerous ones, and enforces a phased
-workflow. 18 source modules, 446 unit tests across 21 test files, 22 end-to-end scenarios.
+workflow. 18 source modules, 446 unit tests across 21 test files, 22
+end-to-end scenarios.
 
 **Decision stack** (checked in order, first match wins):
 
@@ -71,8 +205,8 @@ without touching code.
 
 Gate decisions are HMAC-SHA256-signed artifacts, not forgeable text. The
 signing key lives at `~/.local/share/sisyphus-gate-key` (chmod 600). The AI
-cannot read this file, cannot read `/proc` to extract the key from memory, and
-cannot read the plugin source to study the algorithm.
+cannot read this file, cannot read `/proc` to extract the key from memory,
+and cannot read the plugin source to study the algorithm.
 
 When you (the human) review the AI's work and decide it passes:
 
@@ -87,8 +221,8 @@ The plugin verifies the HMAC signature using `crypto.timingSafeEqual` (prevents
 timing attacks). Unsigned, tampered, or wrong-key verdicts are rejected. If no
 signed verdicts exist, gates stay "unknown" → fail-closed.
 
-**Session-close protocol (anti-drift, Phase 1.5+):** `git push` and `bd dolt push`
-are blocked when `session_close.status === "open"`. The state field is the source
+**Session-close protocol (anti-drift):** `git push` and `bd dolt push` are
+blocked when `session_close.status === "open"`. The state field is the source
 of truth — prose claims of "closed" are non-authoritative.
 
 ```bash
@@ -104,11 +238,11 @@ node cli.js protocol override session-close --reason "..."  # operator bypass fo
 manuals triggered by domain match:
 
 - **Planning**: `discovery-orchestrator`, `prd-writer`, `plan-writer`, `issue-creator`
-- **Review**: `momus-prd-reviewer`, `momus-plan-reviewer`, `code-review`, `security-auditor`
+- **Review**: `momus-prd-reviewer`, `momus-plan-reviewer`, `code-review`, `security-auditor`, `ui-auditor`
 - **Execution**: `wave-executor`, `tdd-executor`, `build-resolver`, `regression-gate`
 - **Research**: `athena-research`, `teach`, `toolkit-lsp`, `toolkit-research`, `website-analyzer`
-- **Development**: `fullstack-dev`, `frontend-ui-ux`, `skill-creator`, `agent-development`
-- **System**: `session-close`, `shell-safety`, `system-reference`, `opencode-expert`
+- **Development**: `fullstack-dev`, `frontend-ui-ux`, `skill-creator`, `agent-development`, `shader-dev`, `document-builder`
+- **System**: `session-close`, `shell-safety`, `system-reference`, `opencode-expert`, `vault-ops`
 
 ### 5. Agents (18 Specialized Personas)
 
@@ -123,36 +257,11 @@ fullstack-dev-tester (broad `edit: *`, needed to build apps anywhere in a projec
 workspace) — and even those are blocked by Layer 0 from touching governance files.
 
 9 categories dispatch tasks by domain (deep, quick, visual-engineering, writing,
-etc.) using a 3-tier fallback strategy: zai-coding-plan subscription (primary)
-→ opencode-go lite subscription (fallback) → opencode pre-pay-as-you-go (final
-fallback).
+etc.) using a 3-tier fallback strategy: subscription primary → lite subscription
+→ pre-pay-as-you-go. Edit `oh-my-openagent.json` to wire your own provider/model
+combinations.
 
-## Getting Started
-
-**Prerequisites:** Node.js 22, npm, OpenCode.
-
-```bash
-npm install            # install dependencies
-npm run install:hooks  # install the git pre-push hook
-```
-
-Generate the HMAC signing key:
-
-```bash
-openssl rand -hex 32 > ~/.local/share/sisyphus-gate-key
-chmod 600 ~/.local/share/sisyphus-gate-key
-```
-
-Verify everything works:
-
-```bash
-cd plugins/sisyphus-gates
-npm test              # 446 unit tests across 21 files (~5s)
-npm run self-test     # 22 end-to-end scenarios (~50ms)
-npm run test:all      # unit + self-test combined
-```
-
-## Signing Verdicts (Operator Guide)
+## Signing verdicts (operator guide)
 
 The AI cannot advance gates on its own. After reviewing the AI's work, sign
 verdicts from a terminal (not through OpenCode):
@@ -176,7 +285,7 @@ node cli.js sign-verdict prd test-001 PASS --dry-run
 The plugin picks up signed artifacts on the next tool call. Gates update from
 the cryptographic signature — never from forgeable text.
 
-## Repository Layout
+## Repository layout
 
 ```
 ~/.config/opencode/
@@ -184,6 +293,7 @@ the cryptographic signature — never from forgeable text.
 ├── oh-my-openagent.json       # 18 agents + 9 categories + model routing
 ├── AGENTS.md                  # Root system prompt (compaction, routing, rules)
 ├── COMPLETE-CODEBASE.md       # Full system map (architecture, timeline, routing)
+├── SYSTEM-NARRATIVE.md        # Era-structured developmental history + rationale
 ├── plugins/sisyphus-gates/    # Governance plugin
 │   ├── src/                   # 18 source modules
 │   ├── cli.js                 # Operator-only signing CLI (sign-verdict, approve, protocol)
@@ -191,7 +301,7 @@ the cryptographic signature — never from forgeable text.
 │   └── THREAT-MODEL.md        # Attack surface analysis
 ├── skills/                    # 46 skill packs
 ├── rules/                     # Language + concern rules
-├── scripts/                   # Git hooks, drift checks, validators
+├── scripts/                   # Git hooks, drift checks, validators, MCP wrapper
 ├── agents/                    # Subagent definitions with permissions
 ├── prompts/                   # External agent prompts (file:// archive for prompt_append)
 └── .github/workflows/ci.yml   # CI: test + nightly canary
@@ -201,7 +311,7 @@ Operator state lives outside the repo at `~/.sisyphus/` (gitignored):
 `state.json`, `workflow.yaml`, `notepads/` (signed verdicts), `evidence/`,
 `plans/`, `hotcache.md`.
 
-## Key Concepts
+## Key concepts
 
 | Term | Meaning |
 |------|---------|
@@ -211,8 +321,10 @@ Operator state lives outside the repo at `~/.sisyphus/` (gitignored):
 | **Trust-root** | The canonical state location (`~/.sisyphus/`) and protected paths the AI is never allowed to edit — enforced unconditionally by Layer 0. |
 | **Skill pack** | A `SKILL.md` file that teaches the AI one specific task. |
 | **Agent routing** | OpenCode dispatches work to 18 agents or 9 categories, each with its own model and permissions. |
+| **Wave** | A unit of execution within the Execution phase — one or more slices shipped together with evidence logging. |
+| **Slice** | A vertical-slice issue (from issue-creator) that wave-executor picks up and ships through goal-backward verification. |
 
-## Security Design
+## Security design
 
 **The AI cannot self-approve.** Gate decisions require HMAC signatures from a
 key the AI cannot read. The signing CLI runs in the operator's terminal, not
@@ -231,7 +343,10 @@ simulations: chaining bypass (`ls && rm -rf /`), command substitution
 subagent escape, trust-root path traversal, forged verdicts, and session-close
 gate regression (subprocess-based CLI dispatch verification).
 
-## Known Limitations
+See [THREAT-MODEL.md](./plugins/sisyphus-gates/THREAT-MODEL.md) for the full
+attack surface analysis.
+
+## Known limitations
 
 - **Terminal escape (TMUX)**: The AI could spawn a tmux session and run commands
   outside OpenCode's tool pipeline. The plugin only gates what flows through
@@ -243,14 +358,34 @@ gate regression (subprocess-based CLI dispatch verification).
   through. Signing prevents AI forgery, not operator mistakes.
 - **Single-operator**: The signing key is a shared secret. Team use would need
   per-operator keys and a key management system.
+- **Out-of-tier terminal access**: A sufficiently-determined agent could
+  exfiltrate via side channels (DNS, network) that bypass the tool pipeline.
+  Mitigation is environment-level, not plugin-level.
+
+## How does this differ from typical agent safety patterns?
+
+Most agent safety approaches fall into one of three buckets. Sisyphus is a
+fourth.
+
+| Pattern | What it does | What it doesn't do |
+|---------|--------------|---------------------|
+| **Confirm-each-action** (common in coding assistants) | Prompts the operator before every tool call | Doesn't scale — operator either rubber-stamps or does the work themselves |
+| **Process sandbox** (container/namespace isolation) | Limits blast radius at the OS level | Doesn't prevent the agent from doing approved-but-wrong things inside the sandbox; doesn't gate workflow phases |
+| **Tool allowlist / RBAC** | Restricts which tools exist | Doesn't enforce sequencing or review gates; agent can still self-approve within its allowed set |
+| **Sisyphus (this repo)** | Cryptographic phase gates + fail-closed defaults + trust-root path protection + workflow state machine | Requires OpenCode as the agent runtime; not a standalone sandbox |
+
+The distinctive property: **the agent cannot advance the workflow without
+operator signature, even if every individual action is otherwise allowed.**
+That's the gap most patterns leave open.
 
 ## Documentation
 
 - [COMPLETE-CODEBASE.md](./COMPLETE-CODEBASE.md) — full system map, timeline, routing
-- [SYSTEM-OVERVIEW.md](./SYSTEM-OVERVIEW.md) — architecture doc
+- [SYSTEM-NARRATIVE.md](./SYSTEM-NARRATIVE.md) — era-structured developmental history + design rationale
 - [THREAT-MODEL.md](./plugins/sisyphus-gates/THREAT-MODEL.md) — attack surface analysis
 - [oh-my-openagent.json](./oh-my-openagent.json) — agent + category routing
 - [opencode.json](./opencode.json) — entry-point config
+- Per-skill `SKILL.md` files in `skills/*/` — read any of them for a concrete example of the skill format
 
 ## Verify
 
@@ -263,6 +398,14 @@ bash scripts/pre-push.sh      # full pre-push suite
 
 ## Status
 
-- 446/446 unit tests + 22/22 self-test scenarios passing
-- `oh-my-openagent` pinned to `4.18.2`; `sisyphus-gates` is a local plugin (`v0.2.0+CLI+protocol`)
-- CI runs on Node 22; last updated 2026-06-30
+- **446/446 unit tests + 22/22 self-test scenarios passing**
+- `oh-my-openagent` pinned to `4.18.2`
+- `sisyphus-gates` local plugin — current: `v0.3.0+CLI+protocol` (Layer 3.7
+  sandbox allowlist shipped Jun 27; Layer 6.5 session-close gate shipped Jun 30)
+- CI runs on Node 22
+- Active maintenance — see [commit history](./commits/main)
+
+## License
+
+Specify your license here (the repo is currently unlicensed — add a `LICENSE`
+file before public flip if you want to define terms).
