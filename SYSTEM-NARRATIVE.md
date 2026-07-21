@@ -127,8 +127,8 @@ The website-analyzer skill grew through three production-grade versions:
 | Version | Date | Headline capability | Validation target |
 |---------|------|--------------------|--------------------|
 | v1.2.0 | May 16 | 19-section DESIGN.md, Playwright browser automation, animation/3D/state/route extraction, production templates (CSS + React) | DropDeadDev (513-line DESIGN.md) |
-| v1.3.0 | May 17 | MCP server (3 tools), enhanced motion analysis, performance metrics, multi-format export (W3C, Tailwind, Figma, shadcn) | aboutluca.com + pixila.net cross-stack |
-| v1.5.0 | May 17 | `content-inventory.json` (9 fields), Visual Parity Gate, Open Question Gate, SPA hydration detection | aboutluca.com + pixila.net — **100% content parity** |
+| v1.3.0 | May 17 | MCP server (3 tools), enhanced motion analysis, performance metrics, multi-format export (W3C, Tailwind, Figma, shadcn) | two test sites, cross-stack |
+| v1.5.0 | May 17 | `content-inventory.json` (9 fields), Visual Parity Gate, Open Question Gate, SPA hydration detection | two test sites — **100% content parity** |
 
 The skill became the only tool producing both a DESIGN.md spec (21 sections) and
 a content-inventory.json (9 fields), enabling end-to-end pipeline validation
@@ -175,9 +175,9 @@ Three real-project post-mortems revealed the same structural defect:
 
 | Project | Failure mode |
 |---------|--------------|
-| **son-daven-clone** | `wave-executor` ran Wave 1 despite Momus having 30 unresolved blockers — no pre-execution gate check |
-| **pienso-clone** | Verification report never generated — no skill required it; spec drift undetected until manual audit |
-| **hottype-clone** | Gold-standard artifacts existed only because the developer followed them by hand — no skill enforced their creation |
+| **project-alpha** | `wave-executor` ran Wave 1 despite Momus having 30 unresolved blockers — no pre-execution gate check |
+| **project-beta** | Verification report never generated — no skill required it; spec drift undetected until manual audit |
+| **project-gamma** | Gold-standard artifacts existed only because the developer followed them by hand — no skill enforced their creation |
 
 ### Root Cause — the blueprint for HMAC gates
 

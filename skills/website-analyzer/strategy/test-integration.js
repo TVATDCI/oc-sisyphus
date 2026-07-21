@@ -133,7 +133,7 @@ console.log('=== Wave 3 Integration Tests ===\n');
 
 const profiles = [
   {
-    name: 'SPA + 3D + animations (sinahatami)',
+    name: 'SPA + 3D + animations (example.vercel.app)',
     signals: {
       is_spa: 1, is_static_html: 0, has_3d: 1, has_state_management: 1,
       route_count_high: 0, css_complexity_high: 0, content_volume_high: 0,
@@ -143,7 +143,7 @@ const profiles = [
     expectedConfidence: 'HIGH'
   },
   {
-    name: 'Static HTML brochure (advanced-team-clone)',
+    name: 'Static HTML brochure (sample-clone)',
     signals: {
       is_spa: 0, is_static_html: 1, has_3d: 0, has_state_management: 0,
       route_count_high: 0, css_complexity_high: 0, content_volume_high: 0,

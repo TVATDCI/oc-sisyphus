@@ -2,6 +2,7 @@
 node_modules/
 .omo/
 .codegraph/
+.sisyphus/
 
 # Toolchain: npm-ONLY at repo root (package-lock.json is canonical).
 # bun.lock at root is gitignored — do NOT commit it. The Jun 21 decision

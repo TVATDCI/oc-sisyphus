@@ -142,7 +142,7 @@ The 5-step validation pipeline — see `## Detailed Steps` below for per-step pr
 
 ## Calibration Notes
 
-### Detection Accuracy (Calibrated on pi-2-test-clone)
+### Detection Accuracy (Calibrated on a representative test project)
 
 | Detection | True Positives | False Positives | Notes |
 |-----------|---------------|-----------------|-------|

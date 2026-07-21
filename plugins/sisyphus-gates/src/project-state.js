@@ -34,7 +34,7 @@ import {
  *   getProjectName("/path/to/repo-with-package")     → "bar" (from package.json)
  *   getProjectName("/path/to/just-a-dir")            → "just-a-dir" (basename)
  *   getProjectName("/")                              → "default" (empty basename)
- *   getProjectName("/home/user")                    → "vladi" (basename of HOME)
+ *   getProjectName("/home/user")                    → "user" (basename of HOME)
  *   getProjectName("/tmp/home")                      → "default" (basename == "home")
  */
 export function getProjectName(cwd) {

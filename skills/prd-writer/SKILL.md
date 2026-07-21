@@ -226,7 +226,7 @@ Verify before Momus review:
 
 ## Example: Auto-Populated Hardening Items by DESIGN.md Section
 
-Below is a concrete example based on a typical `pi-2-test-clone` style analysis (Sections 10–14 populated by `website-analyzer` v1.1.0).
+Below is a concrete example based on a typical representative-project analysis (Sections 10–14 populated by `website-analyzer` v1.1.0).
 
 ### Section 10 — CSS Architecture → Hardening Checklist
 
