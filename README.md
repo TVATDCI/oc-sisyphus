@@ -407,5 +407,4 @@ bash scripts/pre-push.sh      # full pre-push suite
 
 ## License
 
-Specify your license here (the repo is currently unlicensed — add a `LICENSE`
-file before public flip if you want to define terms).
+[MIT](./LICENSE) — Copyright (c) 2026 TVATDCI and contributors.
