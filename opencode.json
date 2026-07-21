@@ -1,6 +1,28 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["oh-my-openagent@4.18.2"],
+  "plugin": [
+    "oh-my-openagent@4.18.2",
+    [
+      "./plugins/sisyphus-gates",
+      {
+        "verdict_key_command": "cat ~/.local/share/sisyphus-gate-key",
+        "sandbox_paths": ["/tmp/"],
+        "sandbox_allowed_commands": [
+          "npm install",
+          "npm test",
+          "npm run ",
+          "bun add ",
+          "bun install",
+          "bunx ",
+          "node ",
+          "tsc --noEmit",
+          "git diff",
+          "git show",
+          "git log"
+        ]
+      }
+    ]
+  ],
   "default_agent": "sisyphus",
   "mcp": {
     "home": {
