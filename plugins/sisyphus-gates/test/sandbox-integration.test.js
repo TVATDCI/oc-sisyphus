@@ -74,8 +74,9 @@ function inSandboxCwd() {
 
 // Helper: chdir to a non-sandbox path
 function inProdCwd() {
-  // Use a path NOT under /tmp/ — the plugin's own dir or HOME
-  process.chdir(originalCwd);
+  // HOME, not originalCwd — originalCwd is under /tmp/ when the repo is cloned
+  // there (smoke test), which would put the "prod" cwd inside the sandbox.
+  process.chdir(homedir());
   return () => {};
 }
 
