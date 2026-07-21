@@ -370,6 +370,10 @@ every decision since. When in doubt, return to these.
 
 - **2026-07-18** — Post-Jul-17 cleanup. Removed dead `opencode-go/kimi-k3: 1` from modelConcurrency; restored `kimi-k2.6` caps (both providers) — silently removed in 93e9c64 but still backing atlas/archivist/auditor fallbacks. Stripped hardcoded model IDs from 12 SKILL.md files per Oracle review (skill-body model mentions have zero routing influence — runtime resolves from oh-my-openagent.json by category). Added `^\*\*Category:\*\*.*→` FAIL guard to scripts/validate-skills.sh — caught a 12th drift case on first run. Validator: 43 PASS / 0 FAIL.
 
+- **2026-07-21** — A+ skill-length cleanup shipped (3 tiers + validator mechanism → 53/0/0). Pre-public PII prep: 5 audits → PASS (2 filter-repo passes, nested-dir purge, project-name scrub, MCP wrapper, plugin tests → `${homedir()}`). README rewritten platform-first + MIT LICENSE. Public-flip-ready.
+
+- **2026-07-21 (session 2)** — Post-public-flip smoke test (fresh `/tmp/` clone → `npm test && npm run self-test`) caught AC-3.2: `inProdCwd()` helper assumed repo never cloned under `/tmp/` → fixed to `os.homedir()` (12/12 sandbox-integration pass; full 446 unit + 22 self-test green). README count drift corrected (46→45 skills, 18→19 source modules). Commits: `test(sisyphus-gates): fix AC-3.2 under /tmp/ clones` + `docs(readme): correct skill + source-module counts`.
+
 ---
 
 ## How to Go Deeper
