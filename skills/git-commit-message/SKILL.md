@@ -1,8 +1,7 @@
 ---
 name: git-commit-message
 compatibility: opencode
-description: "Use this skill when the user specifically needs to draft, write, or generate git commit message content. This includes composing new commit messages from staged diffs, rewriting or improving existing commit messages, or determining what message to use for pending changes. The skill creates descriptive text following conventional commit format. Do not use for revert operations, branch management, merging, rebasing, or other git workflows unrelated to crafting commit message text.
-"
+description: "Use this skill when the user specifically needs to draft, write, or generate git commit message content. This includes composing new commit messages from staged diffs, rewriting or improving existing commit messages, or determining what message to use for pending changes. The skill creates descriptive text following conventional commit format. Do not use for revert operations, branch management, merging, rebasing, or other git workflows unrelated to crafting commit message text."
 license: MIT
 triggers:
   - "git diff"
