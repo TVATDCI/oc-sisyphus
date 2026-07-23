@@ -113,7 +113,12 @@ export function extractCommandName(cmd) {
   s = s.replace(/^\s+/, "");
   if (s.length === 0) return "";
   const m = s.match(/^(\S+)/);
-  return m ? m[1] : "";
+  if (!m) return "";
+  // F6 (#1): basename-normalize PATH-qualified commands (`/bin/rm` → `rm`)
+  // so they match the denylists. No-op for bare commands (no "/").
+  const name = m[1];
+  const slash = name.lastIndexOf("/");
+  return slash >= 0 ? name.slice(slash + 1) : name;
 }
 
 // ─── hasShellRedirect ───────────────────────────────────────────────────────
