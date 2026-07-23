@@ -272,7 +272,6 @@ const LIVE_BYPASS_GROUPS = [
   ["F1 wrappers", LIVE_F1_WRAPPERS],
   ["F1 wrapper flags", LIVE_F1_WRAPPER_FLAGS],
   ["F2 bare structural", LIVE_F2_STRUCTURAL],
-  ["F3 newline injection", LIVE_F3_NEWLINE],
   ["F4 env-prefix Tier-1", LIVE_F4_ENV_TIER1],
   ["F6 PATH-qualified", LIVE_F6_PATH_QUALIFIED],
   ["wrapper × alt payload", LIVE_WRAPPER_ALT_PAYLOAD],
@@ -358,6 +357,7 @@ const DEFENDED_GROUPS = [
   ["injection (NUL / line-cont)", DEFENDED_INJECTION],
   ["sh -c / bash -c nesting 1..9", DEFENDED_NESTING],
   ["env-prefix Tier-1 (already caught)", DEFENDED_ENV_TIER1],
+  ["F3 newline injection (P-A fixed)", LIVE_F3_NEWLINE],
 ];
 
 describe("catastrophic-defense — GROUP B: already-defended (ACTIVE; must stay blocked under fix)", () => {

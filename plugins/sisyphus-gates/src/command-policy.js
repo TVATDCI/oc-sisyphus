@@ -193,8 +193,15 @@ export function hasShellRedirect(cmd) {
  */
 export function hasShellMetachar(cmd) {
   if (typeof cmd !== "string") return false;
-  // Chaining operators (&&, ||, ;, |)
-  if (/(?:&&|\|\||[;|])/.test(cmd)) return true;
+  // P-A (#1): join line-continuations first — bash removes `\<LF>` / `\<CRLF>`,
+  // so the gate must too or it diverges from what the shell executes.
+  cmd = cmd.replace(/\\\r?\n/g, "");
+  // P-A (#1): NUL is unverifiable — execve truncates at NUL, so the gate would
+  // evaluate a longer string than the shell actually runs.
+  if (cmd.includes("\0")) return true;
+  // Chaining operators (&&, ||, ;, |) + P-A: newline/CR as separators.
+  // Closes F3 — `git status\nrm -rf /` no longer smuggles rm past the matcher.
+  if (/(?:&&|\|\||[;|\n\r])/.test(cmd)) return true;
   // Command substitution ($(...) or backtick)
   if (cmd.includes("$(") || cmd.includes("`")) return true;
   // Shell redirects (>, >>, <, |, single &) — reuse existing helper
@@ -267,14 +274,39 @@ const ALWAYS_DESTRUCTIVE_FIRST_TOKEN = new Set([
 /** Subcommand-aware commands. */
 const SUBCOMMAND_BD = {
   safe: new Set([
-    "ready", "prime", "list", "show", "blocked", "search", "memories",
-    "remember", "stats", "doctor", "version", "config",
-    "dep", "help", "--help", "-h",
+    "ready",
+    "prime",
+    "list",
+    "show",
+    "blocked",
+    "search",
+    "memories",
+    "remember",
+    "stats",
+    "doctor",
+    "version",
+    "config",
+    "dep",
+    "help",
+    "--help",
+    "-h",
   ]),
   destructive: new Set([
-    "close", "defer", "supersede", "forget",
-    "create", "update", "mol", "human", "setup",
-    "dolt", "preflight", "stale", "orphans", "lint", "edit",
+    "close",
+    "defer",
+    "supersede",
+    "forget",
+    "create",
+    "update",
+    "mol",
+    "human",
+    "setup",
+    "dolt",
+    "preflight",
+    "stale",
+    "orphans",
+    "lint",
+    "edit",
   ]),
 };
 
@@ -288,15 +320,40 @@ const SUBCOMMAND_GIT = {
   // Per-subcommand destructive check (token-1 is git, token-2 is sub)
   subCheck: (sub, rest) => {
     // git <sub> with any of these flags is destructive
-    if (sub === "checkout" && (rest.includes("--") || rest.some((a) => a.startsWith("-")))) return true;
+    if (
+      sub === "checkout" &&
+      (rest.includes("--") || rest.some((a) => a.startsWith("-")))
+    )
+      return true;
     if (sub === "reset" && rest.includes("--hard")) return true;
-    if (sub === "clean" && rest.some((a) => /^-[a-zA-Z]*[fF]/.test(a))) return true;
-    if (sub === "push" && rest.some((a) => /--force/.test(a) || /^-+f\b/.test(a))) return true;
+    if (sub === "clean" && rest.some((a) => /^-[a-zA-Z]*[fF]/.test(a)))
+      return true;
+    if (
+      sub === "push" &&
+      rest.some((a) => /--force/.test(a) || /^-+f\b/.test(a))
+    )
+      return true;
     if (sub === "branch" && rest.some((a) => /^--?D\b/.test(a))) return true;
     if (sub === "restore") return true;
-    if (sub === "stash" && !["list", "show", "pop", "apply", "drop", "branch"].some((s) => rest.includes(s))) return true;
-    if (sub === "merge" || sub === "rebase" || sub === "cherry-pick" || sub === "revert") return true;
-    if (sub === "tag" && rest.some((a) => /^-[dD]/.test(a) || /^--delete/.test(a))) return true;
+    if (
+      sub === "stash" &&
+      !["list", "show", "pop", "apply", "drop", "branch"].some((s) =>
+        rest.includes(s),
+      )
+    )
+      return true;
+    if (
+      sub === "merge" ||
+      sub === "rebase" ||
+      sub === "cherry-pick" ||
+      sub === "revert"
+    )
+      return true;
+    if (
+      sub === "tag" &&
+      rest.some((a) => /^-[dD]/.test(a) || /^--delete/.test(a))
+    )
+      return true;
     return false;
   },
 };
@@ -380,14 +437,16 @@ const SUBCOMMAND_TERRAFORM = {
 };
 
 function hasRecursiveArg(tokens) {
-  return tokens.slice(1).some(
-    (a) =>
-      a === "-R" ||
-      a === "-r" ||
-      a === "--recursive" ||
-      /^--recursive/.test(a) ||
-      /^-[a-zA-Z]*[rR]/.test(a)
-  );
+  return tokens
+    .slice(1)
+    .some(
+      (a) =>
+        a === "-R" ||
+        a === "-r" ||
+        a === "--recursive" ||
+        /^--recursive/.test(a) ||
+        /^-[a-zA-Z]*[rR]/.test(a),
+    );
 }
 
 const SUBCOMMAND_FIND = {
@@ -403,7 +462,7 @@ const SUBCOMMAND_FIND = {
         "-fls",
         "-fprint",
         "-fprintf",
-      ].includes(a)
+      ].includes(a),
     ),
 };
 
@@ -426,7 +485,13 @@ const SUBCOMMAND_GO = {
 const SUBCOMMAND_CURL = {
   // curl -o / -O writes to file
   flagCheck: (_sub, rest) =>
-    rest.some((a) => a === "-o" || a === "-O" || /^--output/.test(a) || /^--remote-name/.test(a)),
+    rest.some(
+      (a) =>
+        a === "-o" ||
+        a === "-O" ||
+        /^--output/.test(a) ||
+        /^--remote-name/.test(a),
+    ),
 };
 
 const SUBCOMMAND_WGET = {
@@ -437,7 +502,13 @@ const SUBCOMMAND_WGET = {
 const SUBCOMMAND_SED = {
   // sed -i is destructive
   flagCheck: (_sub, rest) =>
-    rest.some((a) => a === "-i" || a === "--in-place" || /^--in-place/.test(a) || /^-i[~a-zA-Z]/.test(a)),
+    rest.some(
+      (a) =>
+        a === "-i" ||
+        a === "--in-place" ||
+        /^--in-place/.test(a) ||
+        /^-i[~a-zA-Z]/.test(a),
+    ),
 };
 
 /** Interpreter commands: dangerous when run with -c/-e/-r flag. */
@@ -476,7 +547,7 @@ function isInterpreterDestructive(cmd, tokens) {
         a === "-i" ||
         a === "--command" ||
         a === "--eval" ||
-        /^-c=/.test(a)
+        /^-c=/.test(a),
     )
   ) {
     return true;
@@ -531,7 +602,14 @@ export function isDestructiveCommand(cmd) {
   if (ALWAYS_DESTRUCTIVE_FIRST_TOKEN.has(first)) return true;
   // P0d (G1): bash -c, sh -c, eval, source, npx execute arbitrary commands
   // beyond what the first-token check sees — always destructive.
-  const shellWrappersDestructive = new Set(["bash", "sh", "eval", "source", ".", "npx"]);
+  const shellWrappersDestructive = new Set([
+    "bash",
+    "sh",
+    "eval",
+    "source",
+    ".",
+    "npx",
+  ]);
   if (shellWrappersDestructive.has(first)) return true;
   // P0d (G3): mkfs.* variants (mkfs.ext4, mkfs.ntfs, etc.)
   if (first.startsWith("mkfs.")) return true;
@@ -555,15 +633,19 @@ export function isDestructiveCommand(cmd) {
     }
     if (first === "npm" && SUBCOMMAND_NPM.destructive.has(sub)) return true;
     if (first === "bd" && SUBCOMMAND_BD.destructive.has(sub)) return true;
-    if (first === "kubectl" && SUBCOMMAND_KUBECTL.destructive.has(sub)) return true;
-    if (first === "docker" && SUBCOMMAND_DOCKER.destructive.has(sub)) return true;
-    if (first === "terraform" && SUBCOMMAND_TERRAFORM.destructive.has(sub)) return true;
+    if (first === "kubectl" && SUBCOMMAND_KUBECTL.destructive.has(sub))
+      return true;
+    if (first === "docker" && SUBCOMMAND_DOCKER.destructive.has(sub))
+      return true;
+    if (first === "terraform" && SUBCOMMAND_TERRAFORM.destructive.has(sub))
+      return true;
     if (first === "pip" && SUBCOMMAND_PIP.destructive.has(sub)) return true;
     if (first === "pip3" && SUBCOMMAND_PIP.destructive.has(sub)) return true;
     if (first === "gem" && SUBCOMMAND_GEM.destructive.has(sub)) return true;
     if (first === "cargo" && SUBCOMMAND_CARGO.destructive.has(sub)) return true;
     if (first === "go" && SUBCOMMAND_GO.destructive.has(sub)) return true;
-    if ((first === "chmod" || first === "chown") && hasRecursiveArg(tokens)) return true;
+    if ((first === "chmod" || first === "chown") && hasRecursiveArg(tokens))
+      return true;
     if (first === "find" && SUBCOMMAND_FIND.flagCheck(sub, rest)) return true;
     if (first === "sed" && SUBCOMMAND_SED.flagCheck(sub, rest)) return true;
     if (first === "curl" && SUBCOMMAND_CURL.flagCheck(sub, rest)) return true;
@@ -738,24 +820,32 @@ export function isSafeReadOnlyCommand(cmd) {
 
   // sed with -i is not safe
   if (first === "sed") {
-    return !tokens.slice(1).some(
-      (a) => a === "-i" || a === "--in-place" || /^--in-place/.test(a) || /^-i[~a-zA-Z]/.test(a)
-    );
+    return !tokens
+      .slice(1)
+      .some(
+        (a) =>
+          a === "-i" ||
+          a === "--in-place" ||
+          /^--in-place/.test(a) ||
+          /^-i[~a-zA-Z]/.test(a),
+      );
   }
 
   // find with -delete/-exec is not safe
   if (first === "find") {
-    return !tokens.slice(1).some((a) =>
-      ["-delete", "-exec", "-execdir", "-ok", "-okdir"].includes(a)
-    );
+    return !tokens
+      .slice(1)
+      .some((a) =>
+        ["-delete", "-exec", "-execdir", "-ok", "-okdir"].includes(a),
+      );
   }
 
   // xargs is NEVER safe (can run any command)
   if (first === "xargs") return false;
 
   // Other safe read-only commands
- if (first === "bd") {
- if (tokens.length < 2) return false;
+  if (first === "bd") {
+    if (tokens.length < 2) return false;
     return SUBCOMMAND_BD.safe.has(tokens[1]);
   }
   return SAFE_READ_ONLY_TOKENS.has(first);
