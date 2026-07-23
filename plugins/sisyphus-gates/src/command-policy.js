@@ -584,7 +584,71 @@ function isInterpreterDestructive(cmd, tokens) {
  * Examples (false):
  *   "ls -la" / "cat /etc/passwd" / "git status" / "git log --oneline -10"
  */
-export function isDestructiveCommand(cmd) {
+
+// P-B2 (#1): wrapper-recursion set. When the first command token is one of
+// these, the real command follows (possibly behind flags/positionals).
+// Resolved by recursing isDestructiveCommand on the remainder (catches direct
+// commands + subcommands) AND scanning remainder tokens for catastrophic names
+// (catches commands hidden behind the wrapper's flags). Flag-agnostic — no
+// per-wrapper flag-consumption table needed.
+const WRAPPER_SET = new Set([
+  "env",
+  "nice",
+  "nohup",
+  "time",
+  "timeout",
+  "command",
+  "strace",
+  "ltrace",
+  "gdb",
+  "busybox",
+  "cpulimit",
+  "stdbuf",
+  "ionice",
+  "chrt",
+  "taskset",
+  "numactl",
+  "setarch",
+  "linux32",
+  "linux64",
+  "catchsegv",
+  "eatmydata",
+  "fakeroot",
+  "fakechroot",
+  "proot",
+  "xvfb-run",
+  "dbus-run-session",
+  "setsid",
+  "flock",
+  "chroot",
+  "nsenter",
+  "unshare",
+  "systemd-run",
+  "su",
+  "pkexec",
+  "perf",
+  "entr",
+  "watchexec",
+  "hyperfine",
+  "multitime",
+  "exec",
+  "builtin",
+  "xargs",
+]);
+
+// P-B2 (#1): remainder of cmd after the first command token (mirrors
+// extractCommandName's stripping: env-export, VAR=val assignments, sudo).
+function remainderAfterFirstCommand(cmd) {
+  let s = stripLeadingEnvExport(cmd).replace(/^\s+/, "");
+  s = s.replace(/^((?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+)+)/, "");
+  s = s.replace(/^sudo\s+/, "");
+  s = s.replace(/^\s+/, "");
+  const m = s.match(/^(\S+)\s*/);
+  if (!m) return "";
+  return s.slice(m[0].length);
+}
+
+export function isDestructiveCommand(cmd, depth = 0) {
   if (typeof cmd !== "string") return false;
   cmd = stripLeadingEnvExport(cmd);
 
@@ -607,6 +671,23 @@ export function isDestructiveCommand(cmd) {
   // execution (brace `{rm,ls}`, subshell `(rm`). Real command names have none,
   // so FP-neutral. Closes F2.
   if (/[(){}'"$`\\]/.test(first)) return true;
+  // P-B2 (#1): wrapper-recursion. If the first token is a known wrapper, the
+  // real command follows — recurse on the remainder (direct + subcommand
+  // analysis) AND scan remainder tokens for catastrophic names (flag-hidden).
+  if (WRAPPER_SET.has(first)) {
+    if (depth >= 8) return true; // depth cap → conservative block
+    const remainder = remainderAfterFirstCommand(cmd);
+    if (!remainder) return false; // wrapper alone (env/time with no command)
+    if (isDestructiveCommand(remainder, depth + 1)) return true;
+    const restTokens = tokenize(remainder);
+    if (
+      restTokens.some(
+        (t) => ALWAYS_DESTRUCTIVE_FIRST_TOKEN.has(t) || t.startsWith("mkfs."),
+      )
+    )
+      return true;
+    return false;
+  }
 
   // Layer 3: always-destructive first tokens
   if (ALWAYS_DESTRUCTIVE_FIRST_TOKEN.has(first)) return true;
@@ -849,6 +930,11 @@ export function isSafeReadOnlyCommand(cmd) {
         ["-delete", "-exec", "-execdir", "-ok", "-okdir"].includes(a),
       );
   }
+
+  // P-B2 (#1): wrapper-aware guard. Some "safe" tokens (env, time, timeout,
+  // …) can wrap + run a destructive command. Defer to isDestructiveCommand —
+  // if the payload is destructive, this is NOT a safe read-only command.
+  if (isDestructiveCommand(cmd)) return false;
 
   // xargs is NEVER safe (can run any command)
   if (first === "xargs") return false;

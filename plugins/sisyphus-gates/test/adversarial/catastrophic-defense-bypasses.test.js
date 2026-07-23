@@ -269,10 +269,7 @@ const LIVE_WRAPPER_ALT_PAYLOAD = [
 ];
 
 const LIVE_BYPASS_GROUPS = [
-  ["F1 wrappers", LIVE_F1_WRAPPERS],
-  ["F1 wrapper flags", LIVE_F1_WRAPPER_FLAGS],
   ["F4 env-prefix Tier-1", LIVE_F4_ENV_TIER1],
-  ["wrapper × alt payload", LIVE_WRAPPER_ALT_PAYLOAD],
 ];
 
 describe("catastrophic-defense — GROUP A: live bypasses (TODO; gate allows today)", () => {
@@ -358,6 +355,9 @@ const DEFENDED_GROUPS = [
   ["F3 newline injection (P-A fixed)", LIVE_F3_NEWLINE],
   ["F6 PATH-qualified (basename-normalized)", LIVE_F6_PATH_QUALIFIED],
   ["F2 structural (first-token strictness)", LIVE_F2_STRUCTURAL],
+  ["F1 wrappers (P-B2 recursion+scan)", LIVE_F1_WRAPPERS],
+  ["F1 wrapper flags (P-B2)", LIVE_F1_WRAPPER_FLAGS],
+  ["wrapper × alt payload (P-B2)", LIVE_WRAPPER_ALT_PAYLOAD],
 ];
 
 describe("catastrophic-defense — GROUP B: already-defended (ACTIVE; must stay blocked under fix)", () => {
