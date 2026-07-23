@@ -268,9 +268,7 @@ const LIVE_WRAPPER_ALT_PAYLOAD = [
   ["cat-timeout-mkfs", "timeout 5 mkfs.ext4 /dev/sda"],
 ];
 
-const LIVE_BYPASS_GROUPS = [
-  ["F4 env-prefix Tier-1", LIVE_F4_ENV_TIER1],
-];
+const LIVE_BYPASS_GROUPS = [];
 
 describe("catastrophic-defense — GROUP A: live bypasses (TODO; gate allows today)", () => {
   for (const [category, cases] of LIVE_BYPASS_GROUPS) {
@@ -358,6 +356,7 @@ const DEFENDED_GROUPS = [
   ["F1 wrappers (P-B2 recursion+scan)", LIVE_F1_WRAPPERS],
   ["F1 wrapper flags (P-B2)", LIVE_F1_WRAPPER_FLAGS],
   ["wrapper × alt payload (P-B2)", LIVE_WRAPPER_ALT_PAYLOAD],
+  ["F4 env-prefix (P-C denylist)", LIVE_F4_ENV_TIER1],
 ];
 
 describe("catastrophic-defense — GROUP B: already-defended (ACTIVE; must stay blocked under fix)", () => {
@@ -436,10 +435,7 @@ describe("catastrophic-defense — GROUP D: FP-over-blocks (TODO; gate blocks to
   for (const [id, command] of FP_OVERBLOCKS) {
     // todo: catastrophic-defense FP-over-block — env matcher is value-blind
     // today; activate when P-C value-discriminating denylist lands.
-    test(
-      `${id}: ${JSON.stringify(command)} -> allowed`,
-      { todo: true },
-      () => {
+    test(`${id}: ${JSON.stringify(command)} -> allowed`, () => {
         const d = runGate(command);
         assert.equal(
           d.blocked,

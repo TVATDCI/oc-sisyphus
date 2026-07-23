@@ -648,9 +648,95 @@ function remainderAfterFirstCommand(cmd) {
   return s.slice(m[0].length);
 }
 
+// P-C (#1): dangerous env-prefix detection. VAR=val prefixes where VAR is a
+// known code-exec vector (loader injection, shell startup, interpreter hooks,
+// program hijack) → destructive. Pager/editor class is value-ruled (safe
+// values like `cat` allowed; anything else blocked). Checked AFTER
+// stripLeadingEnvExport so opencode's own 13-var prefix never flags.
+const DANGEROUS_ENV_VARS = new Set([
+  "LD_PRELOAD",
+  "LD_LIBRARY_PATH",
+  "LD_AUDIT",
+  "GCONV_PATH",
+  "OPENSSL_CONF",
+  "OPENSSL_ENGINES",
+  "DYLD_INSERT_LIBRARIES",
+  "DYLD_LIBRARY_PATH",
+  "DYLD_FALLBACK_LIBRARY_PATH",
+  "BASH_ENV",
+  "ENV",
+  "ZDOTDIR",
+  "PYTHONSTARTUP",
+  "PYTHONPATH",
+  "PYTHONHOME",
+  "PYTHONINSPECT",
+  "NODE_OPTIONS",
+  "NODE_PATH",
+  "PERL5OPT",
+  "PERL5LIB",
+  "PERLLIB",
+  "RUBYOPT",
+  "RUBYLIB",
+  "JAVA_TOOL_OPTIONS",
+  "_JAVA_OPTIONS",
+  "JDK_JAVA_OPTIONS",
+  "PHPRC",
+  "LUA_INIT",
+  "PATH",
+  "IFS",
+  "HOME",
+  "MAKEFLAGS",
+  "TAR_OPTIONS",
+  "GIT_EXTERNAL_DIFF",
+  "GIT_SSH_COMMAND",
+  "GIT_SSH",
+  "GIT_EXEC_PATH",
+  "GIT_CONFIG_PARAMETERS",
+  "GIT_CONFIG_COUNT",
+  "RSYNC_RSH",
+  "BROWSER",
+  "LESSOPEN",
+  "LESSCLOSE",
+]);
+
+const SAFE_PAGER_VALUES = new Set([
+  "cat",
+  "less",
+  "more",
+  "most",
+  "bat",
+  "lv",
+  "true",
+  "false",
+  "echo",
+]);
+
+const VALUE_RULED_ENV = new Set([
+  "PAGER",
+  "GIT_PAGER",
+  "EDITOR",
+  "GIT_EDITOR",
+  "VISUAL",
+]);
+
+function hasDangerousEnvPrefix(cmd) {
+  const m = cmd.match(/^((?:[A-Za-z_][A-Za-z0-9_]*=\S+\s*)+)/);
+  if (!m) return false;
+  for (const assign of m[1].trim().split(/\s+/)) {
+    const eq = assign.indexOf("=");
+    if (eq < 0) continue;
+    const name = assign.slice(0, eq);
+    const value = assign.slice(eq + 1);
+    if (DANGEROUS_ENV_VARS.has(name)) return true;
+    if (VALUE_RULED_ENV.has(name) && !SAFE_PAGER_VALUES.has(value)) return true;
+  }
+  return false;
+}
+
 export function isDestructiveCommand(cmd, depth = 0) {
   if (typeof cmd !== "string") return false;
   cmd = stripLeadingEnvExport(cmd);
+  if (hasDangerousEnvPrefix(cmd)) return true;
 
   // Layer 1: sudo (anywhere as a command → destructive)
   if (containsSudo(cmd)) return true;
@@ -881,6 +967,9 @@ const SAFE_GIT_SUBCOMMANDS = new Set(["status", "log", "diff", "show"]);
 export function isSafeReadOnlyCommand(cmd) {
   if (typeof cmd !== "string") return false;
   cmd = stripLeadingEnvExport(cmd);
+  // P-C (#1): dangerous env-prefix → never safe. Must precede the subcommand
+  // checks below, else `PATH=… git status` reads as a benign git subcommand.
+  if (hasDangerousEnvPrefix(cmd)) return false;
   // Shell metacharacters (redirects, chaining, substitution) are not safe.
   // Consolidated into hasShellMetachar() in Slice C — byte-identical to the
   // previous inline checks.
@@ -900,8 +989,11 @@ export function isSafeReadOnlyCommand(cmd) {
 
   // git subcommand commands
   if (first === "git") {
-    if (tokens.length < 2) return false;
-    return SAFE_GIT_SUBCOMMANDS.has(tokens[1]);
+    // Drop leading VAR=val env-prefix tokens so the subcommand aligns with
+    // `first` (extractCommandName strips them, tokenize does not).
+    const cmdTokens = tokens.filter((t) => !/^[A-Za-z_][A-Za-z0-9_]*=/.test(t));
+    if (cmdTokens.length < 2) return false;
+    return SAFE_GIT_SUBCOMMANDS.has(cmdTokens[1]);
   }
 
   // awk with no positional arg → not destructive, but is it "safe"? Yes (e.g., --version)
