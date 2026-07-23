@@ -40,8 +40,8 @@
       "model": "opencode-go/kimi-k3",
       "variant": "high",
       "fallback_models": [
-        { "model": "opencode-go/glm-5.2" },
-        { "model": "zai-coding-plan/glm-5.2" }
+        { "model": "zai-coding-plan/glm-5.2" },
+        { "model": "opencode/glm-5.2" }
       ],
       "prompt_append": "file://~/.config/opencode/prompts/oracle-guidance.md"
     },
@@ -69,17 +69,17 @@
       ]
     },
     "prometheus": {
-      "model": "opencode-go/glm-5.1",
+      "model": "zai-coding-plan/glm-5.1",
       "fallback_models": [
-        { "model": "zai-coding-plan/glm-5.1" },
+        { "model": "opencode-go/glm-5.1" },
         { "model": "opencode/glm-5.1" }
       ],
       "prompt_append": "file://~/.config/opencode/prompts/prometheus-guidance.md"
     },
     "metis": {
-      "model": "opencode-go/glm-5.1",
+      "model": "zai-coding-plan/glm-5.1",
       "fallback_models": [
-        { "model": "zai-coding-plan/glm-5.1" },
+        { "model": "opencode-go/glm-5.1" },
         { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
