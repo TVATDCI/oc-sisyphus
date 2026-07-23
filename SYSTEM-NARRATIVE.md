@@ -374,6 +374,8 @@ every decision since. When in doubt, return to these.
 
 - **2026-07-21 (session 2)** — Post-public-flip smoke test (fresh `/tmp/` clone → `npm test && npm run self-test`) caught AC-3.2: `inProdCwd()` helper assumed repo never cloned under `/tmp/` → fixed to `os.homedir()` (12/12 sandbox-integration pass; full 446 unit + 22 self-test green). README count drift corrected (46→45 skills, 18→19 source modules). Commits: `test(sisyphus-gates): fix AC-3.2 under /tmp/ clones` + `docs(readme): correct skill + source-module counts`.
 
+- **2026-07-23** — Catastrophic-defense bypass closure (#1): deny-side, 6 finding-classes (F1–F6), 5 corpus-gated zero-FP pushes (P-A newline, F6 basename, P-B1 first-token strictness, P-B2 wrapper-recursion, P-C env-prefix denylist); Oracle-reviewed both sides. security-auditor skill missed F1–F4 across 5 pre-public audits → corpus-based audit is the real fix. Suite 580/0/7. Also: git filter-repo rewrote 175 commits vladi→TVATDCI (contribution attribution) + config forward.
+
 ---
 
 ## How to Go Deeper
