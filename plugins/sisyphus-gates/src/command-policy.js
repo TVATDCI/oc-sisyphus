@@ -602,6 +602,11 @@ export function isDestructiveCommand(cmd) {
   // Get the first non-env-var command token
   const first = extractCommandName(cmd);
   if (!first) return false;
+  // P-B1 (#1): first-token strictness. Structural/quote/substitution chars in
+  // the command-name position = obfuscation (`"rm"`, `\rm`) or structural
+  // execution (brace `{rm,ls}`, subshell `(rm`). Real command names have none,
+  // so FP-neutral. Closes F2.
+  if (/[(){}'"$`\\]/.test(first)) return true;
 
   // Layer 3: always-destructive first tokens
   if (ALWAYS_DESTRUCTIVE_FIRST_TOKEN.has(first)) return true;
