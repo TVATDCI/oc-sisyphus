@@ -64,8 +64,8 @@
     "multimodal-looker": {
       "model": "opencode-go/mimo-v2-omni",
       "fallback_models": [
-        { "model": "opencode/mimo-v2.5-free" },
-        { "model": "opencode/gemini-3.1-pro" }
+        { "model": "opencode/gemini-3.1-pro" },
+        { "model": "opencode/mimo-v2.5-free" }
       ]
     },
     "prometheus": {

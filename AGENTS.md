@@ -262,6 +262,16 @@ Fable 5 / Opus 4.8), kept where they serve this system's gate-hardened posture.
 
 Always use non-interactive flags: `cp -f`, `mv -f`, `rm -f`, `scp -o BatchMode=yes`, `ssh -o BatchMode=yes`, `apt-get -y`, `HOMEBREW_NO_AUTO_UPDATE=1`. Full reference: `skill:shell-safety`.
 
+## Compound bash & Layer-3-first (brain-2q4)
+
+The `sisyphus-gates` shell-metacharacter defense blocks **any** bash command containing `|`, `&&`, `||`, `;`, `&`, `>`, `>>`, `<`, `2>&1`, `$(…)`, or backticks — classifying it as `"Destructive commands blocked"` — even when every component is read-only (e.g. `git status && git log`, `ls -la | head -30`, `git ls-files | wc -l`). This is **intended design, not a bug to casually work around**: the gate deliberately pushes file-content reads to the Layer 3 tools and rejects compound chaining to close `ls && rm -rf /`-style bypasses. Work with it, not against it:
+
+- **Prefer Layer 3 tools for file *content*** — `read`, `grep`, `glob`. They are never gated and give better ergonomics for searching/reading than bash pipelines (`grep | head`, `find | sed`, `cat | wc`).
+- **Split compound bash into bare single commands.** Run `git status`, then `git log --oneline -5`, then `git remote -v` as three separate calls instead of chaining with `&&`. Bare single commands pass the safe-readonly allowlist (Layer 4).
+- **No redirect/pipe games.** Don't reach for `2>&1 | head`, `> /tmp/x`, or `| tee`. If you need filtered/aggregated output that has no Layer-3 equivalent, run the bare producer command and reason about its full output, or use `grep`/`glob` directly.
+
+Reference: `brain-2q4` (issue + adversarial spec-lock at `plugins/sisyphus-gates/test/adversarial/brain-2q4-compound-readonly.test.js`). A narrow additive allow-path for read-only compounds (Layer 4.5) is planned behind a security re-audit; until then, the metachar defense holds and compounds stay blocked.
+
 ## On-Demand Reference
 
 - **System map** → `./COMPLETE-CODEBASE.md` — full topology, routing, timeline, permissions
