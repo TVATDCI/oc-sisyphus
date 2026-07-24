@@ -316,7 +316,7 @@ const SUBCOMMAND_BD = {
 };
 
 const SUBCOMMAND_GIT = {
-  safe: new Set(["status", "log", "diff", "show"]),
+  safe: new Set(["status", "log", "diff", "show", "ls-files"]),
   flagCheck: (_sub, rest) => {
     // git branch -D/--delete is destructive
     if (rest.some((a) => /^--?D\b/.test(a) || /^--?d\b/.test(a))) return true;
@@ -962,7 +962,7 @@ const SAFE_READ_ONLY_TOKENS = new Set([
   "btop",
 ]);
 
-const SAFE_GIT_SUBCOMMANDS = new Set(["status", "log", "diff", "show"]);
+const SAFE_GIT_SUBCOMMANDS = new Set(["status", "log", "diff", "show", "ls-files"]);
 
 export function isSafeReadOnlyCommand(cmd) {
   if (typeof cmd !== "string") return false;
@@ -1037,6 +1037,33 @@ export function isSafeReadOnlyCommand(cmd) {
     return SUBCOMMAND_BD.safe.has(tokens[1]);
   }
   return SAFE_READ_ONLY_TOKENS.has(first);
+}
+
+// P2 (brain-2q4): Layer 4.5 — additive allow-path for read-only compounds.
+// Deny layers (0-2) run first; this only adds an allow (never weakens a block).
+const COMPOUND_EXCLUDED = new Set(["sort", "sed"]);
+
+export function isSafeCompoundCommand(cmd) {
+  if (typeof cmd !== "string") return false;
+  let s = stripLeadingEnvExport(cmd);
+  // Allow the two harmless stderr-redirect tokens, then reject any remaining
+  // redirect/structural/substitution char.
+  s = s.replace(/2>&1/g, "").replace(/2>\/dev\/null/g, "");
+  if (/['"\\$`(){}<>]/.test(s)) return false;
+  if (/opencode\.json|state\.json|workflow\.yaml|gate-key|\/proc\b/.test(s)) return false;
+  // Split on compound separators (quote-unaware — safe, quotes pre-rejected).
+  const segments = s
+    .split(/&&|\|\||[|;&]|\n/)
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0);
+  if (segments.length < 2) return false;
+  for (const seg of segments) {
+    if (isDestructiveCommand(seg)) return false;
+    if (!isSafeReadOnlyCommand(seg)) return false;
+    const first = extractCommandName(seg);
+    if (COMPOUND_EXCLUDED.has(first)) return false;
+  }
+  return true;
 }
 
 // ─── Slice C: Exports for testing + Layer 3.7 reuse ───────────────────────

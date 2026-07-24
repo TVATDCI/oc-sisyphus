@@ -48,6 +48,7 @@
 
 import {
   isDestructiveCommand,
+  isSafeCompoundCommand,
   isSafeReadOnlyCommand,
 } from "./command-policy.js";
 import { containsSudo, isAlwaysBlocked } from "./sudo-policy.js";
@@ -265,6 +266,11 @@ export function shouldBlockTool(tool, args, state) {
 
   // Layer 4: Safe read-only bash commands (always allowed, even when fail-closed)
   if (tool === "bash" && args?.command && isSafeReadOnlyCommand(args.command)) {
+    return { blocked: false };
+  }
+
+  // Layer 4.5: Safe compound commands (brain-2q4 P2 — additive allow-path)
+  if (tool === "bash" && args?.command && isSafeCompoundCommand(args.command)) {
     return { blocked: false };
   }
 

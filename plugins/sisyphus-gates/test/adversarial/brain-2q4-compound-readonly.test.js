@@ -273,16 +273,16 @@ describe("brain-2q4 — MUST-STILL-BLOCK (bypass attempts)", () => {
 // `todo` so this file commits green; do NOT implement L4.5 to make them pass.
 // [id, command, isTodo]
 const MUST_ALLOW = [
-  ["A-1", "git status && git log --oneline -5", true],
-  ["A-2", "git status; git log -3", true],
-  ["A-3", "ls -la | head -30", true],
-  ["A-4", "ls -la | wc -l", true],
-  ["A-5", "git ls-files | wc -l", true],
-  ["A-6", "git diff --stat 2>&1 | head -5", true],
+  ["A-1", "git status && git log --oneline -5", false],
+  ["A-2", "git status; git log -3", false],
+  ["A-3", "ls -la | head -30", false],
+  ["A-4", "ls -la | wc -l", false],
+  ["A-5", "git ls-files | wc -l", false],
+  ["A-6", "git diff --stat 2>&1 | head -5", false],
   // A-7 already works today (bare bd subcommand) — regression guard, ACTIVE.
   ["A-7", "bd ready", false],
-  // A-8 chains two safe bd subcommands — fails today (&&), target for P2.
-  ["A-8", "bd ready && bd memories", true],
+  // A-8 chains two safe bd subcommands — P2 activated.
+  ["A-8", "bd ready && bd memories", false],
 ];
 
 describe("brain-2q4 — MUST-ALLOW (read-only compounds; todo — activate when L4.5 lands)", () => {
