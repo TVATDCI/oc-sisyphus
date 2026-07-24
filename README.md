@@ -155,7 +155,7 @@ Verify everything works:
 
 ```bash
 cd plugins/sisyphus-gates
-npm test              # 446 unit tests across 21 files (~5s)
+npm test              # 587 unit tests across 23 files (~5s)
 npm run self-test     # 22 end-to-end scenarios (~50ms)
 npm run test:all      # unit + self-test combined
 ```
@@ -168,7 +168,7 @@ Five layers work together.
 
 A Node.js plugin that sits between OpenCode and every tool call the AI tries.
 It inspects each action, blocks the dangerous ones, and enforces a phased
-workflow. 19 source modules, 446 unit tests across 21 test files, 22
+workflow. 19 source modules, 587 unit tests across 23 test files, 22
 end-to-end scenarios.
 
 **Decision stack** (checked in order, first match wins):
@@ -176,12 +176,13 @@ end-to-end scenarios.
 | Layer | What it checks | Example |
 |-------|---------------|---------|
 | 0 — Trust-root paths | No tool may write/read state.json, workflow.yaml, verdict files, /proc, or plugin source | AI tries to write state.json → blocked |
-| 1 — Catastrophic denylist | `rm -rf /`, `dd`, `mkfs`, `git push --force`, `shutdown` — blocked in all phases | AI tries `rm -rf /` → blocked |
+| 1 — Catastrophic denylist | Hardened: `rm -rf /`, `dd`, `mkfs` + wrapper-recursion (`env rm`), structural (`{rm,ls}`), newline injection, env-prefix smuggling (`LD_PRELOAD`), PATH-qualified (`/bin/rm`) — blocked in all phases | AI tries `env rm -rf /` → blocked |
 | 2 — Sudo | Never allowed, any phase | `sudo apt update` → blocked |
 | 3 — Safe read-only tools | `read`, `grep`, `glob`, `websearch` — always allowed | `read file.js` → allowed |
 | 3.5 — MCP classification | External MCP tools classified as read/write/unknown; unknown denied by default | `myfiles_unknown_tool` → blocked |
 | 3.7 — Sandbox allowlist | If cwd resolves into a `sandbox_paths` prefix AND command matches `sandbox_allowed_commands` → allowed with audit (Layers 0–3.5 still apply) | `npm install` in `/tmp/` → allowed |
 | 4 — Safe bash allowlist | `ls`, `cat`, `git status`, `git log` — allowed even when fail-closed | `ls -la` → allowed |
+| 4.5 — Compound allow | Read-only compounds (`git status && git log`, `ls \| head`) — every segment independently safe-readonly + non-destructive + charset-clean | `git status && git log` → allowed |
 | 5 — Fail-closed | If state missing, gates unknown, or config unavailable → block everything except reads | No state.json → blocked |
 | 6 — Phase-specific | During review phases: write/edit/git commit blocked. During execution: destructive commands blocked (stricter policy) | PRD review phase + `git commit` → blocked |
 | 6.5 — Session-close gate | `git push` / `bd dolt push` blocked when `session_close.status === "open"` (protocol started but not completed). Operator-side state field; prose claims of "closed" are non-authoritative | Agent claims "session closed" + `git push` without running `cli.js protocol complete session-close` → blocked |
@@ -297,7 +298,7 @@ the cryptographic signature — never from forgeable text.
 ├── plugins/sisyphus-gates/    # Governance plugin
 │   ├── src/                   # 19 source modules
 │   ├── cli.js                 # Operator-only signing CLI (sign-verdict, approve, protocol)
-│   ├── test/                  # 21 test files (446 tests) + 22 self-test scenarios
+│   ├── test/                  # 23 test files (587 tests) + 22 self-test scenarios
 │   └── THREAT-MODEL.md        # Attack surface analysis
 ├── skills/                    # 45 skill packs
 ├── rules/                     # Language + concern rules
@@ -337,7 +338,7 @@ tool, no agent, no phase, and no approval can override.
 **The system is fail-closed by design.** Missing state, unknown gates, invalid
 config, or a missing signing key → block everything except read-only tools.
 
-**Everything is tested adversarially.** 446 unit tests include attack
+**Everything is tested adversarially.** 587 unit tests include attack
 simulations: chaining bypass (`ls && rm -rf /`), command substitution
 (`echo $(rm -rf /)`), shell wrappers (`bash -c`, `eval`, `npx`), MCP bypass,
 subagent escape, trust-root path traversal, forged verdicts, and session-close
@@ -390,7 +391,7 @@ That's the gap most patterns leave open.
 ## Verify
 
 ```bash
-npm test                      # 446 unit tests
+npm test                      # 587 unit tests
 npm run self-test             # 22 end-to-end scenarios
 npm run test:all              # unit + self-test combined
 bash scripts/pre-push.sh      # full pre-push suite
@@ -398,10 +399,11 @@ bash scripts/pre-push.sh      # full pre-push suite
 
 ## Status
 
-- **446/446 unit tests + 22/22 self-test scenarios passing**
+- **587/587 unit tests + 22/22 self-test scenarios passing**
 - `oh-my-openagent` pinned to `4.18.2`
-- `sisyphus-gates` local plugin — current: `v0.3.0+CLI+protocol` (Layer 3.7
-  sandbox allowlist shipped Jun 27; Layer 6.5 session-close gate shipped Jun 30)
+- `sisyphus-gates` local plugin — current: `v0.4.0` (Layer 3.7 sandbox allowlist
+  Jun 27; Layer 6.5 session-close gate Jun 30; Layer 1 catastrophic-defense
+  hardening Jul 23; Layer 4.5 compound-allow Jul 23)
 - CI runs on Node 22
 - Active maintenance — see [commit history](./commits/main)
 
