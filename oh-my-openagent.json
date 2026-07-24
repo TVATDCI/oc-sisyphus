@@ -163,9 +163,9 @@
       ]
     },
     "ultrabrain": {
-      "model": "opencode-go/glm-5.2",
+      "model": "zai-coding-plan/glm-5.2",
       "fallback_models": [
-        { "model": "zai-coding-plan/glm-5.2" },
+        { "model": "opencode-go/glm-5.2" },
         { "model": "opencode/glm-5.2" }
       ]
     },
