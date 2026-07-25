@@ -295,22 +295,25 @@ const SUBCOMMAND_BD = {
     "help",
     "--help",
     "-h",
-  ]),
-  destructive: new Set([
-    "close",
-    "defer",
-    "supersede",
-    "forget",
+    // Phase-agnostic record writes/reads (Finding A, Oracle ses_0656dc708ffeOMNXBtw0kJm9Wh).
+    // AGENTS.md mandates bd for ALL tracking; phase-gating these forced a
+    // forbidden task_create fallback.
     "create",
     "update",
-    "mol",
-    "human",
-    "setup",
-    "dolt",
-    "preflight",
     "stale",
     "orphans",
     "lint",
+    "preflight",
+  ]),
+  destructive: new Set([
+    "close",    // evidence gate (shouldBlockCommand L404)
+    "defer",
+    "supersede",
+    "forget",
+    "mol",
+    "human",
+    "setup",
+    "dolt",     // bd dolt push gated separately by Layer 6.5
     "edit",
   ]),
 };

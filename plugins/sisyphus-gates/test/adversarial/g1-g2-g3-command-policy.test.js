@@ -220,14 +220,14 @@ test("G4: command substitution inside env-export value → strip is no-op, class
 // G5: bd subcommand classifier — closes the under-gate that auto-closed
 // brain-2q4 with no args on 2026-06-24.
 test("G5: bd destructive subs → destructive", () => {
-  for (const sub of ["close", "defer", "supersede", "forget", "create", "update", "dolt", "lint", "edit"]) {
+  for (const sub of ["close", "defer", "supersede", "forget", "dolt", "edit"]) {
     assert.equal(isDestructiveCommand(`bd ${sub} arg`), true, `bd ${sub} must be destructive`);
     assert.equal(isSafeReadOnlyCommand(`bd ${sub} arg`), false, `bd ${sub} must NOT be safe read-only`);
   }
 });
 
 test("G5: bd safe subs → safe read-only, not destructive", () => {
-  for (const sub of ["ready", "prime", "list", "show", "stats", "doctor", "version", "memories", "remember"]) {
+  for (const sub of ["ready", "prime", "list", "show", "stats", "doctor", "version", "memories", "remember", "create", "update", "stale", "orphans", "lint", "preflight"]) {
     assert.equal(isDestructiveCommand(`bd ${sub}`), false, `bd ${sub} must NOT be destructive`);
     assert.equal(isSafeReadOnlyCommand(`bd ${sub}`), true, `bd ${sub} must be safe read-only`);
   }

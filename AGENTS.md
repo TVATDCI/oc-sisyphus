@@ -6,7 +6,7 @@ Use **bd** (beads) for task tracking. Run `bd prime` for full workflow context.
 
 | Trigger | Action |
 |---------|--------|
-| `session-begin`, `continue`, `pick up`, `where was I` | Read `~/.sisyphus/state.json` + `~/.sisyphus/hotcache.md`, query `bd remember` for preserved facts. Present last session status. |
+| `session-begin`, `continue`, `pick up`, `where was I` | Run `skill:session-begin` — 5-step hydration: hotcache → `bd memories` → git sweep (`git status` + `git log --since=<hotcache ts>`) → pi handoff (`~/.pi/agent/exports/pi-handoff.md`) → surface proposed bd facts. Note: `state.json` is Layer 0 trust-root (operator-only); `hotcache.md` is the agent-readable projection. |
 | `session-close`, `done`, `archive`, `wrap up` | Run `skill:session-close` |
 | `checkpoint`, `save state` | Delegated to `skill:session-close` — see its Checkpoint / Save State section |
 
@@ -23,6 +23,14 @@ bd dolt push          # Push beads data to remote
 - Use `bd` for ALL task tracking — no TodoWrite, TaskCreate, or markdown TODO lists
 - Use `bd remember` for persistent knowledge — no MEMORY.md files
 - Run `bd prime` for detailed command reference and session close protocol
+
+### bd subcommand phase policy (gate v0.4.1+)
+
+**Phase-agnostic** (work in all phases, including fail-closed / session-begin): all reads (`list`, `show`, `search`, `memories`, `stats`, `ready`, `blocked`, `dep`, `doctor`, `stale`, `orphans`, `lint`, `preflight`, `prime`) + append-only record writes (`remember`, `create`, `update`).
+
+**Phase-gated** (blocked outside execution): `close` (requires evidence logged), `forget` (deletion), `dolt push` (session-close gate), `edit` (interactive), `setup`, `mol`.
+
+For memory writes via `bd remember`, use `python3 scripts/bd_remember.py` (gate-safe wrapper — passes the `|` delimiter inside Python argv, never hits the shell-safety gate).
 
 ## Context Efficiency
 
