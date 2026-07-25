@@ -110,6 +110,18 @@ def main() -> int:
         )
         return 1
 
+    known_categories = {
+        "exact", "constraint", "reason", "dependency", "preference",
+        "intent", "files", "decision", "next",
+    }
+    if args.category not in known_categories:
+        print(
+            f"WARNING: category '{args.category}' not in canonical set "
+            f"({', '.join(sorted(known_categories))}). Proceeding — "
+            f"verify this isn't a typo.",
+            file=sys.stderr,
+        )
+
     record = build_record(
         args.scope, args.turn, args.category, args.key, args.value
     )

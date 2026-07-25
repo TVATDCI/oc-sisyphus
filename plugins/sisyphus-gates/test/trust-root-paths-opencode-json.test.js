@@ -141,3 +141,43 @@ test("regression: arbitrary non-protected path is NOT blocked for read", () => {
   });
   assert.equal(result, null);
 });
+
+// ─── T5: plugin-source directory boundary (no trailing slash) ─────────────
+// Oracle ses_0656dc708ffeOMNXBtw0kJm9Wh. The read patterns must catch the
+// directory itself, not just files inside it — otherwise grep/read targeting
+// ".../sisyphus-gates/src" (no trailing slash) bypasses the denylist.
+
+test("T5: matchTrustRootRead blocks sisyphus-gates/src dir without trailing slash", () => {
+  const result = matchTrustRootRead({
+    path: `${homedir()}/.config/opencode/plugins/sisyphus-gates/src`,
+  });
+  assert.notEqual(result, null, "src dir without trailing slash must be blocked");
+});
+
+test("T5: matchTrustRootRead blocks sisyphus-gates/src/ with trailing slash", () => {
+  const result = matchTrustRootRead({
+    path: `${homedir()}/.config/opencode/plugins/sisyphus-gates/src/`,
+  });
+  assert.notEqual(result, null);
+});
+
+test("T5: matchTrustRootRead blocks file inside sisyphus-gates/src/", () => {
+  const result = matchTrustRootRead({
+    path: `${homedir()}/.config/opencode/plugins/sisyphus-gates/src/command-policy.js`,
+  });
+  assert.notEqual(result, null);
+});
+
+test("T5: matchTrustRootRead blocks sisyphus-gates/dist dir without trailing slash", () => {
+  const result = matchTrustRootRead({
+    path: `${homedir()}/.config/opencode/plugins/sisyphus-gates/dist`,
+  });
+  assert.notEqual(result, null, "dist dir without trailing slash must be blocked");
+});
+
+test("T5: false-positive guard — sisyphus-gates/srcfoo is NOT blocked", () => {
+  const result = matchTrustRootRead({
+    path: `${homedir()}/.config/opencode/plugins/sisyphus-gates/srcfoo`,
+  });
+  assert.equal(result, null, "srcfoo must not match the src boundary");
+});

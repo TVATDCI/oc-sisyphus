@@ -67,9 +67,10 @@ const TRUST_ROOT_READ_PATTERNS = [
   ...TRUST_ROOT_WRITE_PATTERNS.map(([re, label]) => [re, label]),
   // /proc — MEMORY_KEY extraction (HOLE 1f)
   [/\/proc\//i, "/proc filesystem"],
-  // Plugin source code
-  [/sisyphus-gates\/dist\//i, "plugin dist source"],
-  [/sisyphus-gates\/src\//i, "plugin src source"],
+  // Plugin source — (?:\/|$) boundary required: plain \/ misses the dir itself
+  // (no trailing slash). Oracle T5 ses_0656dc708ffeOMNXBtw0kJm9Wh.
+  [/sisyphus-gates\/dist(?:\/|$)/i, "plugin dist source"],
+  [/sisyphus-gates\/src(?:\/|$)/i, "plugin src source"],
   [/sisyphus-gates\/threat-model\.md$/i, "plugin threat model"],
 ];
 

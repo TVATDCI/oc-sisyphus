@@ -196,20 +196,38 @@ export function hasShellRedirect(cmd) {
  * Slice C (brain-ph1): extracted for reuse by Layer 3.7 sandbox command
  * matching. Layer 3.7 must NOT bypass Layer 4's metachar protections.
  */
+// Quote-aware chain-operator scan (Finding B, Oracle ses_0656dc708ffeOMNXBtw0kJm9Wh).
+// Replaces the raw regex that flagged ;/&&/|| inside quoted --value args.
+function hasUnquotedChainOp(cmd) {
+  let inSingle = false;
+  let inDouble = false;
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i];
+    if (ch === "\\" && i + 1 < cmd.length) {
+      i++;
+      continue;
+    }
+    if (ch === "'" && !inDouble) {
+      inSingle = !inSingle;
+      continue;
+    }
+    if (ch === '"' && !inSingle) {
+      inDouble = !inDouble;
+      continue;
+    }
+    if (inSingle || inDouble) continue;
+    if (ch === ";" || ch === "\n" || ch === "\r") return true;
+    if ((ch === "&" || ch === "|") && i + 1 < cmd.length && cmd[i + 1] === ch) return true;
+  }
+  return false;
+}
+
 export function hasShellMetachar(cmd) {
   if (typeof cmd !== "string") return false;
-  // P-A (#1): join line-continuations first — bash removes `\<LF>` / `\<CRLF>`,
-  // so the gate must too or it diverges from what the shell executes.
   cmd = cmd.replace(/\\\r?\n/g, "");
-  // P-A (#1): NUL is unverifiable — execve truncates at NUL, so the gate would
-  // evaluate a longer string than the shell actually runs.
   if (cmd.includes("\0")) return true;
-  // Chaining operators (&&, ||, ;, |) + P-A: newline/CR as separators.
-  // Closes F3 — `git status\nrm -rf /` no longer smuggles rm past the matcher.
-  if (/(?:&&|\|\||[;|\n\r])/.test(cmd)) return true;
-  // Command substitution ($(...) or backtick)
+  if (hasUnquotedChainOp(cmd)) return true;
   if (cmd.includes("$(") || cmd.includes("`")) return true;
-  // Shell redirects (>, >>, <, |, single &) — reuse existing helper
   if (hasShellRedirect(cmd)) return true;
   return false;
 }

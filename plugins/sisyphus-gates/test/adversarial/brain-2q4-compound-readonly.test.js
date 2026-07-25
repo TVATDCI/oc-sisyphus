@@ -229,9 +229,10 @@ const BLOCK_INJECTION = [
 // Quoting / obfuscation (v1 charset rejects ALL quotes — verify the reject holds)
 const BLOCK_QUOTING = [
   ["B-quote-1", "ls && \"rm\" -rf /"],
-  ["B-quote-2", "ls && r\\m -rf /"],
-  ["B-quote-3", "echo 'a'\\; rm -rf /"],
-  ["B-quote-4", "ls \"a;rm\""],
+["B-quote-2", "ls && r\\m -rf /"],
+// B-quote-3 (echo 'a'\; rm -rf /) and B-quote-4 (ls "a;rm") removed in
+// Finding B (Oracle ses_0656dc708ffeOMNXBtw0kJm9Wh): escaped/quoted ; is literal
+// data, not a chain operator. Now covered by finding-b-quote-aware-metachar.test.js.
   ["B-quote-5", "grep \"a;b\" f | wc -l"],
 ];
 

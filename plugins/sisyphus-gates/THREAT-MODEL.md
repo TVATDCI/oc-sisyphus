@@ -359,6 +359,17 @@ gap. The plugin is not expected to mitigate all of these; some are by design
   intercepts only tool calls that go through the opencode plugin API. A user
   running `rm -rf /` in a terminal is not gated.
 
+- **Interpreter-wrapping (subprocess-internal execution).** `python3 scripts/bd_remember.py`
+  passes the gate (no metacharacters in the outer command); the script then internally calls
+  `subprocess.run(["bd", "remember", "scope=x|turn=y|..."])` where the `|` lives inside a Python
+  argv element the gate never inspects. This is the deliberate mechanism `scripts/bd_remember.py`
+  uses to write pipe-delimited bd records past the shell-metachar defense. Risk: any interpreter
+  script can internally execute unseen commands. Boundary: agents cannot create wrapper scripts at
+  trust-root paths (Layer 0); `scripts/` wrappers are operator-installed. The post-turn memory
+  extractor (`AGENTS.md`) depends on this exception. Complementary fix tracked in Finding B (Oracle
+  ses_0656dc708ffeOMNXBtw0kJm9Wh): a quote-aware `hasShellMetachar` would reduce the false
+  positives that drive reliance on this wrapper.
+
 - **The plugin file being replaced on disk.** If the user (or a root process)
   edits `dist/index.js` or any module under `src/`, the opencode loader will
   pick up the replacement. There is no integrity check, no signature
