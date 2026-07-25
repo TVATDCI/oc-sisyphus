@@ -353,7 +353,7 @@ every decision since. When in doubt, return to these.
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
 - **Provider:** `zai-coding-plan` primary (11/18 agents + 5/9 categories); `opencode-go` (oracle — kimi-k3, multimodal-looker, prometheus, metis, explorer, reviewer + ultrabrain, artistry, deep categories) → `opencode` (explore, git-commit-message) fallback
-- **Last reviewed:** 2026-07-19
+- **Last reviewed:** 2026-07-25
 
 ### Session log *(append, newest last)*
 
@@ -375,6 +375,8 @@ every decision since. When in doubt, return to these.
 - **2026-07-21 (session 2)** — Post-public-flip smoke test (fresh `/tmp/` clone → `npm test && npm run self-test`) caught AC-3.2: `inProdCwd()` helper assumed repo never cloned under `/tmp/` → fixed to `os.homedir()` (12/12 sandbox-integration pass; full 446 unit + 22 self-test green). README count drift corrected (46→45 skills, 18→19 source modules). Commits: `test(sisyphus-gates): fix AC-3.2 under /tmp/ clones` + `docs(readme): correct skill + source-module counts`.
 
 - **2026-07-23** — Catastrophic-defense bypass closure (#1): deny-side, 6 finding-classes (F1–F6), 5 corpus-gated zero-FP pushes (P-A newline, F6 basename, P-B1 first-token strictness, P-B2 wrapper-recursion, P-C env-prefix denylist); Oracle-reviewed both sides. security-auditor skill missed F1–F4 across 5 pre-public audits → corpus-based audit is the real fix. Suite 587/0/0 (brain-2q4 P2 Layer 4.5 compound-allow also shipped this session). Also: git filter-repo rewrote 175 commits vladi→TVATDCI (contribution attribution) + config forward.
+
+- **2026-07-25** — Pi-Herdr test-drive COMPLETE: bridge hardened (3 bugs fixed — truncation, format mismatch, escaped pipes; Oracle 6-step plan shipped; 13/13 doctor checks), co-existence framework established (3 boundaries, 3 routing signals, operator-corrected), skills bootstrap validated (skill-creator + skill-auditor shipped as pi first self-authored skills, 4/4 firing test). Reverse-bridge mini-initiative (R1-R4) parked for next session. Pi independence demonstrated.
 
 ---
 
