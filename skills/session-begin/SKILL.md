@@ -7,6 +7,8 @@ compatibility: opencode
 # Session Begin Protocol
 
 Hydrates five context sources at session start, then presents a unified status.
+**Target cost: ~12-15K tokens total.** If you're spending more, you're
+over-querying (especially bd memories — use targeted keywords, NOT bare dump).
 Closes two gaps: (1) what changed in the repos while opencode was away, (2) what
 pi did in its independent micro-session(s).
 
@@ -39,19 +41,24 @@ Label injected facts `[FROM HOTCACHE]` so they're distinguishable from live cont
 
 ### Step 2 — Query preserved facts (bd memories)
 
-Run `bd memories` for the full list, or `bd memories <keyword>` for targeted recall.
+Run **targeted** keyword queries — NOT bare `bd memories` (dumps 167+ entries, costs ~30K tokens). Derive 2-3 keywords from the hotcache's next-steps + preserved-constraints sections:
 
-> **Use `bd memories`, NOT `bd remember`.** `bd remember` is write-only and
-> errors on no-args. This is a common confusion — the read command is `memories`.
+```
+bd memories <keyword-from-next-steps>
+bd memories <keyword-from-constraints>
+```
+
+> **Use `bd memories <keyword>`, NOT bare `bd memories` or `bd remember`.**
+> Bare dumps everything (~30K tokens for 167 entries). `bd remember` is write-only.
 
 Inject relevant facts labeled `[FROM MEMORY]`. Prioritize:
-1. Hard constraints (always inject — they're cheap and prevent violations)
+1. Hard constraints (always inject — cheap, prevent violations)
 2. Current task facts (exact values, decisions for the active bead/plan)
 3. Cross-file dependencies for files in the current scope
 
-Cap at ~10% of context window. Prefer recency + relevance over completeness.
-Never inject memories that conflict with the user's current message — current
-turn wins.
+**Hard cap: ~5K tokens injected** (roughly 10-15 entries). If targeted queries
+return more, take the most recent + most relevant. Never inject memories that
+conflict with the user's current message — current turn wins.
 
 ### Step 3 — Git sweep (what changed while away)
 
@@ -64,7 +71,7 @@ discipline we want at session start:
 
 ```
 git status
-git log --since="<hotcache timestamp>" --oneline
+git log --since="<hotcache timestamp>" --oneline -10
 ```
 
 For multi-repo awareness, run per-repo using the `workdir` parameter. Canonical
