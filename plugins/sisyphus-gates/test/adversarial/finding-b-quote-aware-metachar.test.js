@@ -113,3 +113,35 @@ describe("Finding B — backslash escape edge cases (Oracle final-review probe)"
     assert.equal(hasShellMetachar('echo "a\\"; b"'), false);
   });
 });
+
+describe("Finding B — case-4 (squote nested in dquote) + unclosed-quote edges", () => {
+  // case-4: single-quote inside double-quotes. The scanner's `'` branch is
+  // guarded by `!inDouble`, so the squote is treated as literal data —
+  // inDouble stays true and any metacharacter after it remains inside the
+  // dquote (i.e., literal). Without the !inDouble guard the squote would
+  // toggle inSingle and the scanner would lose track of the quoting state.
+  test('squote nested in dquote: semicolon is literal (case-4)', () => {
+    assert.equal(hasShellMetachar('echo "foo;\'bar\'"'), false);
+  });
+
+  test('case-4 variant: squote-in-dquote command is NOT destructive', () => {
+    assert.equal(isDestructiveCommand('echo "foo;\'bar\'" --x'), false);
+  });
+
+  // Unclosed-quote: scanner EOFs while still inSingle/inDouble, returns false
+  // (no metachar found in quoted state). Bash treats unclosed quotes as syntax
+  // errors — the command does not execute — so this is safe in practice.
+  test('unclosed dquote: scanner returns false (bash syntax-errors)', () => {
+    assert.equal(hasShellMetachar('"foo;bar'), false);
+  });
+
+  test('unclosed squote: scanner returns false (bash syntax-errors)', () => {
+    assert.equal(hasShellMetachar("'foo;bar"), false);
+  });
+
+  // Closed-form regression: the actually-dangerous case is closed quote
+  // FOLLOWED BY unquoted metachar — that must still be caught.
+  test('closed quote + unquoted semicolon: still caught (regression)', () => {
+    assert.equal(hasShellMetachar('"foo"; rm -rf /'), true);
+  });
+});

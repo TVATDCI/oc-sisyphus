@@ -155,7 +155,7 @@ Verify everything works:
 
 ```bash
 cd plugins/sisyphus-gates
-npm test              # 641 unit tests across 25 files (~5s)
+npm test              # 648 unit tests across 25 files (~5s)
 npm run self-test     # 22 end-to-end scenarios (~50ms)
 npm run test:all      # unit + self-test combined
 ```
@@ -168,7 +168,7 @@ Five layers work together.
 
 A Node.js plugin that sits between OpenCode and every tool call the AI tries.
 It inspects each action, blocks the dangerous ones, and enforces a phased
-workflow. 19 source modules, 641 unit tests across 25 test files, 22
+workflow. 19 source modules, 648 unit tests across 25 test files, 22
 end-to-end scenarios.
 
 **Decision stack** (checked in order, first match wins):
@@ -298,7 +298,7 @@ the cryptographic signature — never from forgeable text.
 ├── plugins/sisyphus-gates/    # Governance plugin
 │   ├── src/                   # 19 source modules
 │   ├── cli.js                 # Operator-only signing CLI (sign-verdict, approve, protocol)
-│   ├── test/                  # 25 test files (641 tests) + 22 self-test scenarios
+│   ├── test/                  # 25 test files (648 tests) + 22 self-test scenarios
 │   └── THREAT-MODEL.md        # Attack surface analysis
 ├── skills/                    # 46 skill packs
 ├── rules/                     # Language + concern rules
@@ -338,7 +338,7 @@ tool, no agent, no phase, and no approval can override.
 **The system is fail-closed by design.** Missing state, unknown gates, invalid
 config, or a missing signing key → block everything except read-only tools.
 
-**Everything is tested adversarially.** 641 unit tests include attack
+**Everything is tested adversarially.** 648 unit tests include attack
 simulations: chaining bypass (`ls && rm -rf /`), command substitution
 (`echo $(rm -rf /)`), shell wrappers (`bash -c`, `eval`, `npx`), MCP bypass,
 subagent escape, trust-root path traversal, forged verdicts, and session-close
@@ -391,7 +391,7 @@ That's the gap most patterns leave open.
 ## Verify
 
 ```bash
-npm test                      # 641 unit tests
+npm test                      # 648 unit tests
 npm run self-test             # 22 end-to-end scenarios
 npm run test:all              # unit + self-test combined
 bash scripts/pre-push.sh      # full pre-push suite
@@ -399,7 +399,7 @@ bash scripts/pre-push.sh      # full pre-push suite
 
 ## Status
 
-- **641/641 unit tests + 22/22 self-test scenarios passing**
+- **648/648 unit tests + 22/22 self-test scenarios passing**
 - `oh-my-openagent` pinned to `4.18.2`
 - `sisyphus-gates` local plugin — current: `v0.4.1` (Layer 3.7 sandbox allowlist
   Jun 27; Layer 6.5 session-close gate Jun 30; Layer 1 catastrophic-defense

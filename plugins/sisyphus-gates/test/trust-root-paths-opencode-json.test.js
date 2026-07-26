@@ -14,7 +14,9 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
+import { mkdtempSync, symlinkSync, rmSync } from "node:fs";
+import { join } from "node:path";
 import {
   matchTrustRootWrite,
   matchTrustRootRead,
@@ -180,4 +182,32 @@ test("T5: false-positive guard — sisyphus-gates/srcfoo is NOT blocked", () => 
     path: `${homedir()}/.config/opencode/plugins/sisyphus-gates/srcfoo`,
   });
   assert.equal(result, null, "srcfoo must not match the src boundary");
+});
+
+// ─── T5 gap coverage: dot-dot + symlink canonicalization ──────────────────
+// canonicalize() resolves `..` (via node:path resolve) and symlinks (via
+// realpathSync) BEFORE the regex match. Without this an agent could write a
+// path like `plugins/sisyphus-gates/foo/../src/x` — the literal substring
+// wouldn't contain `sisyphus-gates/src` and would bypass. These tests verify
+// the canonicalization defense end-to-end through matchTrustRootRead.
+
+test("T5 regression: dot-dot traversal into src is canonicalized and blocked", () => {
+  const result = matchTrustRootRead({
+    path: `${homedir()}/.config/opencode/plugins/sisyphus-gates/foo/../src/command-policy.js`,
+  });
+  assert.notEqual(result, null, "dot-dot into src must be canonicalized and blocked");
+});
+
+test("T5 regression: symlink into src is realpath-resolved and blocked", () => {
+  const tmp = mkdtempSync(join(tmpdir(), "t5-symlink-"));
+  try {
+    const symlinkPath = join(tmp, "evil-link");
+    symlinkSync(`${homedir()}/.config/opencode/plugins/sisyphus-gates/src`, symlinkPath);
+    const result = matchTrustRootRead({
+      path: `${symlinkPath}/command-policy.js`,
+    });
+    assert.notEqual(result, null, "symlink into src must be realpath-resolved and blocked");
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
 });
