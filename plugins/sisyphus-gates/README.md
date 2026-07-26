@@ -1,6 +1,6 @@
 # sisyphus-gates
 
-Phase-based governance gate enforcement for the Sisyphus workflow. Blocks writes/commits until PRD/plan gates pass. v0.3.0 adds Layer 3.7 — path-scoped sandbox allowlist for routine dev work in disposable directories.
+Phase-based governance gate enforcement for the Sisyphus workflow. Blocks writes/commits until PRD/plan gates pass. Current: `v0.4.1` — extends the bd destructive-subcommand enumeration (brain-hxm P0, Jul 27), tightens quote-aware shell-metachar detection (Finding B, Jul 25), and hardens trust-root path boundaries (T4/T5, Jul 25). Layer history: 3.7 sandbox allowlist (v0.3.0); 6.5 session-close gate, 4.5 compound-allow, 1 catastrophic-defense hardening (v0.4.0).
 
 ## Decision stack
 
@@ -18,6 +18,7 @@ Phase-based governance gate enforcement for the Sisyphus workflow. Blocks writes
 | **4.5** | **Compound allow**       | **bash only**                       | **Read-only compounds — every segment independently safe-readonly + non-destructive + charset-clean. Additive allow-path; deny layers untouched.**                                                            |
 | 5       | Fail-closed              | `write`, `edit`, `bash`, `task`     | Blocks if state file missing, gates unknown/fail, or approval ≠ `approved`.                                                                                                                                   |
 | 6       | Phase-specific           | All tools                           | Discovery/PRD-writing: allow all. PRD-review: block destructive. Plan-approved: block destructive.                                                                                                            |
+| **6.5** | **Session-close gate**   | **bash**                            | **`git push` / `bd dolt push` blocked when `session_close.status === "open"` (protocol started but not completed). Operator-side state field; prose claims of "closed" are non-authoritative.**                |
 
 ## Sandbox allowlist (Layer 3.7)
 
