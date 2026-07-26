@@ -353,7 +353,7 @@ every decision since. When in doubt, return to these.
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
 - **Provider:** `zai-coding-plan` primary (11/18 agents + 5/9 categories); `opencode-go` (oracle — kimi-k3, multimodal-looker, prometheus, metis, explorer, reviewer + ultrabrain, artistry, deep categories) → `opencode` (explore, git-commit-message) fallback
-- **Last reviewed:** 2026-07-25
+- **Last reviewed:** 2026-07-27
 
 ### Session log *(append, newest last)*
 
@@ -379,6 +379,8 @@ every decision since. When in doubt, return to these.
 - **2026-07-25** — Pi-Herdr test-drive COMPLETE: bridge hardened (3 bugs fixed — truncation, format mismatch, escaped pipes; Oracle 6-step plan shipped; 13/13 doctor checks), co-existence framework established (3 boundaries, 3 routing signals, operator-corrected), skills bootstrap validated (skill-creator + skill-auditor shipped as pi first self-authored skills, 4/4 firing test). Reverse-bridge mini-initiative (R1-R4) parked for next session. Pi independence demonstrated.
 
 - **2026-07-25 (session 2)** — Reverse-bridge session-begin skill (46th) + Oracle-driven gate fixes shipped (3 commits, all pushed). Finding A: bd create/update/stale/orphans/lint/preflight moved destructive→safe (resolves AGENTS.md "bd for ALL tracking" vs gate conflict). Finding B: hasShellMetachar quote-aware via hasUnquotedChainOp (raw regex false-positive on quoted `;`/`&&` fixed) + escape fix (`!inSingle` — Oracle final-gate catch via shell-semantics analysis). T5: TRUST_ROOT_READ_PATTERNS boundary `(?:\/|$)`. T4: bd_remember.py category validation + THREAT-MODEL interpreter-wrapping note. 620 tests + 22 self-test, 0 fail. brain-hxm P0 open (bd inverted-default hole).
+
+- **2026-07-27** — brain-hxm P0 SHIPPED + hotcache #3 coverage closed. brain-hxm: SUBCOMMAND_BD.destructive extended by 11 (delete/sql/prune/purge/gc/compact/flatten/batch/import/admin/hooks — admin and hooks are top-level covers) closes the execution-phase inverted-default hole where `bd sql 'DELETE FROM memories'` bypassed `bd forget` and `bd hooks install` was a persistence vector. Operator gate-disable cycle (Layer 0 trust-root blocks direct agent edits — operator lifted, agent applied diff, operator re-enabled). #3: 7 regression tests across T5 file (dot-dot traversal + symlink canonicalization via resolve()+realpathSync) and Finding B file (case-4 squote-in-dquote via !inDouble guard + unclosed-quote edges) — no source changes, defenses already in place, only coverage was missing. Suite 648/0/0. brain-hxm bd closed. README + plugin README drift fixed in same arc (587→641→648, v0.4.0→v0.4.1, Layer 6.5 row added). Lesson: agent asserted "commit still pending" without checking `git status` — corrective discipline recorded as global:constraint:verify_git_state_before_asserting.
 
 ---
 
