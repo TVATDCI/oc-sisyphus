@@ -334,6 +334,21 @@ const SUBCOMMAND_BD = {
     "setup",
     "dolt", // bd dolt push gated separately by Layer 6.5
     "edit",
+    // brain-hxm (P0, Oracle ses_05fa90ad2ffe25lDSMkB0WImbE): inverted-default
+    // hole. In execution phase, Layer 6 only blocks commands classified
+    // destructive by isDestructiveCommand(). These subs all mutate/destroy
+    // state but were absent from the enumeration, so they slipped through.
+    "delete",
+    "sql", // arbitrary SQL; bypasses bd forget
+    "prune",
+    "purge",
+    "gc",
+    "compact",
+    "flatten",
+    "batch",
+    "import",
+    "admin", // top-level cover: admin reset + every privileged db-maintenance op
+    "hooks", // top-level cover: hooks install writes executable git hooks (persistence vector)
   ]),
 };
 
