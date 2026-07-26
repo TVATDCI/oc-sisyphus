@@ -99,3 +99,17 @@ describe("Finding B — interpreter -c payloads still blocked (independent check
     assert.equal(isDestructiveCommand('sh -c "git push --force"'), true);
   });
 });
+
+describe("Finding B — backslash escape edge cases (Oracle final-review probe)", () => {
+  test('escaped dquote outside quotes: backslash skips ", unquoted ; caught', () => {
+    assert.equal(hasShellMetachar('echo \\"; rm x'), true);
+  });
+
+  test("backslash literal inside single quotes: ' closes quote, unquoted ; caught", () => {
+    assert.equal(hasShellMetachar("echo 'a\\'; rm x"), true);
+  });
+
+  test('backslash escape inside double quotes: \\"; is literal data', () => {
+    assert.equal(hasShellMetachar('echo "a\\"; b"'), false);
+  });
+});

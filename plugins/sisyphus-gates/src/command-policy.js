@@ -43,7 +43,7 @@ export function tokenize(cmd) {
   let inDouble = false;
   while (i < cmd.length) {
     const ch = cmd[i];
-    if (ch === "\\" && i + 1 < cmd.length) {
+    if (ch === "\\" && !inSingle && i + 1 < cmd.length) {
       // Escape: include the next char literally
       current += cmd[i + 1];
       i += 2;
@@ -203,7 +203,7 @@ function hasUnquotedChainOp(cmd) {
   let inDouble = false;
   for (let i = 0; i < cmd.length; i++) {
     const ch = cmd[i];
-    if (ch === "\\" && i + 1 < cmd.length) {
+    if (ch === "\\" && !inSingle && i + 1 < cmd.length) {
       i++;
       continue;
     }
@@ -217,7 +217,8 @@ function hasUnquotedChainOp(cmd) {
     }
     if (inSingle || inDouble) continue;
     if (ch === ";" || ch === "\n" || ch === "\r") return true;
-    if ((ch === "&" || ch === "|") && i + 1 < cmd.length && cmd[i + 1] === ch) return true;
+    if ((ch === "&" || ch === "|") && i + 1 < cmd.length && cmd[i + 1] === ch)
+      return true;
   }
   return false;
 }
@@ -324,14 +325,14 @@ const SUBCOMMAND_BD = {
     "preflight",
   ]),
   destructive: new Set([
-    "close",    // evidence gate (shouldBlockCommand L404)
+    "close", // evidence gate (shouldBlockCommand L404)
     "defer",
     "supersede",
     "forget",
     "mol",
     "human",
     "setup",
-    "dolt",     // bd dolt push gated separately by Layer 6.5
+    "dolt", // bd dolt push gated separately by Layer 6.5
     "edit",
   ]),
 };
@@ -983,7 +984,13 @@ const SAFE_READ_ONLY_TOKENS = new Set([
   "btop",
 ]);
 
-const SAFE_GIT_SUBCOMMANDS = new Set(["status", "log", "diff", "show", "ls-files"]);
+const SAFE_GIT_SUBCOMMANDS = new Set([
+  "status",
+  "log",
+  "diff",
+  "show",
+  "ls-files",
+]);
 
 export function isSafeReadOnlyCommand(cmd) {
   if (typeof cmd !== "string") return false;
@@ -1071,7 +1078,8 @@ export function isSafeCompoundCommand(cmd) {
   // redirect/structural/substitution char.
   s = s.replace(/2>&1/g, "").replace(/2>\/dev\/null/g, "");
   if (/['"\\$`(){}<>]/.test(s)) return false;
-  if (/opencode\.json|state\.json|workflow\.yaml|gate-key|\/proc\b/.test(s)) return false;
+  if (/opencode\.json|state\.json|workflow\.yaml|gate-key|\/proc\b/.test(s))
+    return false;
   // Split on compound separators (quote-unaware — safe, quotes pre-rejected).
   const segments = s
     .split(/&&|\|\||[|;&]|\n/)
