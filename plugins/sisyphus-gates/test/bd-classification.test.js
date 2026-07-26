@@ -11,7 +11,7 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { shouldBlockTool, shouldBlockCommand } from "../src/gates.js";
+import { shouldBlockTool, shouldBlockCommand, isDestructiveCommand } from "../src/gates.js";
 
 describe("SUBCOMMAND_BD phase-agnostic classification (Finding A)", () => {
   const failClosedState = { stateFileExists: false };
@@ -76,4 +76,51 @@ describe("SUBCOMMAND_BD phase-agnostic classification (Finding A)", () => {
     const result = shouldBlockTool("bash", { command: "bd edit abc123" }, failClosedState);
     assert.equal(result.blocked, true);
   });
+});
+
+describe("SUBCOMMAND_BD destructive enumeration (brain-hxm)", () => {
+  // brain-hxm (P0, Oracle ses_05fa90ad2ffe25lDSMkB0WImbE): inverted-default hole.
+  // These subs mutate/destroy bd state but were missing from the destructive
+  // enumeration. Layer 6 (execution phase) only blocks isDestructiveCommand()
+  // hits — so in execution state these slipped through entirely.
+  //
+  // We test isDestructiveCommand directly because it is the source of truth
+  // for the destructive classification. Full-pipeline shouldBlockTool tests
+  // would be tautological here: in the test env, getCachedWorkflowConfig()
+  // returns null, so Layer 5 blocks all non-safe bash regardless of Layer 6,
+  // masking whether the destructive classifier itself was fixed.
+  //
+  // 11 subs added to SUBCOMMAND_BD.destructive. admin/hooks are top-level
+  // covers: `admin` covers reset/wipe/etc., `hooks` covers install/uninstall.
+  const destructiveSubs = [
+    "delete", "sql", "prune", "purge", "gc",
+    "compact", "flatten", "batch", "import", "admin", "hooks",
+  ];
+
+  for (const sub of destructiveSubs) {
+    test(`bd ${sub} classified destructive by isDestructiveCommand`, () => {
+      assert.equal(isDestructiveCommand(`bd ${sub} arg`), true);
+    });
+  }
+
+  // Headline vectors from the bead — explicit named tests for grep-ability.
+  test("bd sql 'DELETE FROM memories' destructive (bypass-forget vector)", () => {
+    assert.equal(isDestructiveCommand("bd sql 'DELETE FROM memories'"), true);
+  });
+
+  test("bd hooks install destructive (persistence vector)", () => {
+    assert.equal(isDestructiveCommand("bd hooks install"), true);
+  });
+
+  test("bd admin reset destructive (wipe vector)", () => {
+    assert.equal(isDestructiveCommand("bd admin reset"), true);
+  });
+
+  // Regression guard: existing safe subs must NOT be over-classified.
+  const safeSubs = ["create", "update", "ready", "list", "show", "memories", "remember"];
+  for (const sub of safeSubs) {
+    test(`bd ${sub} NOT destructive (regression guard)`, () => {
+      assert.equal(isDestructiveCommand(`bd ${sub} arg`), false);
+    });
+  }
 });
