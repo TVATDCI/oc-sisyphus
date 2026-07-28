@@ -16,11 +16,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { homedir, tmpdir } from "node:os";
 import { mkdtempSync, symlinkSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   matchTrustRootWrite,
   matchTrustRootRead,
 } from "../src/trust-root-paths.js";
+
+// Path-agnostic fixtures: derive from this test file so canonicalize() has a
+// realpath-resolvable target in any checkout (operator's ~/.config/opencode/
+// OR CI's /home/runner/work/...). The two T5 canonicalization tests below
+// need the target to EXIST on disk for realpathSync to succeed — homedir()-
+// anchored paths don't exist in CI, which is what caused run 30225993880 to fail.
+const TEST_DIR = dirname(fileURLToPath(import.meta.url));
+const PLUGIN_ROOT = resolve(TEST_DIR, "..");
+const REAL_SRC = join(PLUGIN_ROOT, "src");
 
 // ─── AC-3.16: opencode.json write is blocked ──────────────────────────────
 
@@ -192,8 +202,12 @@ test("T5: false-positive guard — sisyphus-gates/srcfoo is NOT blocked", () => 
 // the canonicalization defense end-to-end through matchTrustRootRead.
 
 test("T5 regression: dot-dot traversal into src is canonicalized and blocked", () => {
+  // String interpolation (not path.join) preserves the literal `..` so
+  // canonicalize() must actually resolve it via realpathSync. path.join would
+  // normalize `foo/..` away and defeat the test's purpose.
+  const dotdotPath = `${PLUGIN_ROOT}/foo/../src/command-policy.js`;
   const result = matchTrustRootRead({
-    path: `${homedir()}/.config/opencode/plugins/sisyphus-gates/foo/../src/command-policy.js`,
+    path: dotdotPath,
   });
   assert.notEqual(result, null, "dot-dot into src must be canonicalized and blocked");
 });
@@ -202,9 +216,11 @@ test("T5 regression: symlink into src is realpath-resolved and blocked", () => {
   const tmp = mkdtempSync(join(tmpdir(), "t5-symlink-"));
   try {
     const symlinkPath = join(tmp, "evil-link");
-    symlinkSync(`${homedir()}/.config/opencode/plugins/sisyphus-gates/src`, symlinkPath);
+    // Symlink target is the REAL src dir (exists in any checkout) so realpathSync
+    // can resolve through it. A homedir()-anchored target doesn't exist in CI.
+    symlinkSync(REAL_SRC, symlinkPath);
     const result = matchTrustRootRead({
-      path: `${symlinkPath}/command-policy.js`,
+      path: join(symlinkPath, "command-policy.js"),
     });
     assert.notEqual(result, null, "symlink into src must be realpath-resolved and blocked");
   } finally {
