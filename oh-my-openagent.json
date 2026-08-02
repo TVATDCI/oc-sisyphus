@@ -19,7 +19,7 @@
       ],
       "prompt_append": "file://~/.config/opencode/prompts/sisyphus-guidance.md",
       "ultrawork": {
-        "model": "zai-coding-plan/glm-5-turbo",
+        "model": "zai-coding-plan/glm-5.1",
         "variant": "high",
         "fallback_models": [
           { "model": "opencode-go/glm-5.1" },
@@ -40,8 +40,9 @@
       "model": "opencode-go/kimi-k3",
       "variant": "high",
       "fallback_models": [
+        { "model": "opencode-go/glm-5.2" },
         { "model": "zai-coding-plan/glm-5.2" },
-        { "model": "opencode/glm-5.2" }
+        { "model": "opencode/kimi-k3" }
       ],
       "prompt_append": "file://~/.config/opencode/prompts/oracle-guidance.md"
     },
