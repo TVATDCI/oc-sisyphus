@@ -382,6 +382,7 @@ If a loaded rule causes a deviation from the plan (e.g., naming convention requi
          4. **Build/lint/type-check** — Attach command output. "Build passes" without output is not evidence.
          5. **PRD compliance** — List PRD requirements checked and status (✓ / ✗). No scope creep.
          6. **Wiring check** — For each new file: grep for imports and usage. Attach results showing file is actually wired, not orphaned.
+         7. **Graph-node traceability (fan-out gate):** If this slice delegated subtasks in parallel — i.e. the slice ran a graph of `task(...)` calls rather than a single seriatim delegate — then an `execution-receipt` must be filed under `.sisyphus/evidence/` for **each** `task()` node **before** any of their results are read or merged. This is the graph-engineering fix for the "one error cascades, untraceable" flaw; attach the receipt path(s). If the slice did **not** fan out, this item is N/A.
 
        **If build/lint/type-check fails:**
        ```
