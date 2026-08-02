@@ -256,7 +256,7 @@ concurrency 2→5 to carry 12 consumers (7 agents + 5 categories). Net: zai
 14/18 agents + 8/9 categories; opencode-go 2 agents + 0 categories (oracle,
 multimodal-looker); opencode 2 agents + 1 category (explore, explorer,
 git-commit-message). modelConcurrency now 21 entries (3 zai + 8 opencode-go +
-10 opencode); opencode/hy3-free → opencode/ling-3.0-flash-free.
+10 opencode); opencode/hy3-free retired (Aug 3: hephaestus/metis → opencode/laguna-s-2.1-free, capped at 3); opencode/kimi-k2.5 removed (dead).
 
 ### Frontier Prompt Absorption
 
