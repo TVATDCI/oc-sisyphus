@@ -96,6 +96,38 @@ else
     ((ERRORS++))
 fi
 
+# 7. Check parallel fan-out receipt gate (graph-node traceability)
+RECEIPT_LOG="${HOME}/.sisyphus/evidence/execution-receipts.jsonl"
+FANOUT_DECLARED=false
+DECLARED_NODES=0
+if [ -d "$EVIDENCE_DIR" ]; then
+    FANOUT_HITS=$(grep -rhoEi "fan-out|fan_out|delegated[[:space:]]+[0-9]+[[:space:]]+parallel" "$EVIDENCE_DIR" --include="*.md" 2>/dev/null || true)
+    if [ -n "$FANOUT_HITS" ]; then
+        FANOUT_DECLARED=true
+        DECLARED_NODES=$(echo "$FANOUT_HITS" | grep -oE "[0-9]+" | head -1)
+        if [ -z "$DECLARED_NODES" ]; then
+            DECLARED_NODES=1
+        fi
+    fi
+fi
+
+if [ "$FANOUT_DECLARED" = true ]; then
+    if [ ! -f "$RECEIPT_LOG" ]; then
+        echo "✗ FAIL: Parallel fan-out declared (${DECLARED_NODES} nodes) but receipt log missing: ${RECEIPT_LOG}"
+        ((ERRORS++))
+    else
+        FOUND_ENTRIES=$(grep -c '"n":' "$RECEIPT_LOG" 2>/dev/null || true)
+        if [ "$FOUND_ENTRIES" -lt "$DECLARED_NODES" ]; then
+            echo "✗ FAIL: Parallel fan-out declared ${DECLARED_NODES} nodes but receipt log has ${FOUND_ENTRIES} entries (need >= ${DECLARED_NODES}): ${RECEIPT_LOG}"
+            ((ERRORS++))
+        else
+            echo "✓ Fan-out receipt gate: ${FOUND_ENTRIES} receipt entries >= ${DECLARED_NODES} declared nodes"
+        fi
+    fi
+else
+    echo "ℹ Fan-out receipt gate: no fan-out declared (serial/no delegation; gate N/A)"
+fi
+
 GIT_VERIFIER="${HOME}/.config/opencode/scripts/verify-git-commits.sh"
 if [ -f "$GIT_VERIFIER" ]; then
     echo ""

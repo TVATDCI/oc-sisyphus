@@ -32,6 +32,16 @@ bd dolt push          # Push beads data to remote
 
 For memory writes via `bd remember`, use `python3 scripts/bd_remember.py` (gate-safe wrapper — passes the `|` delimiter inside Python argv, never hits the shell-safety gate).
 
+## Graph Shapes (Delegation Vocabulary)
+
+Name the delegation shape when fanning out work, so plan-writers and executors share the vocabulary (source: graph-engineering §15):
+
+- **chain** — serial `task()` calls; each node waits for the prior to finish before the next starts. Simplest, slowest, easiest to trace.
+- **diamond** — fan-out of parallel `task()` nodes, then fan-in to one merging agent. Best when independent angles reduce wall-time (e.g. `explore` + `librarian` swarms, multi-skill review).
+- **barrier** — parallel fan-out where the merge node **must not read results until ALL N nodes terminate** (the fan-out gate). Used when partial results would mislead (e.g. `momus`/`reviewer` gates, `regression-gate`).
+
+Diamond vs barrier is the merge rule, not the fan-out: a diamond merges as nodes arrive; a barrier blocks on all N. Every `diamond`/`barrier` wave declares its node count and files one `execution-receipt` per node (see `execution-receipt` skill) before the merge runs.
+
 ## Context Efficiency
 
 - Context window: ~1M (1,000,000) tokens — hard ceiling only. The bands below are the quality working budget (stay inside them); compaction @50% (~500K) is an emergency backstop, not license to be verbose.
@@ -41,6 +51,8 @@ For memory writes via `bd remember`, use `python3 scripts/bd_remember.py` (gate-
 - Thinking budget: 10K tokens/turn max
 - Mechanical task → cheap model, judgment task → expensive model
 - Always report: `Executing with [model] via [category]`
+- **Judging/verify nodes never land a cheap model — even as fallback (§17 #3):** review, audit, `momus`, `oracle`, and `post-reviewer` nodes must prune cheap models from their fallback chains. One bad cheap-model review inside a graph means downstream agents fix non-bugs, and you can't trace which node started it.
+- **Graph token multiplier (§17 #2):** fan-out multiplies total token burn across parallel windows. A wave running N parallel `task()` nodes should budget roughly **N×** the per-window band above (🟢/🟡/🔴); background fan-outs count against the same budget. If N× exceeds the comfortable band, collapse to serial (`chain`) or reduce N.
 
 ### Compaction Protocol
 

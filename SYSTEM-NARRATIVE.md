@@ -245,6 +245,19 @@ as fallback capacity for the atlas/archivist/auditor chains). The provider
 strategy is cost-optimized, not model-maximalist — consistent with the Era 1
 philosophy.
 
+**Aug 2 consolidation** — routing re-concentrated onto a 4-model zai map
+(glm-5.2, glm-5-turbo, glm-4.7, deepseek-v4-flash-free), partially reversing
+the Jul 19 de-concentration: glm-5.1 + glm-4.5-air retired from zai primaries
+(prometheus/momus/auditor/reviewer/fullstack-dev-tester → glm-5.2; metis →
+glm-5-turbo; quick → zai deepseek-v4-flash-free; visual-engineering +
+unspecified-high categories glm-5-turbo → glm-5.2; deep + artistry glm-5.1 →
+glm-5.2; sisyphus ultrawork reverted glm-5.1 → glm-5-turbo). glm-5.2
+concurrency 2→5 to carry 12 consumers (7 agents + 5 categories). Net: zai
+14/18 agents + 8/9 categories; opencode-go 2 agents + 0 categories (oracle,
+multimodal-looker); opencode 2 agents + 1 category (explore, explorer,
+git-commit-message). modelConcurrency now 21 entries (3 zai + 8 opencode-go +
+10 opencode); opencode/hy3-free → opencode/ling-3.0-flash-free.
+
 ### Frontier Prompt Absorption
 
 The **Response & Gate Discipline** section was added to `AGENTS.md` (between
@@ -352,8 +365,8 @@ every decision since. When in doubt, return to these.
 - **Workflow:** 9-phase HMAC-signed state machine
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
-- **Provider:** `zai-coding-plan` primary (11/18 agents + 5/9 categories); `opencode-go` (oracle — kimi-k3, multimodal-looker, prometheus, metis, explorer, reviewer + ultrabrain, artistry, deep categories) → `opencode` (explore, git-commit-message) fallback
-- **Last reviewed:** 2026-07-28
+- **Provider:** `zai-coding-plan` primary (14/18 agents + 8/9 categories) on a 4-model map (glm-5.2 — 12 consumers, glm-5-turbo — 3, glm-4.7 — 7, deepseek-v4-flash-free — 1); `opencode-go` (oracle — kimi-k3, multimodal-looker — mimo-v2-omni) → `opencode` (explore, explorer, git-commit-message — all deepseek-v4-flash-free) fallback
+- **Last reviewed:** 2026-08-02
 
 ### Session log *(append, newest last)*
 
@@ -383,6 +396,9 @@ every decision since. When in doubt, return to these.
 - **2026-07-27** — brain-hxm P0 SHIPPED + hotcache #3 coverage closed. brain-hxm: SUBCOMMAND_BD.destructive extended by 11 (delete/sql/prune/purge/gc/compact/flatten/batch/import/admin/hooks — admin and hooks are top-level covers) closes the execution-phase inverted-default hole where `bd sql 'DELETE FROM memories'` bypassed `bd forget` and `bd hooks install` was a persistence vector. Operator gate-disable cycle (Layer 0 trust-root blocks direct agent edits — operator lifted, agent applied diff, operator re-enabled). #3: 7 regression tests across T5 file (dot-dot traversal + symlink canonicalization via resolve()+realpathSync) and Finding B file (case-4 squote-in-dquote via !inDouble guard + unclosed-quote edges) — no source changes, defenses already in place, only coverage was missing. Suite 648/0/0. brain-hxm bd closed. README + plugin README drift fixed in same arc (587→641→648, v0.4.0→v0.4.1, Layer 6.5 row added). Lesson: agent asserted "commit still pending" without checking `git status` — corrective discipline recorded as global:constraint:verify_git_state_before_asserting.
 
 - **2026-07-28** — Cross-repo coordination. Established `bd_clean_of_agent_self_constraints` policy (pi handoff self-constraints surfaced, not promoted to bd — pi keeps them local). dotfiles `brain-6bf` Check 14 (pi-handoff freshness guard, mirrors Check 6) shipped `efacffe`, bead closed. W8b store.jsonl cross-process shipped on pi side (`fbc3433`, Oracle-reviewed locked-append after v1 lockless BLOCKER caught — `O_APPEND` doesn't protect append-vs-rewrite; 168/0 tests); `store_jsonl_append_only_2026_07_28` decision promoted to bd; memory-hardening arc (W18→W8→W8b + reverse bridge) complete + verified e2e. CI fix `26df1f2`: T5 canonicalization tests path-agnostic via `import.meta.url` (closes GH Actions run 30225993880 — tests hardcoded `homedir()/.config/opencode/` paths absent in CI's `/home/runner/work/` checkout, so `realpathSync` threw and canonicalization failed).
+
+- **2026-08-02** — Agent routing consolidated to a 4-model zai map (glm-5.2/glm-5-turbo/glm-4.7/deepseek-v4-flash-free): zai 14/18 agents + 8/9 categories; glm-5.1 + glm-4.5-air retired; glm-5.2 cap 2→5; quick → zai deepseek-v4-flash-free; hy3-free → ling-3.0-flash-free. Doc-sync: COMPLETE-CODEBASE §Agent Routing + Provider-mix + timeline, SYSTEM-NARRATIVE Current System State + Provider Strategy v3.
+- **2026-08-02 (session 2)** — Oracle steps 1-3 (brain-tm7): (1) **receipt mechanics** — wave-executor item 7 → parallel fan-out receipt gate at `$HOME/.sisyphus/evidence/execution-receipts.jsonl`; wave-validator.sh check #7 (declared fan-out ⇒ receipt log must exist with ≥ node count). (2) **orchestrator-review skill (47th)** — operator-owned fork of plugin `review-work`; 6 gate lanes (goal-verify oracle, code-review, security-auditor, conditional ui-auditor/regression-gate, oracle second-opinion), barrier-before-report, no model literals. (3) **vocab/budget pass** — AGENTS.md Graph Shapes (chain/diamond/barrier, §15), judging-node fallback rule (§17 #3), graph token multiplier (§17 #2); plan-writer per-slice Graph Shape requirement. README skill count 46→47.
 
 ---
 

@@ -254,6 +254,24 @@ If a slice involves a flagged component (motion, tokens, responsive, API boundar
 - Do NOT use inline styles for colors
 ```
 
+## Graph Shape (REQUIRED per slice)
+
+Declare the delegation shape per slice (vocabulary: AGENTS.md § Graph Shapes). Every slice states one of:
+
+- **`chain`** — serial `task()`; next node waits for prior.
+- **`diamond`** — parallel fan-out, merge as results arrive.
+- **`barrier`** — parallel fan-out, **merge blocked until ALL N nodes terminate** (the fan-out gate).
+
+For `diamond`/`barrier` slices, the plan must state a **node count N** and the **fan-out receipt requirement**: one `execution-receipt` per node filed to `$HOME/.sisyphus/evidence/execution-receipts.jsonl` **before** results merge. No receipt → merge does not run.
+
+Per-slice template entry:
+```markdown
+### Slice {N}: {name}
+- **Graph shape:** chain | diamond | barrier
+- **Nodes:** {N}              # diamond/barrier only
+- **Receipts filed:** {N} × execution-receipt @ ~/.sisyphus/evidence/execution-receipts.jsonl before merge
+```
+
 ## Gate to Next Phase
 
 User explicitly approves plan ("start execution", "begin work") → hand off to `wave-executor`

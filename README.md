@@ -1,6 +1,6 @@
 # Sisyphus — a production-grade AI agent platform with governance baked in
 
-> 46 skills that can clone a website, write a PRD, build a full-stack app,
+> 47 skills that can clone a website, write a PRD, build a full-stack app,
 > ship a fragment shader, generate a PPTX, or run a security audit — paired
 > with a cryptographic governance layer that makes the agent trustworthy
 > enough to actually deploy.
@@ -62,7 +62,7 @@ agent: advances. Cannot forge this on its own — the HMAC key is outside its re
 
 ## What can it actually do?
 
-A non-exhaustive list of what the 46 skills produce. None of these are demos —
+A non-exhaustive list of what the 47 skills produce. None of these are demos —
 each is a working `SKILL.md` with evals.
 
 **Build end-to-end artifacts:**
@@ -131,7 +131,7 @@ Three properties, enforced cryptographically:
   [THREAT-MODEL.md](./plugins/sisyphus-gates/THREAT-MODEL.md) documents the
   attack surface; the plugin's 10-layer decision stack is a reference
   implementation of fail-closed agent gating with HMAC-signed verdicts.
-- **Builders wanting a starting skill library** — 46 skills spanning planning,
+- **Builders wanting a starting skill library** — 47 skills spanning planning,
   review, execution, research, development, system operations. Each is a
   readable `SKILL.md` you can fork, study, or rewrite.
 
@@ -300,7 +300,7 @@ the cryptographic signature — never from forgeable text.
 │   ├── cli.js                 # Operator-only signing CLI (sign-verdict, approve, protocol)
 │   ├── test/                  # 25 test files (648 tests) + 22 self-test scenarios
 │   └── THREAT-MODEL.md        # Attack surface analysis
-├── skills/                    # 46 skill packs
+├── skills/                    # 47 skill packs
 ├── rules/                     # Language + concern rules
 ├── scripts/                   # Git hooks, drift checks, validators, MCP wrapper
 ├── agents/                    # Subagent definitions with permissions
