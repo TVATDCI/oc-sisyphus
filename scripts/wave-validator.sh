@@ -72,7 +72,7 @@ if [ -f "${PROJECT_ROOT}/DESIGN.md" ]; then
     echo "✓ DESIGN.md exists"
 else
     # Check if any UI components were created in this wave
-    UI_FILES=$(find "$EVIDENCE_DIR" -name "*component*" -o -name "*ui*" -o -name "*filter*" | wc -l)
+    UI_FILES=$(find "$EVIDENCE_DIR" -name "*component*" -o -name "*ui-*" -o -name "*ui_*" -o -name "*filter*" | wc -l)
     if [ "$UI_FILES" -gt 0 ]; then
         echo "✗ FAIL: DESIGN.md missing but UI work detected in evidence"
         ((ERRORS++))
