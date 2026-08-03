@@ -24,6 +24,8 @@ import { getLatestVerdict, validateVerdict } from "./verdict-parser.js";
 import { verifyVerdict } from "./verdict-signing.js";
 import { logGateEvent } from "./gate-logger.js";
 
+const _warnedBadVerdicts = new Set();
+
 let BASE_DIR_OVERRIDE = null;
 
 function getNotepadsPath() {
@@ -50,8 +52,15 @@ export function scanReviewFiles() {
     for (const entry of readdirSync(notepadsPath, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
       for (const file of readdirSync(join(notepadsPath, entry.name))) {
-        if (!file.includes("momus-prd-review") && !file.includes("momus-plan-review")) continue;
-        const content = readFileSync(join(notepadsPath, entry.name, file), "utf-8");
+        if (
+          !file.includes("momus-prd-review") &&
+          !file.includes("momus-plan-review")
+        )
+          continue;
+        const content = readFileSync(
+          join(notepadsPath, entry.name, file),
+          "utf-8",
+        );
         const isPRD = file.includes("prd-review");
         const isPlan = file.includes("plan-review");
 
@@ -85,14 +94,20 @@ function mapVerdictToGate(verdict) {
   if (!verdict) return undefined;
   const validation = validateVerdict(verdict);
   if (!validation.valid) {
-    console.warn(
-      `[sisyphus-gates] review-scanner: invalid verdict (kind=${verdict.kind}, reviewer=${verdict.reviewer}): ${validation.errors.join("; ")}`
-    );
+    const sig = `${verdict.kind}|${verdict.reviewer}|${validation.errors.join(";")}`;
+    if (!_warnedBadVerdicts.has(sig)) {
+      _warnedBadVerdicts.add(sig);
+      logGateEvent("scan", "invalid verdict", {
+        kind: verdict.kind,
+        reviewer: verdict.reviewer,
+        errors: validation.errors,
+      });
+    }
     return undefined;
   }
   if (verdict.decision === "PASS") return "PASS";
   if (verdict.decision === "FAIL") return "FAIL";
-  if (verdict.decision === "WARN") return null; // WARN is uncertain
+  if (verdict.decision === "WARN") return null;
   return undefined;
 }
 
@@ -114,19 +129,32 @@ export function scanLatestVerdicts() {
     for (const entry of readdirSync(notepadsPath, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
       for (const file of readdirSync(join(notepadsPath, entry.name))) {
-        if (!file.includes("momus-prd-review") && !file.includes("momus-plan-review")) continue;
-        const content = readFileSync(join(notepadsPath, entry.name, file), "utf-8");
+        if (
+          !file.includes("momus-prd-review") &&
+          !file.includes("momus-plan-review")
+        )
+          continue;
+        const content = readFileSync(
+          join(notepadsPath, entry.name, file),
+          "utf-8",
+        );
         const isPRD = file.includes("prd-review");
         const isPlan = file.includes("plan-review");
         if (isPRD) {
           const v = getLatestVerdict(content, "prd");
-          if (v && (!latestByKind.prd || v.timestamp >= latestByKind.prd.timestamp)) {
+          if (
+            v &&
+            (!latestByKind.prd || v.timestamp >= latestByKind.prd.timestamp)
+          ) {
             latestByKind.prd = v;
           }
         }
         if (isPlan) {
           const v = getLatestVerdict(content, "plan");
-          if (v && (!latestByKind.plan || v.timestamp >= latestByKind.plan.timestamp)) {
+          if (
+            v &&
+            (!latestByKind.plan || v.timestamp >= latestByKind.plan.timestamp)
+          ) {
             latestByKind.plan = v;
           }
         }
@@ -146,15 +174,32 @@ export function scanLatestVerdicts() {
 
 export function loadSignedVerdicts(kind, id, memoryKey) {
   if (!memoryKey) {
-    logGateEvent("scan", "loadSignedVerdicts: skipped (no memoryKey)", { kind });
-    return { gate: null, valid: false, id: null, decision: null, signed_at: null };
+    logGateEvent("scan", "loadSignedVerdicts: skipped (no memoryKey)", {
+      kind,
+    });
+    return {
+      gate: null,
+      valid: false,
+      id: null,
+      decision: null,
+      signed_at: null,
+    };
   }
 
   try {
     const notepadsPath = getNotepadsPath();
     if (!existsSync(notepadsPath)) {
-      logGateEvent("scan", "loadSignedVerdicts: notepads dir missing", { kind, notepadsPath });
-      return { gate: null, valid: false, id: null, decision: null, signed_at: null };
+      logGateEvent("scan", "loadSignedVerdicts: notepads dir missing", {
+        kind,
+        notepadsPath,
+      });
+      return {
+        gate: null,
+        valid: false,
+        id: null,
+        decision: null,
+        signed_at: null,
+      };
     }
 
     let latest = null;
@@ -179,8 +224,12 @@ export function loadSignedVerdicts(kind, id, memoryKey) {
           continue;
         }
 
-        const gateMatch = content.match(/<!--\s*SISYPHUS_GATE\s+(\{[\s\S]*?\})\s*-->/);
-        const sigMatch = content.match(/<!--\s*SISYPHUS_GATE_SIG\s+(\{[\s\S]*?\})\s*-->/);
+        const gateMatch = content.match(
+          /<!--\s*SISYPHUS_GATE\s+(\{[\s\S]*?\})\s*-->/,
+        );
+        const sigMatch = content.match(
+          /<!--\s*SISYPHUS_GATE_SIG\s+(\{[\s\S]*?\})\s*-->/,
+        );
         if (!gateMatch || !sigMatch) continue;
 
         let payload, sig;
@@ -209,20 +258,46 @@ export function loadSignedVerdicts(kind, id, memoryKey) {
       signedAt: latest?.signed_at || null,
     });
 
-    if (!latest) return { gate: null, valid: false, id: null, decision: null, signed_at: null };
+    if (!latest)
+      return {
+        gate: null,
+        valid: false,
+        id: null,
+        decision: null,
+        signed_at: null,
+      };
 
     let gate = null;
     if (latest.decision === "PASS") gate = "PASS";
     else if (latest.decision === "FAIL") gate = "FAIL";
 
-    return { gate, valid: true, id: latest.id || null, decision: latest.decision || null, signed_at: latest.signed_at || null, kind: latest.kind || null };
+    return {
+      gate,
+      valid: true,
+      id: latest.id || null,
+      decision: latest.decision || null,
+      signed_at: latest.signed_at || null,
+      kind: latest.kind || null,
+    };
   } catch {
-    return { gate: null, valid: false, id: null, decision: null, signed_at: null };
+    return {
+      gate: null,
+      valid: false,
+      id: null,
+      decision: null,
+      signed_at: null,
+    };
   }
 }
 
 export const _internal = {
-  setBaseDir(dir) { BASE_DIR_OVERRIDE = dir; },
-  resetBaseDir() { BASE_DIR_OVERRIDE = null; },
-  getNotepadsPath() { return getNotepadsPath(); },
+  setBaseDir(dir) {
+    BASE_DIR_OVERRIDE = dir;
+  },
+  resetBaseDir() {
+    BASE_DIR_OVERRIDE = null;
+  },
+  getNotepadsPath() {
+    return getNotepadsPath();
+  },
 };

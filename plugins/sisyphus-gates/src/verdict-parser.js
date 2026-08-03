@@ -30,7 +30,31 @@
  */
 
 /** The schema_version this parser understands as the current contract. */
-export const SUPPORTED_SCHEMA_VERSION = "1.0.0";
+export const SUPPORTED_SCHEMA_VERSION = "2.0.0";
+
+/**
+ * Compare two dotted version strings (e.g. "1.0.0", "2.0.0", "10.2.3")
+ * numerically by component. Returns true iff `ver` is strictly newer than
+ * `base`. Replaces the previous lexicographic string `>` comparison, which
+ * incorrectly classified "10.0.0" as not-newer-than "2.0.0" (because
+ * '1' < '2' at index 0).
+ *
+ * @param {string} ver
+ * @param {string} base
+ * @returns {boolean}
+ */
+function isNewerVersion(ver, base) {
+  const a = String(ver).split(".").map((n) => Number(n) || 0);
+  const b = String(base).split(".").map((n) => Number(n) || 0);
+  const len = Math.max(a.length, b.length);
+  for (let i = 0; i < len; i++) {
+    const ai = a[i] ?? 0;
+    const bi = b[i] ?? 0;
+    if (ai > bi) return true;
+    if (ai < bi) return false;
+  }
+  return false;
+}
 
 /**
  * Find all SISYPHUS_GATE HTML comment blocks in `content` and parse them
@@ -88,8 +112,28 @@ export function parseVerdictBlocks(content) {
       blockers,
       schema_version:
         typeof parsed.schema_version === "string" ? parsed.schema_version : undefined,
-      timestamp: typeof parsed.timestamp === "string" ? parsed.timestamp : undefined,
-      reviewer: typeof parsed.reviewer === "string" ? parsed.reviewer : undefined,
+      // v1 field, with v2 alias fallback (signed_at -> timestamp) so v1-only
+      // callers continue to work on v2 payloads.
+      timestamp:
+        typeof parsed.timestamp === "string"
+          ? parsed.timestamp
+          : typeof parsed.signed_at === "string"
+            ? parsed.signed_at
+            : undefined,
+      // v1 field, with v2 alias fallback (operator -> reviewer). NOTE: this
+      // alias is semantically lossy — see bd memory key reason:schema_alias_reviewer.
+      reviewer:
+        typeof parsed.reviewer === "string"
+          ? parsed.reviewer
+          : typeof parsed.operator === "string"
+            ? parsed.operator
+            : undefined,
+      // v2 pass-through fields (additive; ignored by v1 callers, available
+      // to v2-aware callers such as id-scoped gate checks).
+      id: typeof parsed.id === "string" ? parsed.id : undefined,
+      sessionID: typeof parsed.sessionID === "string" ? parsed.sessionID : undefined,
+      signed_at: typeof parsed.signed_at === "string" ? parsed.signed_at : undefined,
+      operator: typeof parsed.operator === "string" ? parsed.operator : undefined,
     });
   }
 
@@ -146,7 +190,7 @@ export function validateVerdict(verdict) {
 
   if (typeof verdict.schema_version !== "string") {
     errors.push("schema_version must be a string");
-  } else if (verdict.schema_version > SUPPORTED_SCHEMA_VERSION) {
+  } else if (isNewerVersion(verdict.schema_version, SUPPORTED_SCHEMA_VERSION)) {
     errors.push(
       `schema_version ${verdict.schema_version} is newer than supported ${SUPPORTED_SCHEMA_VERSION}`
     );
