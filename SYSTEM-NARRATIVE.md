@@ -366,7 +366,7 @@ every decision since. When in doubt, return to these.
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
 - **Provider:** `zai-coding-plan` primary (14/18 agents + 8/9 categories) on a 4-model map (glm-5.2 — 12 consumers, glm-5-turbo — 3, glm-4.7 — 7, deepseek-v4-flash-free — 1); `opencode-go` (oracle — kimi-k3, multimodal-looker — mimo-v2-omni) → `opencode` (explore, explorer, git-commit-message — all deepseek-v4-flash-free) fallback
-- **Last reviewed:** 2026-08-02
+- **Last reviewed:** 2026-08-03
 
 ### Session log *(append, newest last)*
 
@@ -399,6 +399,8 @@ every decision since. When in doubt, return to these.
 
 - **2026-08-02** — Agent routing consolidated to a 4-model zai map (glm-5.2/glm-5-turbo/glm-4.7/deepseek-v4-flash-free): zai 14/18 agents + 8/9 categories; glm-5.1 + glm-4.5-air retired; glm-5.2 cap 2→5; quick → zai deepseek-v4-flash-free; hy3-free → ling-3.0-flash-free. Doc-sync: COMPLETE-CODEBASE §Agent Routing + Provider-mix + timeline, SYSTEM-NARRATIVE Current System State + Provider Strategy v3.
 - **2026-08-02 (session 2)** — Oracle steps 1-3 (brain-tm7): (1) **receipt mechanics** — wave-executor item 7 → parallel fan-out receipt gate at `$HOME/.sisyphus/evidence/execution-receipts.jsonl`; wave-validator.sh check #7 (declared fan-out ⇒ receipt log must exist with ≥ node count). (2) **orchestrator-review skill (47th)** — operator-owned fork of plugin `review-work`; 6 gate lanes (goal-verify oracle, code-review, security-auditor, conditional ui-auditor/regression-gate, oracle second-opinion), barrier-before-report, no model literals. (3) **vocab/budget pass** — AGENTS.md Graph Shapes (chain/diamond/barrier, §15), judging-node fallback rule (§17 #3), graph token multiplier (§17 #2); plan-writer per-slice Graph Shape requirement. README skill count 46→47. **SHIPPED 08-03** (4c9b2cb + 9982546, pushed to origin) + bonus check-5 UI-heuristic fix (bare `*ui*` matched "build"; anchored to `*ui-*`/`*ui_*`).
+
+- **2026-08-03 (session 3)** — brain-tm7 follow-up bead `brain-3dv` CLOSED (`0b54077`, pushed): Oracle items 4-5. Item 4 wave-validator check #7 wave-scoped — FANOUT regex requires explicit `fan-out N nodes`/`fan_out N nodes`/`delegated N parallel` (eliminates bare-mention false-positive where "no fan-out was needed" tripped NODES=1); FOUND_ENTRIES scoped to `bead=<PLAN_NAME>` (eliminates global cumulative log trivial-pass after 5 receipts); DECLARED_NODES takes MAX via `sort -n | tail -1`. Residual intra-plan cross-wave accumulation documented inline + bd. Item 5 nits: check-doc-claims self-test sed 17→18 agents, CC L214 stray `zai` removed + L145 Provider-mix pointer L223→L226, pre-push.sh echo labels 180/648 + 20/22, orchestrator-review Phase 2 Lane 6 conditional note. Ghost `~/.config/opencode/.sisyphus/` cleaned.
 
 ---
 
