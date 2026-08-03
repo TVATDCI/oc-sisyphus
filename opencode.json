@@ -27,8 +27,13 @@
   "mcp": {
     "home": {
       "type": "local",
-      "command": ["bash", "scripts/mcp-home-wrapper.sh"],
-      "enabled": true
+      "command": [
+        "bash",
+        "-c",
+        "exec bash \"$HOME/.config/opencode/scripts/mcp-home-wrapper.sh\""
+      ],
+      "enabled": true,
+      "timeout": 30000
     },
     "semble": {
       "type": "local",
