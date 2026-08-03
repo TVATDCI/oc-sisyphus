@@ -233,7 +233,7 @@ node cli.js protocol complete session-close                 # marks all 4 layers
 node cli.js protocol override session-close --reason "..."  # operator bypass for legit cases
 ```
 
-### 4. Skills (46 Instruction Modules)
+### 4. Skills (47 Instruction Modules)
 
 `SKILL.md` files that teach the AI specific tasks — reusable instruction
 manuals triggered by domain match:

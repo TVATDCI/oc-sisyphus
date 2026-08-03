@@ -30,7 +30,7 @@ Work is NOT complete until `git push` succeeds.
 
 1. **File issues for remaining work** - Create beads issues for anything that needs follow-up
 2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Run COMPLETE-CODEBASE.md drift check** — If this session touched skills, agents, routing, permissions, workflow docs, scripts, or canonical paths:
+3. **Run COMPLETE-CODEBASE.md drift check** — If this session touched skills, agents, routing, permissions, workflow docs, scripts, or canonical paths. **Carve-out (see AGENTS.md Doc Drift Guard): routine model swaps are commit-message-only** — skip this drift check entirely for fallback-chain reshuffles, `modelConcurrency` cap tweaks, and free-tier model retirements/additions (the config file is the source of truth; prose syncs on architectural change, not per-swap). Primary-model changes (agent or category) stay prose-synced — they're rare and category-primary swaps are enforced by `check-completion-honesty.sh` Check 9. Reserve this check for architectural/decision changes (new skills/agents, gate layers, canonical paths, permission model, workflow, process/convention changes):
    - Update `Last reviewed` date in header
    - Check skill count / notable skill changes
    - Check agent routing (named agents, categories, models)

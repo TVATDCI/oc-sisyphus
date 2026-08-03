@@ -249,6 +249,8 @@ The full conversation history is always preserved in JSONL regardless of compact
 
 If a change touches **skills, agents, routing, permissions, canonical paths, or workflow docs**, update `./COMPLETE-CODEBASE.md` in the same change. The session-close protocol enforces this at close time; the pre-push `check-doc-claims.sh` validates it at push time.
 
+**Exception — routine model swaps are commit-message-only** (no timeline entry, no current-state prose sync): fallback-chain reshuffles, `modelConcurrency` cap tweaks, and free-tier model retirements/additions. (Primary-model changes — agent or category — stay prose-synced: they're rare, and category-primary swaps are hard-enforced by `check-completion-honesty.sh` Check 9, which fails the push if CC §Agent Routing diverges from `oh-my-openagent.json`.) `oh-my-openagent.json` is the source of truth; prose summaries are refreshed on architectural change, not per-swap. Rationale: the LLM landscape evolves fast, so model swaps are frequent and low-decision-content — per-swap prose chase is high-cost/low-value. **Timeline + prose sync stays mandatory for architectural/decision changes**: new skills/agents, new gate layers, canonical-path changes, permission-model changes, workflow changes, process/convention changes, and non-obvious decisions (the *why*, not the *what* — git log covers the *what*).
+
 For routing decisions, refer to the skill system map in `COMPLETE-CODEBASE.md` or `skill:system-reference`. Skills are invoked by domain match against their trigger descriptions — and `session-close` includes a mandatory COMPLETE-CODEBASE.md drift check if system topology changed.
 
 ## Response & Gate Discipline
