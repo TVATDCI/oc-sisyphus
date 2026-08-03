@@ -230,6 +230,8 @@ Track each lane independently:
 | 4 | UI Audit | pending/PASS/WARN/FAIL/INCONCLUSIVE/N/A | — | — |
 | 5 | Regression Gate | pending/PASS/WARN/FAIL/INCONCLUSIVE/N/A | — | — |
 
+Lane 6 (Oracle Second-Opinion) is **conditional** — it fires only in Phase 2.5 after the Phase 2 barrier lifts and a high-risk trigger is met. It is NOT tracked in this table; its verdict row appears in the Phase 3 final report.
+
 ## Phase 2.5 — Oracle Second-Opinion (conditional, high-risk only)
 
 Fire Lane 6 **only** when a Lane 1–5 verdict triggers a high-risk condition:

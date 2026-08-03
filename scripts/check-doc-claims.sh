@@ -142,13 +142,13 @@ if [ "${1:-}" = "--self-test" ]; then
     exit 1
   fi
 
-  echo "==> Self-test 2/3: breaking a claim (17 agents -> 99 agents)..."
+  echo "==> Self-test 2/3: breaking a claim (18 agents -> 99 agents)..."
   TMP_DOC=$(mktemp)
   cp "$DOC_FILE" "$TMP_DOC"
-  sed -i '0,/17 agents/s//99 agents/' "$TMP_DOC"
+  sed -i '0,/18 agents/s//99 agents/' "$TMP_DOC"
   if DOC_CLAIMS_FILE="$TMP_DOC" bash "$0" 2>&1; then
     rm -f "$TMP_DOC"
-    echo "FAIL: guard should have detected drift (17->99 agents)"
+    echo "FAIL: guard should have detected drift (18->99 agents)"
     exit 1
   fi
   echo "==> PASS: guard correctly caught drift"

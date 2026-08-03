@@ -97,14 +97,21 @@ else
 fi
 
 # 7. Check parallel fan-out receipt gate (graph-node traceability)
+# Requires an EXPLICIT node declaration: "fan-out N nodes" / "fan_out N nodes" /
+# "delegated N parallel" — bare "fan-out" mentions (incl. "no fan-out was
+# needed") must NOT trip the gate. Count is scoped to bead=<PLAN_NAME> so the
+# gate verifies THIS plan filed its receipts, not that receipts exist somewhere
+# in the global cumulative log. Residual: intra-plan cross-wave accumulation
+# (wave 1 of plan X counts toward wave 2's check); future improvement is to
+# snapshot the receipt counter at wave start and require `n >` that value.
 RECEIPT_LOG="${HOME}/.sisyphus/evidence/execution-receipts.jsonl"
 FANOUT_DECLARED=false
 DECLARED_NODES=0
 if [ -d "$EVIDENCE_DIR" ]; then
-    FANOUT_HITS=$(grep -rhoEi "fan-out|fan_out|delegated[[:space:]]+[0-9]+[[:space:]]+parallel" "$EVIDENCE_DIR" --include="*.md" 2>/dev/null || true)
+    FANOUT_HITS=$(grep -rhoEi "fan-out[[:space:]]+[0-9]+|fan_out[[:space:]]+[0-9]+|delegated[[:space:]]+[0-9]+[[:space:]]+parallel" "$EVIDENCE_DIR" --include="*.md" 2>/dev/null || true)
     if [ -n "$FANOUT_HITS" ]; then
         FANOUT_DECLARED=true
-        DECLARED_NODES=$(echo "$FANOUT_HITS" | grep -oE "[0-9]+" | head -1)
+        DECLARED_NODES=$(echo "$FANOUT_HITS" | grep -oE "[0-9]+" | sort -n | tail -1)
         if [ -z "$DECLARED_NODES" ]; then
             DECLARED_NODES=1
         fi
@@ -116,12 +123,12 @@ if [ "$FANOUT_DECLARED" = true ]; then
         echo "✗ FAIL: Parallel fan-out declared (${DECLARED_NODES} nodes) but receipt log missing: ${RECEIPT_LOG}"
         ((ERRORS++))
     else
-        FOUND_ENTRIES=$(grep -c '"n":' "$RECEIPT_LOG" 2>/dev/null || true)
+        FOUND_ENTRIES=$(grep "\"bead\":\"${PLAN_NAME}\"" "$RECEIPT_LOG" 2>/dev/null | grep -c '"n":' || true)
         if [ "$FOUND_ENTRIES" -lt "$DECLARED_NODES" ]; then
-            echo "✗ FAIL: Parallel fan-out declared ${DECLARED_NODES} nodes but receipt log has ${FOUND_ENTRIES} entries (need >= ${DECLARED_NODES}): ${RECEIPT_LOG}"
+            echo "✗ FAIL: Parallel fan-out declared ${DECLARED_NODES} nodes but plan '${PLAN_NAME}' has ${FOUND_ENTRIES} receipt entries (need >= ${DECLARED_NODES}): ${RECEIPT_LOG}"
             ((ERRORS++))
         else
-            echo "✓ Fan-out receipt gate: ${FOUND_ENTRIES} receipt entries >= ${DECLARED_NODES} declared nodes"
+            echo "✓ Fan-out receipt gate: plan '${PLAN_NAME}' has ${FOUND_ENTRIES} receipt entries >= ${DECLARED_NODES} declared nodes"
         fi
     fi
 else
