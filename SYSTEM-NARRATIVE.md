@@ -366,7 +366,7 @@ every decision since. When in doubt, return to these.
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
 - **Provider:** `zai-coding-plan` primary (14/18 agents + 8/9 categories) on a 4-model map (glm-5.2 — 12 consumers, glm-5-turbo — 3, glm-4.7 — 7, deepseek-v4-flash-free — 1); `opencode-go` (oracle — kimi-k3, multimodal-looker — mimo-v2-omni) → `opencode` (explore, explorer, git-commit-message — all deepseek-v4-flash-free) fallback
-- **Last reviewed:** 2026-08-04
+- **Last reviewed:** 2026-08-05
 
 ### Session log *(append, newest last)*
 
@@ -403,6 +403,8 @@ every decision since. When in doubt, return to these.
 - **2026-08-03 (session 3)** — brain-tm7 follow-up bead `brain-3dv` CLOSED (`0b54077`, pushed): Oracle items 4-5. Item 4 wave-validator check #7 wave-scoped — FANOUT regex requires explicit `fan-out N nodes`/`fan_out N nodes`/`delegated N parallel` (eliminates bare-mention false-positive where "no fan-out was needed" tripped NODES=1); FOUND_ENTRIES scoped to `bead=<PLAN_NAME>` (eliminates global cumulative log trivial-pass after 5 receipts); DECLARED_NODES takes MAX via `sort -n | tail -1`. Residual intra-plan cross-wave accumulation documented inline + bd. Item 5 nits: check-doc-claims self-test sed 17→18 agents, CC L214 stray `zai` removed + L145 Provider-mix pointer L223→L226, pre-push.sh echo labels 180/648 + 20/22, orchestrator-review Phase 2 Lane 6 conditional note. Ghost `~/.config/opencode/.sisyphus/` cleaned.
 
 - **2026-08-04** — TUI verdict-parser leak fixed + v1→v2 schema patch shipped (Oracle `ses_0385555baffeJtl0dkqA5OOGWy`). `verdict-parser.js`: SUPPORTED_SCHEMA_VERSION 1.0.0→2.0.0, numeric semver compare (was lexicographic — wrongly accepted "10.0.0"), v2 aliasing (timestamp←signed_at, reviewer←operator) + pass-throughs (id/sessionID/signed_at/operator); `review-scanner.js` cosmetic patch by user silenced the TUI spam (console.warn→logGateEvent + dedup). 648/648 tests still pass. **Architecture finding:** `state.js:211-238` already uses `loadSignedVerdicts` (signed) as AUTHORITATIVE for gate=PASS; unsigned `scanReviewFiles` bounded to defensive FAIL-downgrade — the 3 June v2 PASS verdicts on disk were already determining `planGateStatus=PASS` via signed path before this patch (no new activation). Oracle's Medium follow-up (signed-authoritative) already implemented. Evidence: `~/.sisyphus/evidence/session-close-2026-08-04-verdict-parser-v2-schema.patch.md`.
+
+- **2026-08-05** — dotfiles audit gap-closure shipped (2 commits `efacffe..1aba7ef` pushed to TVATDCI/dotfiles private): oracle+librarian governance review surfaced 4 gaps + 5 missed; shipped Gap 1 (README/skills-contract drift), Gap 2 (vendored ghostty/config + herdr/config.toml with install.sh step 5 symlinks + doctor.sh Check 15), Gap 3 (restore story largely resolved by Gap 2 fix per ADR-0006 — manifest-clone N/A since pi=USB-sourced + opencode=live-system), Gap 4 (no fix needed — layouts are real, human-applied via herdr CLI per constitution §1); amended constitution §4 (stale since Jul 23 — "Submodule refs only" → "Documentation refs only (ADR-0006)"). Bridge export refreshed after 11-day staleness; cron hourly backstop chosen over session-close-skill hook (skill trigger inherits <100% /session-close invocation reliability, operator-confirmed history of forgotten closes). 18 bd entries filed. No sisyphus-side changes — COMPLETE-CODEBASE check: no update needed.
 
 ---
 
