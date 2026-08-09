@@ -406,6 +406,8 @@ every decision since. When in doubt, return to these.
 
 - **2026-08-05** — dotfiles audit gap-closure shipped (2 commits `efacffe..1aba7ef` pushed to TVATDCI/dotfiles private): oracle+librarian governance review surfaced 4 gaps + 5 missed; shipped Gap 1 (README/skills-contract drift), Gap 2 (vendored ghostty/config + herdr/config.toml with install.sh step 5 symlinks + doctor.sh Check 15), Gap 3 (restore story largely resolved by Gap 2 fix per ADR-0006 — manifest-clone N/A since pi=USB-sourced + opencode=live-system), Gap 4 (no fix needed — layouts are real, human-applied via herdr CLI per constitution §1); amended constitution §4 (stale since Jul 23 — "Submodule refs only" → "Documentation refs only (ADR-0006)"). Bridge export refreshed after 11-day staleness; cron hourly backstop chosen over session-close-skill hook (skill trigger inherits <100% /session-close invocation reliability, operator-confirmed history of forgotten closes). 18 bd entries filed. No sisyphus-side changes — COMPLETE-CODEBASE check: no update needed.
 
+- **2026-08-07** — Main-vault git-hygiene investigation (archivist audit, 3 audits PASS): archived `.omo` decision sound, nothing lost; prior agent's ".omo gitignored" claim proven FALSE; `.omo` restored as live tracked dir (commit dbf9602, stripped 81-file archive duplicate → `/tmp/opencode/mv-strip-trash-2026-08-07`); `.beads/*` + `web-dashboard` submodule intentionally left (systemic hygiene policy filed as `brain-na1`).
+
 ---
 
 ## How to Go Deeper
