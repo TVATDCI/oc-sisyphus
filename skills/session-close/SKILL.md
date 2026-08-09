@@ -62,6 +62,14 @@ Work is NOT complete until `git push` succeeds.
    ```
 
    **Layer 4 bd remember slug pattern:** `session-close:{YYYY-MM-DD}:{category}:{fact}` (matches existing convention — see `bd memories` for examples).
+
+   **Layer completion checklist (MANDATORY — each layer records landing evidence before the session is considered closed):**
+   - **Layer 1:** timeline entry present in `SYSTEM-NARRATIVE.md` (≤3 lines, hard cap)
+   - **Layer 2:** `log.md` entry **committed** — record the commit hash. Because Main-vault constitution §5 blocks agent git-commits, Layer 2 is frequently `pending-operator`: archivist prepares the entry + an exact commit script, hands it to the operator, and the operator's commit hash flows back to close the layer. A Layer 2 entry that is *written but uncommitted* = layer NOT complete (this was the 2026-08-07 drift root cause — the entry existed in the working tree but no operator-handoff artifact was produced, so it sat uncommitted for 2 days).
+   - **Layer 3:** evidence file exists at `~/.sisyphus/evidence/session-close-{date}-*.md`
+   - **Layer 4:** bd facts filed via the gate-safe wrapper (`python3 scripts/bd_remember.py`); **state-of-repo claims must cite the Layer 3 evidence path**. Unverified claims stay in evidence labeled as claims — never promoted to bd.
+
+   **Verification gate (prevents claim-as-fact drift):** before any state-of-repo claim is written to Layer 3 or 4, re-read the actual cited file / `git status` and confirm the claim matches ground truth. A claim derived from an unverified claim is a rumor with a primary key — this was the root cause of the 2026-08-07 `.gitignore`-precedent drift (a false "gitignored per L22-27" claim propagated into the evidence file, a bd fact, and the audit report because nobody re-read the 10-line `.gitignore`).
 5. **Update issue status** - Close finished work, update in-progress items
 6. **Mark protocol complete** — Run `node ~/.config/opencode/plugins/sisyphus-gates/cli.js protocol complete session-close`. This sets `session_close.status = "complete"` in state.json. **The gate at step 7 will block `git push` if this is skipped.**
 7. **PUSH TO REMOTE**:
