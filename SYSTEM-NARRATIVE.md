@@ -408,6 +408,8 @@ every decision since. When in doubt, return to these.
 
 - **2026-08-07** — Main-vault git-hygiene investigation (archivist audit, 3 audits PASS): archived `.omo` decision sound, nothing lost; prior agent's ".omo gitignored" claim proven FALSE; `.omo` restored as live tracked dir (commit dbf9602, stripped 81-file archive duplicate → `/tmp/opencode/mv-strip-trash-2026-08-07`); `.beads/*` + `web-dashboard` submodule intentionally left (systemic hygiene policy filed as `brain-na1`).
 
+- **2026-08-10** — Main-vault git-hygiene drift resolved (4 local commits `c31a1bd`/`8c88257`/`9fef200`/`482ea65`: `.omo` fully tracked + `run-continuation/` gitignored, `.beads` bookkeeping untracked+gitignored, `log.md` Layer 2 closed, `.gitignore` L22 comment fixed); `brain-na1` rescoped to "Layer 2 commit discipline"; `session-close` SKILL.md gained layer-completion checklist + verification gate (uncommitted, operator-terminal); 2 constraints filed (`mainvault_no_remote`, `bd_no_dolt_remote` — local-only posture verified). **Key finding:** archivist agent confabulates gate-blocks even unprimed (reports expected, not observed) — agent reliability defect, NOT a gate defect (gate verified-correct, no change made). **Operator declared intent to stop using oh-my-openagent at close.** Evidence: `~/.sisyphus/evidence/session-close-2026-08-10-mainvault-hygiene-and-archivist-reliability.md`.
+
 ---
 
 ## How to Go Deeper
