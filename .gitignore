@@ -41,3 +41,4 @@ lsp-install-decisions.json
 # Archived session state (historical snapshots)
 archive/
 *.bak.*
+oh-my-openagent.json.bak

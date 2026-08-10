@@ -259,8 +259,8 @@ workspace) — and even those are blocked by Layer 0 from touching governance fi
 
 9 categories dispatch tasks by domain (deep, quick, visual-engineering, writing,
 etc.) using a 3-tier fallback strategy: subscription primary → lite subscription
-→ pre-pay-as-you-go. Edit `oh-my-openagent.json` to wire your own provider/model
-combinations.
+→ pre-pay-as-you-go. Edit `~/.omo/omo.jsonc` (`[opencode]` section) to wire your own
+provider/model combinations.
 
 ## Signing verdicts (operator guide)
 
@@ -291,7 +291,7 @@ the cryptographic signature — never from forgeable text.
 ```
 ~/.config/opencode/
 ├── opencode.json              # Entry-point config (plugin, MCP, permissions)
-├── oh-my-openagent.json       # 18 agents + 9 categories + model routing
+├── oh-my-openagent.json.bak   # Legacy (4.19.4 moved routing to ~/.omo/omo.jsonc)
 ├── AGENTS.md                  # Root system prompt (compaction, routing, rules)
 ├── COMPLETE-CODEBASE.md       # Full system map (architecture, timeline, routing)
 ├── SYSTEM-NARRATIVE.md        # Era-structured developmental history + rationale
@@ -384,7 +384,7 @@ That's the gap most patterns leave open.
 - [COMPLETE-CODEBASE.md](./COMPLETE-CODEBASE.md) — full system map, timeline, routing
 - [SYSTEM-NARRATIVE.md](./SYSTEM-NARRATIVE.md) — era-structured developmental history + design rationale
 - [THREAT-MODEL.md](./plugins/sisyphus-gates/THREAT-MODEL.md) — attack surface analysis
-- [oh-my-openagent.json](./oh-my-openagent.json) — agent + category routing
+- `~/.omo/omo.jsonc` — agent + category routing (4.19.4+ unified config, `[opencode]` section)
 - [opencode.json](./opencode.json) — entry-point config
 - Per-skill `SKILL.md` files in `skills/*/` — read any of them for a concrete example of the skill format
 
@@ -400,7 +400,7 @@ bash scripts/pre-push.sh      # full pre-push suite
 ## Status
 
 - **648/648 unit tests + 22/22 self-test scenarios passing**
-- `oh-my-openagent` pinned to `4.18.2`
+- `oh-my-openagent` pinned to `4.19.4`
 - `sisyphus-gates` local plugin — current: `v0.4.1` (Layer 3.7 sandbox allowlist
   Jun 27; Layer 6.5 session-close gate Jun 30; Layer 1 catastrophic-defense
   hardening Jul 23; Layer 4.5 compound-allow Jul 23; Finding A bd subcommand

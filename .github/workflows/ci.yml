@@ -191,7 +191,7 @@ jobs:
 
       - name: canary 1 — oh-my-openagent drift
         run: |
-          PINNED="4.7.5"
+          PINNED="4.19.4"
           LATEST=$(npm view oh-my-openagent@latest version 2>/dev/null || echo "FETCH_FAILED")
           echo "pinned:  oh-my-openagent@$PINNED"
           echo "latest:  oh-my-openagent@$LATEST"

@@ -106,7 +106,7 @@ High-level flow (stable across all invocations):
 
 **Category:** `unspecified-high`
 
-Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
+Runtime model and fallbacks are resolved from `~/.omo/omo.jsonc` (`[opencode]` section) by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 **Rationale:** Wave execution is mechanical work — read PRD, follow specs, implement, test. The hard architectural reasoning is already done (in PRD approved by Momus). Using cheaper model reduces cost per wave by ~10x.
 

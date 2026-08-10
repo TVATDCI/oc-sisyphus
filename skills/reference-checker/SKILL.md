@@ -56,7 +56,7 @@ task(
 - Use `ls` and `grep` tools, not reasoning
 - If directory doesn't exist, report it explicitly
 - Do not invent file names — only report what actually exists
-- **Cost note:** This is a mechanical verification task. If your execution costs are high, the category routing may be selecting an expensive model. Verify via `oh-my-openagent.json` category config.
+- **Cost note:** This is a mechanical verification task. If your execution costs are high, the category routing may be selecting an expensive model. Verify via `~/.omo/omo.jsonc` (`[opencode]` section) category config.
 
 ## Core Workflow: Reference Verification
 
@@ -348,10 +348,10 @@ Orchestrator begins Workflow 1b (PRD creation):
 **Target cost:** ≤€0.01 per verification (mechanical directory scanning).
 
 **If costs exceed target:**
-1. Check `oh-my-openagent.json` — verify `unspecified-low` category routes to cheapest model
+1. Check `~/.omo/omo.jsonc` — verify `unspecified-low` category routes to cheapest model
 2. If category fallback chain selects expensive model, report: "Cost drift detected: {model} used for verification. Consider tuning category config."
 3. **Escape hatch (only if benchmarked drift >20% over 10+ tasks):**
-   - Create custom `verification` category in `oh-my-openagent.json`
+   - Create custom `verification` category in `~/.omo/omo.jsonc`
    - Route: cheapest available model in the catalog → next-cheapest fallback. Check the catalog at category-creation time — do not hardcode model identifiers in this skill, they drift.
    - Use only for reference-checker tasks, not general `unspecified-low`
 

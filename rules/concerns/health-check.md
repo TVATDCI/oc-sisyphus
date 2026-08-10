@@ -25,7 +25,7 @@ bunx oh-my-opencode doctor
 This is the canonical verification tool. It checks:
 
 - OpenCode version and plugin versions
-- Configuration schema validity (`oh-my-openagent.json`, `opencode.json`)
+- Configuration schema validity (`~/.omo/omo.jsonc`, `opencode.json`)
 - Model availability for all configured agents
 - Skill/agent load status
 - Cache consistency
@@ -46,4 +46,4 @@ This is the canonical verification tool. It checks:
 ## Related
 
 - For config schema questions, also see `rules/concerns/project-structure.md`.
-- For model selection or category changes, see the `oh-my-openagent.json` file directly and `system-reference` skill.
+- For model selection or category changes, see the `~/.omo/omo.jsonc` file directly (`[opencode]` section) and `system-reference` skill.
