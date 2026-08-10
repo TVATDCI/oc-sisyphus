@@ -196,10 +196,10 @@ while IFS='|' read -r claimed_num noun; do
 
   case "$nkey" in
     agents|"named agents"|"runtime agents")
-      cmd="node -e \"console.log(Object.keys(require('$REPO_ROOT/oh-my-openagent.json').agents).length)\""
+      cmd="node \"$REPO_ROOT/scripts/omo-query.js\" agents"
       ;;
     categories)
-      cmd="node -e \"console.log(Object.keys(require('$REPO_ROOT/oh-my-openagent.json').categories).length)\""
+      cmd="node \"$REPO_ROOT/scripts/omo-query.js\" categories"
       ;;
     "rule files"|rule)
       cmd="find \"$REPO_ROOT/rules\" -maxdepth 2 -name '*.md' -not -path '*/node_modules/*' | wc -l"

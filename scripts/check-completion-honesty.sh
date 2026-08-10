@@ -68,25 +68,26 @@ else
   add_error "AGENTS.md missing"
 fi
 
-# === Check 5: oh-my-openagent.json consistency ===
-OMA="$REPO/oh-my-openagent.json"
-if [ -f "$OMA" ]; then
-  AGENT_COUNT=$(node -e "const j=JSON.parse(require('fs').readFileSync('$OMA','utf8')); console.log(Object.keys(j.agents).length);" 2>/dev/null || echo "0")
-  CAT_COUNT=$(node -e "const j=JSON.parse(require('fs').readFileSync('$OMA','utf8')); console.log(Object.keys(j.categories).length);" 2>/dev/null || echo "0")
+# === Check 5: ~/.omo/omo.jsonc consistency ===
+OMO="$HOME/.omo/omo.jsonc"
+OMO_QUERY="$REPO/scripts/omo-query.js"
+if [ -f "$OMO" ]; then
+  AGENT_COUNT=$(node "$OMO_QUERY" agents 2>/dev/null || echo "0")
+  CAT_COUNT=$(node "$OMO_QUERY" categories 2>/dev/null || echo "0")
 
   if [ "$AGENT_COUNT" -eq 18 ]; then
-    add_pass "oh-my-openagent.json has 18 agents"
+    add_pass "~/.omo/omo.jsonc has 18 agents"
   else
-    add_error "oh-my-openagent.json has $AGENT_COUNT agents (expected 18)"
+    add_error "~/.omo/omo.jsonc has $AGENT_COUNT agents (expected 18)"
   fi
 
   if [ "$CAT_COUNT" -eq 9 ]; then
-    add_pass "oh-my-openagent.json has 9 categories"
+    add_pass "~/.omo/omo.jsonc has 9 categories"
   else
-    add_error "oh-my-openagent.json has $CAT_COUNT categories (expected 9)"
+    add_error "~/.omo/omo.jsonc has $CAT_COUNT categories (expected 9)"
   fi
 else
-  add_error "oh-my-openagent.json missing"
+  add_error "~/.omo/omo.jsonc missing"
 fi
 
 # === Check 6: agents/*.md have no model: lines ===
@@ -168,16 +169,13 @@ else
   add_warning "Could not parse agents/ count claim"
 fi
 
-# === Check 9: routing claims match oh-my-openagent.json ===
-if [ -f "$OMA" ]; then
-  ROUTING_MISMATCHES=$(OMA="$OMA" DOC="$DOC" node - <<'NODE'
+# === Check 9: routing claims match ~/.omo/omo.jsonc ===
+if [ -f "$OMO" ]; then
+  OMO_ROUTING=$(node "$OMO_QUERY" categories-routing 2>/dev/null || echo "{}")
+  ROUTING_MISMATCHES=$(OMO_ROUTING="$OMO_ROUTING" DOC="$DOC" node - <<'NODE'
 const fs = require('fs');
-const oma = JSON.parse(fs.readFileSync(process.env.OMA, 'utf8'));
 const doc = fs.readFileSync(process.env.DOC, 'utf8');
-
-const jsonCats = Object.entries(oma.categories).map(([name, cfg]) => {
-  return { name, model: cfg.model };
-});
+const omaCats = JSON.parse(process.env.OMO_ROUTING || '{}');
 
 const line = doc.split('\n').find(l => l.includes('Categories (via task(category'));
 if (!line) {
@@ -193,19 +191,19 @@ for (const pair of pairs) {
   if (m) docCats.push({ name: m[1], model: m[2].trim() });
 }
 
-const jsonMap = new Map(jsonCats.map(c => [c.name, c.model]));
+const jsonMap = new Map(Object.entries(omaCats).map(([name, cfg]) => [name, cfg.model]));
 const docMap = new Map(docCats.map(c => [c.name, c.model]));
 const mismatches = [];
 for (const [name, docModel] of docMap) {
   const jsonModel = jsonMap.get(name);
   if (!jsonModel) {
-    mismatches.push(`${name}: documented but missing in oh-my-openagent.json`);
+    mismatches.push(`${name}: documented but missing in ~/.omo/omo.jsonc`);
   } else if (jsonModel !== docModel) {
-    mismatches.push(`${name}: doc claims ${docModel}, JSON has ${jsonModel}`);
+    mismatches.push(`${name}: doc claims ${docModel}, config has ${jsonModel}`);
   }
 }
 for (const [name] of jsonMap) {
-  if (!docMap.has(name)) mismatches.push(`${name}: in JSON but missing from doc`);
+  if (!docMap.has(name)) mismatches.push(`${name}: in config but missing from doc`);
 }
 console.log(mismatches.join('\n'));
 NODE
@@ -216,7 +214,7 @@ NODE
       add_error "Category routing mismatch: $line"
     done <<< "$ROUTING_MISMATCHES"
   else
-    add_pass "Category routing claims match oh-my-openagent.json"
+    add_pass "Category routing claims match ~/.omo/omo.jsonc"
   fi
 fi
 

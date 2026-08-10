@@ -93,12 +93,12 @@ validate_skill() {
     fi
 
     # Anti-pattern guard: hardcoded model identifier after **Category:**
-    # Runtime model comes from oh-my-openagent.json (resolved by category at task() time).
+    # Runtime model comes from ~/.omo/omo.jsonc (resolved by category at task() time).
     # Hardcoding model names in skill bodies drifts on every model refresh.
     # Pattern matches: **Category:** `X` → `Y`  or  **Category:** X → Y
     if grep -qE '^\*\*Category:\*\*.*→' "$skill_dir/SKILL.md"; then
         local offending_line=$(grep -nE '^\*\*Category:\*\*.*→' "$skill_dir/SKILL.md" | head -1)
-        echo -e "${RED}FAIL${NC} (hardcoded model after **Category:** — runtime model is resolved from oh-my-openagent.json; do not hardcode in skill body)"
+        echo -e "${RED}FAIL${NC} (hardcoded model after **Category:** — runtime model is resolved from ~/.omo/omo.jsonc; do not hardcode in skill body)"
         echo "         offending: ${offending_line}"
         ((FAIL++)) || true
         return 1
