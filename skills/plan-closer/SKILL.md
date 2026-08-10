@@ -34,7 +34,7 @@ Closes execution plan, archives state, and closes beads tracking issues.
 
 **Category:** `unspecified-high`
 
-Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
+Runtime model and fallbacks are resolved from `~/.omo/omo.jsonc` (`[opencode]` section) by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 **Model Transparency:**
 When delegating to subagents, always report: `Executing with [model] via [category]` — fill `[model]` from runtime context.

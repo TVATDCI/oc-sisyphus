@@ -229,7 +229,7 @@ archivist / vault-ops
 
 **Category:** `unspecified-low`
 
-Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
+Runtime model and fallbacks are resolved from `~/.omo/omo.jsonc` (`[opencode]` section) by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 Regression testing is mechanical: run tests, parse output, report results. No reasoning needed.
 

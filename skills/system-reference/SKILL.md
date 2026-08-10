@@ -207,7 +207,7 @@ Our custom system (oh-my-openagent + 44 real skills + 1 _shared reference) coexi
 | **Browser automation** | `website-analyzer` — full DESIGN.md generation, multi-pass extraction, strategy recommendation | `/playwright` — simple browser commands, screenshots, quick tests |
 | **Codebase research** | `explore`/`athena-research` — thorough contextual grep across our custom skills and agents | `explore` subagent (Tab or `/agent explore`) — general codebase exploration |
 | **Multi-step research** | `oracle`/`librarian` agents — high-IQ reasoning, remote docs, GitHub examples | `general` subagent (use `@general`) — complex searches |
-| **Background tasks** | `background_task` in oh-my-openagent.json — configured, production-tested | Experimental background subagents — not yet stable; avoid until confirmed |
+| **Background tasks** | `background_task` in ~/.omo/omo.jsonc — configured, production-tested | Experimental background subagents — not yet stable; avoid until confirmed |
 | **Config editing** | `agent-development` — custom agents, skills, permissions | `customize-opencode` — safe native OpenCode config edits |
 | **Code review** | `code-review` skill — structured review (correctness, security, performance, maintainability, testing). For subagent reviews use `reviewer.md` (combined oracle+auditor+post-reviewer) or `post-reviewer.md` (post-change only); both read-only with granular bash. For 5-agent parallel use `/review-work`. | `plan` agent (Tab to switch) — quick read-only analysis |
 | **Planning/design** | `discovery-orchestrator` → `prd-writer` → `issue-creator` → `plan-writer` (full Sisyphus workflow) | `plan` agent — quick one-shot analysis without custom workflow |
@@ -242,7 +242,7 @@ comprehensive status report by synthesizing these sources:
 | `SYSTEM-NARRATIVE.md` | History, eras, architecture principles, design rationale |
 | `COMPLETE-CODEBASE.md` | Current topology, routing, permissions, live timeline |
 | `opencode.json` | Entry-point config (plugin, MCP, permissions) |
-| `oh-my-openagent.json` | Agents, categories, model routing, provider fallback |
+| `~/.omo/omo.jsonc` | Agents, categories, model routing, provider fallback |
 
 **Report structure:**
 1. **Current state** — skill/agent/test counts, plugin version, provider strategy (from COMPLETE-CODEBASE.md "Current System State" + system narrative living section)

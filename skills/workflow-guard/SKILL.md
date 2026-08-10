@@ -143,7 +143,7 @@ Agent:
 
 **Category:** `unspecified-low`
 
-Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
+Runtime model and fallbacks are resolved from `~/.omo/omo.jsonc` (`[opencode]` section) by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 Purely mechanical: scan files, compare with evidence logs, report gaps.
 

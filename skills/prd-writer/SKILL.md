@@ -36,7 +36,7 @@ Transforms an approved brief into a structured PRD (Product Requirements Documen
 
 **Category:** `deep`
 
-Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
+Runtime model and fallbacks are resolved from `~/.omo/omo.jsonc` (`[opencode]` section) by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 **Rationale:** PRD writing requires reasoning, asking questions, finding blockers. This is judgment work, not mechanical execution.
 

@@ -35,7 +35,7 @@ Transforms an approved PRD into vertical slice issues with dependency mapping. E
 
 **Category:** `unspecified-high`
 
-Runtime model and fallbacks are resolved from `oh-my-openagent.json` by category. Do not hardcode model identifiers here — they drift on every model refresh.
+Runtime model and fallbacks are resolved from `~/.omo/omo.jsonc` (`[opencode]` section) by category. Do not hardcode model identifiers here — they drift on every model refresh.
 
 **Rationale:** Issue creation is mechanical — read PRD, identify vertical slices, assign IDs. No deep reasoning needed.
 

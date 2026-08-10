@@ -79,7 +79,7 @@ Lanes are leaf agents: each does its own reading, running, and judging inline. A
 | 5 | Regression Gate | `skills/regression-gate` | only if HAS_PRIOR_WAVES | `category="unspecified-low"` |
 | 6 | Oracle Second-Opinion | — (fresh oracle) | only on high-risk items from lanes 1–5 (Phase 2.5) | `subagent_type="oracle"` |
 
-**Strong model at every judging node** (source knowledge §7). Lanes 1–4 judge — they run on `ultrabrain` / `oracle`. Lane 5 is mechanical (run tests, parse, report) — `unspecified-low` per the `regression-gate` skill's own model section. Do not downgrade a judging lane to a cheap category: one bad review inside a graph means agents fix non-bugs and you cannot trace which node started it. Routing abstractions (`category`, `subagent_type`) resolve to actual models via `oh-my-openagent.json`; do not hardcode model identifiers in this file — they drift on every refresh.
+**Strong model at every judging node** (source knowledge §7). Lanes 1–4 judge — they run on `ultrabrain` / `oracle`. Lane 5 is mechanical (run tests, parse, report) — `unspecified-low` per the `regression-gate` skill's own model section. Do not downgrade a judging lane to a cheap category: one bad review inside a graph means agents fix non-bugs and you cannot trace which node started it. Routing abstractions (`category`, `subagent_type`) resolve to actual models via `~/.omo/omo.jsonc`; do not hardcode model identifiers in this file — they drift on every refresh.
 
 ### Lane 1 — Goal Verification (always)
 

@@ -291,7 +291,6 @@ the cryptographic signature — never from forgeable text.
 ```
 ~/.config/opencode/
 ├── opencode.json              # Entry-point config (plugin, MCP, permissions)
-├── oh-my-openagent.json.bak   # Legacy (4.19.4 moved routing to ~/.omo/omo.jsonc)
 ├── AGENTS.md                  # Root system prompt (compaction, routing, rules)
 ├── COMPLETE-CODEBASE.md       # Full system map (architecture, timeline, routing)
 ├── SYSTEM-NARRATIVE.md        # Era-structured developmental history + rationale
