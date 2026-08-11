@@ -55,7 +55,7 @@ In nested directories, parent `.opencode/` wins over child `.opencode/` (should 
 { "snapshot": false }
 ```
 - **Default:** `true` (tracks file changes for undo)
-- **Problem:** Can consume 170GB+ disk space on large repos
+- **Problem:** Can consume 100GB+ disk space on large repos
 - **When to disable:** Large repos, limited disk space, CI/CD environments
 
 ### Experimental Flags

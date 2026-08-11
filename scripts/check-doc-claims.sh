@@ -16,9 +16,9 @@
 #   3. Restore → exit 0
 #
 # Ground-truth table (current system state):
-#   17 agents | 9 categories | 14 rule files | 45 skill directories | 8 subagent .md
-#   0 model: lines | 15 scripts | 13 src/ modules | 3 JSONL baseline runs
-#   180 unit tests | 2 agents have write access
+#   18 agents | 9 categories | 14 rule files | 47 skill directories | 8 subagent .md
+#   0 model: lines | 18 scripts | 19 src/ modules | 3 JSONL baseline runs
+#   648 unit tests | 2 agents have write access
 #
 # Design:
 #   - set -euo pipefail for strict error handling

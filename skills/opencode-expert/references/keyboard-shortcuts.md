@@ -104,7 +104,6 @@ These work in the input field for composing messages.
 | `Ctrl+V` | Paste |
 | `Ctrl+-` | Undo |
 | `Ctrl+.` | Redo |
-| `Ctrl+T` | Transpose characters |
 
 ---
 

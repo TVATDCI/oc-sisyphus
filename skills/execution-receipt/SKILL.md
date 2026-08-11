@@ -70,7 +70,7 @@ BEFORE_DIRTY=$([ -n "$BEFORE" ] && echo "1" || echo "0")
 
 ```bash
 START=$(date +%s)
-BEAD=$(bd list --status=in_progress 2>/dev/null | head -1 | awk '{print $1}' || echo "none")
+BEAD=$(bd list --status=in_progress 2>/dev/null | head -1 | awk -v f=1 '{print $f}' || echo "none")
 SESSION="${OPENCODE_SESSION_ID:-none}"
 ```
 
@@ -101,8 +101,8 @@ AFTER=$(git status --porcelain 2>/dev/null || echo "")
 # Renames: R  old -> new
 CHANGED_PATHS=$(
   {
-    echo "$BEFORE" | awk '{if (NR==1 && $0 ~ /^#/) next; print}'
-    echo "$AFTER"   | awk '{if (NR==1 && $0 ~ /^#/) next; print}'
+    echo "$BEFORE" | awk -v r=0 '{if (NR==1 && $r ~ /^#/) next; print}'
+    echo "$AFTER"   | awk -v r=0 '{if (NR==1 && $r ~ /^#/) next; print}'
   } |
   while read -r line; do
     [ -z "$line" ] && continue

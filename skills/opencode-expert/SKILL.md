@@ -29,7 +29,7 @@ gates:
 metadata:
   version: 2.0.0
   category: reference
-  last_verified: 2026-04-30
+  last_verified: 2026-08-12
 ---
 
 # OpenCode Expert
