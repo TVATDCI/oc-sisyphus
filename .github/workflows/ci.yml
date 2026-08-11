@@ -61,11 +61,10 @@ jobs:
       - name: Tier 1.3 — plugin compat check
         run: node scripts/verify-plugin-compat.js
 
-      - name: Tier 1.4 — JSON syntax (opencode + oh-my-openagent)
+      - name: Tier 1.4 — JSON syntax (opencode configs)
         run: |
           for f in opencode.json tui.json package.json \
-                   plugins/sisyphus-gates/package.json \
-                   oh-my-openagent.json; do
+                   plugins/sisyphus-gates/package.json; do
             if [ -f "$f" ]; then
               node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" \
                 && echo "OK: $f" || (echo "FAIL: $f" && exit 1)
@@ -107,14 +106,14 @@ jobs:
 
       - name: Tier 2.4 — structural integrity (agent drift check)
         run: |
-          # Verify: 17 agents in JSON, 0 model: lines in .md
-          # (Wave 2 reconciliation — if this fails, drift has returned)
-          AGENTS_JSON=$(node -e "
-            const j = JSON.parse(require('fs').readFileSync('oh-my-openagent.json','utf8'));
-            console.log(Object.keys(j.agents).length);
-          ")
-          echo "agents in JSON: $AGENTS_JSON"
-          [ "$AGENTS_JSON" -ge 17 ] || (echo "FAIL: expected ≥17 agents, got $AGENTS_JSON" && exit 1)
+          # Agent count: config is user-local (~/.omo/omo.jsonc since 4.19.4), skip on CI
+          if [ -f "$HOME/.omo/omo.jsonc" ]; then
+            AGENTS_JSON=$(node scripts/omo-query.js agents)
+            echo "agents in config: $AGENTS_JSON"
+            [ "$AGENTS_JSON" -ge 17 ] || (echo "FAIL: expected ≥17 agents, got $AGENTS_JSON" && exit 1)
+          else
+            echo "INFO: ~/.omo/omo.jsonc not present in CI — skipping agent count check (config is user-local since 4.19.4 migration)"
+          fi
 
           MODEL_LINES=$(grep -c "^model:" agents/*.md 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')
           echo "model: lines in agents/*.md: $MODEL_LINES"
@@ -145,7 +144,12 @@ jobs:
           [ $status -eq 0 ] && echo "OK: all markdown links resolve"
 
       - name: Tier 2.6 — doc-claims drift check
-        run: bash scripts/check-doc-claims.sh
+        run: |
+          if [ -f "$HOME/.omo/omo.jsonc" ]; then
+            bash scripts/check-doc-claims.sh
+          else
+            echo "INFO: ~/.omo/omo.jsonc not present in CI — skipping doc-claims drift check (config is user-local since 4.19.4 migration)"
+          fi
 
       # ── Artifacts: test reports + logs ──────────────────────────
 
