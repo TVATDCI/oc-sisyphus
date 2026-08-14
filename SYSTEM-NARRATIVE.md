@@ -366,7 +366,7 @@ every decision since. When in doubt, return to these.
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
 - **Provider:** `zai-coding-plan` primary (14/18 agents + 8/9 categories) on a 5-model map (glm-5.3 — 5 consumers, glm-5.2 — 7, glm-5-turbo — 3, glm-4.7 — 7, deepseek-v4-flash-free — 1); `opencode-go` (oracle — kimi-k3, multimodal-looker — mimo-v2-omni) → `opencode` (explore, explorer, git-commit-message — all deepseek-v4-flash-free) fallback
-- **Last reviewed:** 2026-08-05
+- **Last reviewed:** 2026-08-14
 
 ### Session log *(append, newest last)*
 
@@ -409,6 +409,8 @@ every decision since. When in doubt, return to these.
 - **2026-08-07** — Main-vault git-hygiene investigation (archivist audit, 3 audits PASS): archived `.omo` decision sound, nothing lost; prior agent's ".omo gitignored" claim proven FALSE; `.omo` restored as live tracked dir (commit dbf9602, stripped 81-file archive duplicate → `/tmp/opencode/mv-strip-trash-2026-08-07`); `.beads/*` + `web-dashboard` submodule intentionally left (systemic hygiene policy filed as `brain-na1`).
 
 - **2026-08-10** — Main-vault git-hygiene drift resolved (4 local commits `c31a1bd`/`8c88257`/`9fef200`/`482ea65`: `.omo` fully tracked + `run-continuation/` gitignored, `.beads` bookkeeping untracked+gitignored, `log.md` Layer 2 closed, `.gitignore` L22 comment fixed); `brain-na1` rescoped to "Layer 2 commit discipline"; `session-close` SKILL.md gained layer-completion checklist + verification gate (uncommitted, operator-terminal); 2 constraints filed (`mainvault_no_remote`, `bd_no_dolt_remote` — local-only posture verified). **Key finding:** archivist agent confabulates gate-blocks even unprimed (reports expected, not observed) — agent reliability defect, NOT a gate defect (gate verified-correct, no change made). **Operator declared intent to stop using oh-my-openagent at close.** **Update (same-day reversal):** operator reversed the stop-using intent later in the session and upgraded oh-my-openagent 4.18.2 → 4.19.4 — migration scoping (two parallel explore sweeps) confirmed zero `shared/`-alias and zero ralph references in repo files; verify-plugin-compat + 648 unit + 22 self-test PASS; delegate-task contract smoke-tested OK. 11 npm audit vulns flagged as watch-item. See COMPLETE-CODEBASE.md timeline (Aug 10). Evidence: `~/.sisyphus/evidence/session-close-2026-08-10-mainvault-hygiene-and-archivist-reliability.md`.
+
+- **2026-08-14** — 4.19.4 category-routing repair: Aug-10 migration had converted `[opencode].categories` to `models`-chain format, which runtime readers ignore (`.model`/`.fallback_models` only) → all 9 categories silently fell to builtin paid-ladder defaults (claude-fable-5/gpt-5.6-sol/kimi-for-coding-highspeed, Zen billing); restored legacy format from the 4.18.2 backup, TUI verified 12/12 lanes. glm-5.3 adopted (sisyphus/momus/reviewer/post-reviewer + ultrabrain + oracle fallbacks; zai cap 3) — CC timeline + §Agent Routing, SN 5-model map synced; operator committed+pushed, validators green. Constraint `omo_no_models_chain_format`; upstream doctor/migrate bug → bead filed. Evidence: `~/.sisyphus/evidence/session-close-2026-08-14-omo-4194-category-repair-glm53.md`.
 
 ---
 
