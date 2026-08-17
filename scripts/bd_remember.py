@@ -143,7 +143,12 @@ def main() -> int:
         return 0
 
     try:
-        result = subprocess.run(bd_cmd, capture_output=True, text=True, check=False)
+        # bd's output may contain non-UTF-8 bytes; strict decoding crashed the
+        # wrapper AFTER the write committed, reading as a false failure.
+        result = subprocess.run(
+            bd_cmd, capture_output=True, text=True,
+            encoding="utf-8", errors="replace", check=False,
+        )
     except FileNotFoundError:
         print(
             "ERROR: bd not found — is it installed and on PATH?",
