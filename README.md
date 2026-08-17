@@ -66,6 +66,7 @@ A non-exhaustive list of what the 47 skills produce. None of these are demos —
 each is a working `SKILL.md` with evals.
 
 **Build end-to-end artifacts:**
+
 - **Clone a website** — `website-analyzer` reverse-engineers a site into a
   21-section DESIGN.md + structured content inventory + tech detections, then
   planning + execution skills reproduce it
@@ -80,6 +81,7 @@ each is a working `SKILL.md` with evals.
 - **Generate presentations** — `document-builder` emits PPTX via PptxGenJS
 
 **Review and audit existing work:**
+
 - **Security audit** — `security-auditor` scans 6 vulnerability categories
   (secrets, injection, XSS, auth/CSRF, dependencies, path traversal) with
   PASS/WARN/FAIL verdicts
@@ -92,12 +94,14 @@ each is a working `SKILL.md` with evals.
   verification before a human signs off
 
 **Research and learn:**
+
 - **Gather context** — `athena-research`, `toolkit-research` (web/docs/GitHub),
   `toolkit-lsp` (LSP-powered code analysis)
 - **Multi-session curricula** — `teach` builds Markdown learning workspaces
   anchored to a mission, with lessons, glossary, and learning records
 
 **Plan and orchestrate:**
+
 - **Discovery** — `discovery-orchestrator` turns vague requests into planning
   briefs via Socratic Q&A
 - **Issue creation** — `issue-creator` breaks PRDs into vertical-slice issues
@@ -173,19 +177,19 @@ end-to-end scenarios.
 
 **Decision stack** (checked in order, first match wins):
 
-| Layer | What it checks | Example |
-|-------|---------------|---------|
-| 0 — Trust-root paths | No tool may write/read state.json, workflow.yaml, verdict files, /proc, or plugin source | AI tries to write state.json → blocked |
-| 1 — Catastrophic denylist | Hardened: `rm -rf /`, `dd`, `mkfs` + wrapper-recursion (`env rm`), structural (`{rm,ls}`), newline injection, env-prefix smuggling (`LD_PRELOAD`), PATH-qualified (`/bin/rm`) — blocked in all phases | AI tries `env rm -rf /` → blocked |
-| 2 — Sudo | Never allowed, any phase | `sudo apt update` → blocked |
-| 3 — Safe read-only tools | `read`, `grep`, `glob`, `websearch` — always allowed | `read file.js` → allowed |
-| 3.5 — MCP classification | External MCP tools classified as read/write/unknown; unknown denied by default | `myfiles_unknown_tool` → blocked |
-| 3.7 — Sandbox allowlist | If cwd resolves into a `sandbox_paths` prefix AND command matches `sandbox_allowed_commands` → allowed with audit (Layers 0–3.5 still apply) | `npm install` in `/tmp/` → allowed |
-| 4 — Safe bash allowlist | `ls`, `cat`, `git status`, `git log` — allowed even when fail-closed | `ls -la` → allowed |
-| 4.5 — Compound allow | Read-only compounds (`git status && git log`, `ls \| head`) — every segment independently safe-readonly + non-destructive + charset-clean | `git status && git log` → allowed |
-| 5 — Fail-closed | If state missing, gates unknown, or config unavailable → block everything except reads | No state.json → blocked |
-| 6 — Phase-specific | During review phases: write/edit/git commit blocked. During execution: destructive commands blocked (stricter policy) | PRD review phase + `git commit` → blocked |
-| 6.5 — Session-close gate | `git push` / `bd dolt push` blocked when `session_close.status === "open"` (protocol started but not completed). Operator-side state field; prose claims of "closed" are non-authoritative | Agent claims "session closed" + `git push` without running `cli.js protocol complete session-close` → blocked |
+| Layer                     | What it checks                                                                                                                                                                                        | Example                                                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 0 — Trust-root paths      | No tool may write/read state.json, workflow.yaml, verdict files, /proc, or plugin source                                                                                                              | AI tries to write state.json → blocked                                                                        |
+| 1 — Catastrophic denylist | Hardened: `rm -rf /`, `dd`, `mkfs` + wrapper-recursion (`env rm`), structural (`{rm,ls}`), newline injection, env-prefix smuggling (`LD_PRELOAD`), PATH-qualified (`/bin/rm`) — blocked in all phases | AI tries `env rm -rf /` → blocked                                                                             |
+| 2 — Sudo                  | Never allowed, any phase                                                                                                                                                                              | `sudo apt update` → blocked                                                                                   |
+| 3 — Safe read-only tools  | `read`, `grep`, `glob`, `websearch` — always allowed                                                                                                                                                  | `read file.js` → allowed                                                                                      |
+| 3.5 — MCP classification  | External MCP tools classified as read/write/unknown; unknown denied by default                                                                                                                        | `myfiles_unknown_tool` → blocked                                                                              |
+| 3.7 — Sandbox allowlist   | If cwd resolves into a `sandbox_paths` prefix AND command matches `sandbox_allowed_commands` → allowed with audit (Layers 0–3.5 still apply)                                                          | `npm install` in `/tmp/` → allowed                                                                            |
+| 4 — Safe bash allowlist   | `ls`, `cat`, `git status`, `git log` — allowed even when fail-closed                                                                                                                                  | `ls -la` → allowed                                                                                            |
+| 4.5 — Compound allow      | Read-only compounds (`git status && git log`, `ls \| head`) — every segment independently safe-readonly + non-destructive + charset-clean                                                             | `git status && git log` → allowed                                                                             |
+| 5 — Fail-closed           | If state missing, gates unknown, or config unavailable → block everything except reads                                                                                                                | No state.json → blocked                                                                                       |
+| 6 — Phase-specific        | During review phases: write/edit/git commit blocked. During execution: destructive commands blocked (stricter policy)                                                                                 | PRD review phase + `git commit` → blocked                                                                     |
+| 6.5 — Session-close gate  | `git push` / `bd dolt push` blocked when `session_close.status === "open"` (protocol started but not completed). Operator-side state field; prose claims of "closed" are non-authoritative            | Agent claims "session closed" + `git push` without running `cli.js protocol complete session-close` → blocked |
 
 Enforcement is via `throw` — the tool call is aborted, not just annotated.
 
@@ -313,16 +317,16 @@ Operator state lives outside the repo at `~/.sisyphus/` (gitignored):
 
 ## Key concepts
 
-| Term | Meaning |
-|------|---------|
-| **Fail-closed** | If anything is uncertain (missing state, unknown gates, invalid config), block all actions by default. The safe default is "no." |
-| **Phase gate** | A checkpoint the AI cannot pass on its own. PRD and plan review phases block writes and commits until a human signs a verdict. |
-| **HMAC verdict** | A cryptographic signature proving a human approved advancing a phase. The AI cannot forge it; produced by `cli.js`. |
-| **Trust-root** | The canonical state location (`~/.sisyphus/`) and protected paths the AI is never allowed to edit — enforced unconditionally by Layer 0. |
-| **Skill pack** | A `SKILL.md` file that teaches the AI one specific task. |
-| **Agent routing** | OpenCode dispatches work to 18 agents or 9 categories, each with its own model and permissions. |
-| **Wave** | A unit of execution within the Execution phase — one or more slices shipped together with evidence logging. |
-| **Slice** | A vertical-slice issue (from issue-creator) that wave-executor picks up and ships through goal-backward verification. |
+| Term              | Meaning                                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fail-closed**   | If anything is uncertain (missing state, unknown gates, invalid config), block all actions by default. The safe default is "no."         |
+| **Phase gate**    | A checkpoint the AI cannot pass on its own. PRD and plan review phases block writes and commits until a human signs a verdict.           |
+| **HMAC verdict**  | A cryptographic signature proving a human approved advancing a phase. The AI cannot forge it; produced by `cli.js`.                      |
+| **Trust-root**    | The canonical state location (`~/.sisyphus/`) and protected paths the AI is never allowed to edit — enforced unconditionally by Layer 0. |
+| **Skill pack**    | A `SKILL.md` file that teaches the AI one specific task.                                                                                 |
+| **Agent routing** | OpenCode dispatches work to 18 agents or 9 categories, each with its own model and permissions.                                          |
+| **Wave**          | A unit of execution within the Execution phase — one or more slices shipped together with evidence logging.                              |
+| **Slice**         | A vertical-slice issue (from issue-creator) that wave-executor picks up and ships through goal-backward verification.                    |
 
 ## Security design
 
@@ -367,12 +371,16 @@ attack surface analysis.
 Most agent safety approaches fall into one of three buckets. Sisyphus is a
 fourth.
 
-| Pattern | What it does | What it doesn't do |
-|---------|--------------|---------------------|
-| **Confirm-each-action** (common in coding assistants) | Prompts the operator before every tool call | Doesn't scale — operator either rubber-stamps or does the work themselves |
-| **Process sandbox** (container/namespace isolation) | Limits blast radius at the OS level | Doesn't prevent the agent from doing approved-but-wrong things inside the sandbox; doesn't gate workflow phases |
-| **Tool allowlist / RBAC** | Restricts which tools exist | Doesn't enforce sequencing or review gates; agent can still self-approve within its allowed set |
-| **Sisyphus (this repo)** | Cryptographic phase gates + fail-closed defaults + trust-root path protection + workflow state machine | Requires OpenCode as the agent runtime; not a standalone sandbox |
+| Pattern                                               | What it does                                                                                           | What it doesn't do                                                                                              |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| **Confirm-each-action** (common in coding assistants) | Prompts the operator before every tool call                                                            | Doesn't scale — operator either rubber-stamps or does the work themselves                                       |
+| **Process sandbox** (container/namespace isolation)   | Limits blast radius at the OS level                                                                    | Doesn't prevent the agent from doing approved-but-wrong things inside the sandbox; doesn't gate workflow phases |
+| **Tool allowlist / RBAC**                             | Restricts which tools exist                                                                            | Doesn't enforce sequencing or review gates; agent can still self-approve within its allowed set                 |
+| **Sisyphus (this repo)**                              | Cryptographic phase gates + fail-closed defaults + trust-root path protection + workflow state machine | Requires OpenCode as the agent runtime; not a standalone sandbox                                                |
+| **Confirm-each-action** (common in coding assistants) | Prompts the operator before every tool call                                                            | Doesn't scale — operator either rubber-stamps or does the work themselves                                       |
+| **Process sandbox** (container/namespace isolation)   | Limits blast radius at the OS level                                                                    | Doesn't prevent the agent from doing approved-but-wrong things inside the sandbox; doesn't gate workflow phases |
+| **Tool allowlist / RBAC**                             | Restricts which tools exist                                                                            | Doesn't enforce sequencing or review gates; agent can still self-approve within its allowed set                 |
+| **Sisyphus (this repo)**                              | Cryptographic phase gates + fail-closed defaults + trust-root path protection + workflow state machine | Requires OpenCode as the agent runtime; not a standalone sandbox                                                |
 
 The distinctive property: **the agent cannot advance the workflow without
 operator signature, even if every individual action is otherwise allowed.**
