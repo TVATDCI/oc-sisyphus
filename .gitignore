@@ -27,6 +27,10 @@ opencode.json.full
 *.tmp
 *.temp
 
+# Python bytecode cache (scripts/__pycache__ from bd_remember etc.)
+__pycache__/
+*.pyc
+
 # Build artifacts (only ignore root build dirs, not plugin dist/)
 build/
 .next/
