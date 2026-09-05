@@ -34,11 +34,6 @@
       ],
       "enabled": true,
       "timeout": 30000
-    },
-    "semble": {
-      "type": "local",
-      "command": ["semble", "mcp"],
-      "enabled": true
     }
   },
   "lsp": true

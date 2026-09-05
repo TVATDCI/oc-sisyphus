@@ -59,24 +59,21 @@ grep_app_searchGitHub({ query: "(?s)function.*authenticate", useRegexp: true, la
 - Filter by `language`, `repo`, or `path` to narrow results
 
 ### Semble (Code Search)
-Semantic code search for any local or remote repo. Available as MCP tools or CLI. Prefer over `Grep`/`Glob`/`Read` for any question about how code works — uses ~98% fewer tokens than grep+read.
 
-**MCP tools** (auto-available from `semble` server in opencode.json config):
-- `search(query, repo, top_k?)` — search repo by intent
-- `find_related(file_path, line, repo, top_k?)` — find code similar to a known location
+**Semble tools unavailable pending recovery** — the `semble` binary never
+migrated to this desk and its MCP entry was removed from `opencode.json`
+(2026-09-05); `Grep`/`Read` fallback is the primary code-search path for now.
+(Legacy usage below retained for the CLI fallback if `semble` is reinstalled.)
 
-**Bash fallback:**
 ```bash
 semble search "your query" ./path
 semble find-related src/file.py 42 ./path
 ```
 
-Indexes in ~250ms, queries in ~1.5ms. CPU-only, no API keys needed.
-
 ## Recommended Workflow
 
 ```
-1. semble search → semantic code search (prefer over grep)
+1. Grep/Read → local code search (semble unavailable till recovery)
 2. websearch → find relevant pages or docs
 3. context7_resolve-library-id → find official docs
 4. context7_query-docs → get API details

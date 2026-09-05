@@ -308,12 +308,16 @@ the cryptographic signature — never from forgeable text.
 ├── scripts/                   # Git hooks, drift checks, validators, MCP wrapper
 ├── agents/                    # Subagent definitions with permissions
 ├── prompts/                   # External agent prompts (file:// archive for prompt_append)
+├── sisyphus/                  # RECOVERY BASELINE — workflow.yaml + RECOVERY.md copies
 └── .github/workflows/ci.yml   # CI: test + nightly canary
 ```
 
 Operator state lives outside the repo at `~/.sisyphus/` (gitignored):
 `state.json`, `workflow.yaml`, `notepads/` (signed verdicts), `evidence/`,
-`plans/`, `hotcache.md`.
+`plans/`, `hotcache.md`. The `sisyphus/` dir above holds recovery-baseline
+copies of `workflow.yaml` and `RECOVERY.md`; the live `~/.sisyphus/` files
+remain authoritative runtime state — the repo copies exist so a rebuilt desk
+can restore the gates and runbook without hunting for the originals.
 
 ## Key concepts
 
