@@ -319,6 +319,16 @@ copies of `workflow.yaml` and `RECOVERY.md`; the live `~/.sisyphus/` files
 remain authoritative runtime state — the repo copies exist so a rebuilt desk
 can restore the gates and runbook without hunting for the originals.
 
+### Per-desk omo variants (two-desk contract)
+
+`omo.tnt.jsonc` / `omo.ddd.jsonc` at repo root are the tracked per-desk omo
+configs (the only two sanctioned divergences — models via variant choice;
+identity stays local, never committed). Deploy: `bash scripts/deploy-omo.sh`
+(hostname-switched: `tnt` → omo.tnt.jsonc, `dropdeaddev` → omo.ddd.jsonc; backs
+up the live file before any real overwrite; identical content deploys as a
+no-op). Run `omo doctor` after deploying. Full contract: `00-STRUCTURE.md` in
+the dotfiles repo (RATIFIED 2026-09-05).
+
 ## Key concepts
 
 | Term              | Meaning                                                                                                                                  |
