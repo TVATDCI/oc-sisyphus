@@ -34,6 +34,15 @@
       ],
       "enabled": true,
       "timeout": 30000
+    },
+    "codegraph": {
+      "type": "local",
+      "command": [
+        "codegraph",
+        "serve",
+        "--mcp"
+      ],
+      "enabled": true
     }
   },
   "lsp": true

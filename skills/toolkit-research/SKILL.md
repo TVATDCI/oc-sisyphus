@@ -58,11 +58,31 @@ grep_app_searchGitHub({ query: "(?s)function.*authenticate", useRegexp: true, la
 - Use `useRegexp: true` for flexible patterns
 - Filter by `language`, `repo`, or `path` to narrow results
 
+### Codegraph (semantic code search) — PRIMARY local code search
+
+MCP tools (preferred): `codegraph_explore` etc. — registered in `opencode.json`
+2026-09-05 via the CLI's own install path (`~/.omo/codegraph/bin/codegraph
+install opencode`), not hand-edited.
+
+```bash
+# CLI fallback
+codegraph explore "<question>" .
+codegraph query "<symbol>"
+codegraph node <file>:<line>
+```
+
+Index lives at `~/.omo/codegraph/projects/` (canonical; repo-local
+`.codegraph/` is a legacy gitignored copy). After large changes: `codegraph sync`.
+
 ### Semble (Code Search)
 
 **Semble tools unavailable pending recovery** — the `semble` binary never
 migrated to this desk and its MCP entry was removed from `opencode.json`
-(2026-09-05); `Grep`/`Read` fallback is the primary code-search path for now.
+(2026-09-05). Provenance identified 2026-09-05: **MinishLab/semble**
+(github.com/MinishLab/semble, Model2Vec+BM25) — recorded, NOT installed;
+recovery deferred in favor of codegraph (above). Benchmark context retained:
+semble −59% / codegraph −37% vs grep+read baseline (May-29 runs, `benchmark/`).
+`Grep`/`Read` remains the zero-dependency fallback.
 (Legacy usage below retained for the CLI fallback if `semble` is reinstalled.)
 
 ```bash
@@ -73,10 +93,11 @@ semble find-related src/file.py 42 ./path
 ## Recommended Workflow
 
 ```
-1. Grep/Read → local code search (semble unavailable till recovery)
-2. websearch → find relevant pages or docs
-3. context7_resolve-library-id → find official docs
-4. context7_query-docs → get API details
-5. grep_app_searchGitHub → see real implementation examples
-6. webfetch → pull specific pages for deep reading
+1. codegraph (codegraph_explore MCP; CLI fallback `codegraph explore/query/node`) → semantic local code search
+2. Grep/Read → zero-dependency fallback when codegraph is unavailable
+3. websearch → find relevant pages or docs
+4. context7_resolve-library-id → find official docs
+5. context7_query-docs → get API details
+6. grep_app_searchGitHub → see real implementation examples
+7. webfetch → pull specific pages for deep reading
 ```
