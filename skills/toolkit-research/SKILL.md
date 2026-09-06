@@ -62,7 +62,10 @@ grep_app_searchGitHub({ query: "(?s)function.*authenticate", useRegexp: true, la
 
 MCP tools (preferred): `codegraph_explore` etc. — registered in `opencode.json`
 2026-09-05 via the CLI's own install path (`~/.omo/codegraph/bin/codegraph
-install opencode`), not hand-edited.
+install opencode`), not hand-edited. Binary reprovisioned 2026-09-06:
+user-level via mise (`npm:@colbymchenry/codegraph@1.5.0`, the same upstream
+pin oh-my-openagent uses) — `codegraph` resolves on PATH, no `~/.omo`
+dependency; reproducible via `scripts/install-codegraph.sh` in this repo.
 
 ```bash
 # CLI fallback
@@ -71,8 +74,9 @@ codegraph query "<symbol>"
 codegraph node <file>:<line>
 ```
 
-Index lives at `~/.omo/codegraph/projects/` (canonical; repo-local
-`.codegraph/` is a legacy gitignored copy). After large changes: `codegraph sync`.
+Indexes live per-project (repo-local `.codegraph/`, created by
+`codegraph init`; `~/.omo/codegraph/projects/` was the old omo-provisioned
+layout — gone since the restore). After large changes: `codegraph sync`.
 
 ### Semble (Code Search)
 
