@@ -17,7 +17,7 @@
 #
 # Ground-truth table (current system state):
 #   18 agents | 9 categories | 14 rule files | 47 skill directories | 8 subagent .md
-#   0 model: lines | 18 scripts | 19 src/ modules | 3 JSONL baseline runs
+#   0 model: lines | 20 scripts | 19 src/ modules | 3 JSONL baseline runs
 #   648 unit tests | 2 agents have write access
 #
 # Design:
@@ -93,9 +93,11 @@ extract_p3() {
 }
 
 # Pattern 4: Prose assertion with parenthetical (line 152, 155, 158)
-#   grep -E '^\s*\b[0-9]+\b\s+([A-Z][a-zA-Z]+(?:\s+[a-zA-Z]+)*?)\s*(\(.+\))?:'
+#   ERE-safe form (no (?:...) non-capturing group, no lazy *? — POSIX ERE
+#   parses a bare '?' after '(' as "? at start of expression" warning)
+#   grep -E '^\s*\b[0-9]+\b\s+[A-Z][a-zA-Z]+(\s+[a-zA-Z]+)*\s*(\(.+\))?:'
 extract_p4() {
-  local greppat='^\s*\b[0-9]+\b\s+([A-Z][a-zA-Z]+(?:\s+[a-zA-Z]+)*?)\s*(\(.+\))?:'
+  local greppat='^\s*\b[0-9]+\b\s+[A-Z][a-zA-Z]+(\s+[a-zA-Z]+)*\s*(\(.+\))?:'
   local re='^[[:space:]]*([0-9]+)[[:space:]]+([A-Z][a-zA-Z]+)'
   while IFS=: read -r ln rest; do
     is_excluded "$ln" && continue
@@ -142,13 +144,18 @@ if [ "${1:-}" = "--self-test" ]; then
     exit 1
   fi
 
-  echo "==> Self-test 2/3: breaking a claim (18 agents -> 99 agents)..."
+  echo "==> Self-test 2/3: breaking a claim (# 8 subagent -> # 99 subagent)..."
   TMP_DOC=$(mktemp)
   cp "$DOC_FILE" "$TMP_DOC"
-  sed -i '0,/18 agents/s//99 agents/' "$TMP_DOC"
+  # Retarget note (2nd occurrence of the L-historical trap, fixed 2026-09-07):
+  # breaking a *textual* first occurrence is useless if no pattern extracts it —
+  # '18 Named Agents' (L244) extracts noun 'Named' (unmapped), and bare '18 agents'
+  # first lands in excluded timeline L143. Break the tree-annotation claim P2
+  # actually verifies: '# 8 subagent' on the agents/ line.
+  sed -i '0,/# 8 subagent/s//# 99 subagent/' "$TMP_DOC"
   if DOC_CLAIMS_FILE="$TMP_DOC" bash "$0" 2>&1; then
     rm -f "$TMP_DOC"
-    echo "FAIL: guard should have detected drift (18->99 agents)"
+    echo "FAIL: guard should have detected drift (8->99 subagent)"
     exit 1
   fi
   echo "==> PASS: guard correctly caught drift"
