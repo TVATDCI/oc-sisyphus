@@ -2,24 +2,19 @@
 name: scaffolding-audit
 description: |
   Audit prompt/skill scaffolding for stale model claims when models or plans
-  change — the 9-step-harness Step-9 pruning gap, closed (sis twin of the pi
-  scaffolding-audit skill; both landings consume one hash-pinned shared
-  spec). Runs a deterministic 5-class scan (historical model identifiers,
-  workaround prose, era-pinned quota constants, doctrine residue, dated
-  knowledge) over sis routing surfaces — the omo binding config (agents +
-  categories: primary assignments + fallback_models chains, JSONC-aware
-  parse), the skill tree, and repo-root routing/count docs including
-  COMPLETE-CODEBASE.md — plus a skill-count claim verification against the
-  self-enumerated tree, a doctrine diff anchored to the last audited commit,
-  a manifest-diff drift check, and the `omo doctor` validation leg. Read-only
-  and propose-only: flags carry file:line + class + verbatim quote +
-  suggested action; the operator arbitrates every change. Triggers:
-  "scaffolding audit", "stale scaffolding", "audit routing text", "model
-  changed what's stale", "drift check", "routing state drifted", "run
-  scaffolding-audit". Do NOT use for: live endpoint/plan verification
-  (model-audit's pi-domain leg), skill-set gap/overlap maps (skill-auditor),
-  applying any edit it proposes (propose-only), or pi-side surfaces (the pi
-  landing's domain).
+  change — the 9-step-harness Step-9 pruning gap, closed (sis twin of the
+  pi skill; one hash-pinned shared spec). Deterministic 5-class scan
+  (historical model ids, workaround prose, era-pinned quota constants,
+  doctrine residue, dated knowledge) over sis routing surfaces — omo
+  binding config (agents + categories, primary + fallback_models chains),
+  the skill tree, repo-root routing/count docs — plus skill-count claim
+  verification, doctrine diff vs the last audited commit, manifest-diff
+  drift check, and the omo doctor leg. Read-only, propose-only: flags carry
+  file:line + class + quote + suggested action; the operator arbitrates
+  every change. Triggers: "scaffolding audit", "stale scaffolding",
+  "audit routing text", "drift check", "routing state drifted". Do NOT use
+  for: live endpoint verification (model-audit), skill gap/overlap maps
+  (skill-auditor), applying proposed edits, or pi-side surfaces.
 ---
 
 # Scaffolding Audit (sis twin)
