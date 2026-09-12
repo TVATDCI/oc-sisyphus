@@ -22,7 +22,7 @@
    │ └── commands/ # Slash-command definitions (reflection)
    │
    ├── 3. SKILL LAYER
-    │ ├── skills/ # 47 real skill directories + 1 \_shared refs (48 total)
+    │ ├── skills/ # 51 real skill directories + 1 \_shared refs (52 total)
    │ ├── each has SKILL.md + optional scripts/evals
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator; operator-owned fan-out review: orchestrator-review (fork of plugin-bundled review-work; Sisyphus gate lanes — code-review + security-auditor + ui-auditor + goal-verify + conditional regression-gate + oracle second-opinion)
    │
