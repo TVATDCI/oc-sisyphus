@@ -1,13 +1,13 @@
 {
-  "recorded-at": "2026-09-13T12:49:30.822Z",
+  "recorded-at": "2026-09-13T15:28:14.007Z",
   "surface-scope": "sis",
   "last-audit-commit": {
-    "~/.config/opencode": "0ee6e4d166dc640ad780c35c516b95fdbedec575"
+    "~/.config/opencode": "1dd133ba02f574c63bb36aca11a67d04da792c5a"
   },
   "model-state": {
     "source": {
       "path": "~/.omo/omo.jsonc",
-      "sha256": "206782c6b582fe6b9f9db626c62904bbcd7bd2938858e8442fc89c9486e3e2c9"
+      "sha256": "92907fe17a8336ef05123996c2c65e5fc89162d900347e4bed7cef2abceed1d2"
     },
     "bindings": {
       "agents/sisyphus": "zai-coding-plan/glm-5.3",
@@ -43,7 +43,7 @@
         "opencode-go/glm-5.3",
         "opencode-go/grok-4.6",
         "opencode-go/kimi-k2.7-code",
-        "opencode/glm-5.2"
+        "opencode/glm-5.3"
       ],
       "agents/hephaestus": [
         "zai-coding-plan/glm-5-2",
