@@ -119,7 +119,7 @@ Runtime model and fallbacks are resolved from `~/.omo/omo.jsonc` (`[opencode]` s
 **Rationale:** Website analysis requires visual interpretation, tech stack inference, and design system extraction — tasks that benefit from strong multimodal and reasoning capabilities.
 
 **Model Transparency:**
-When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.2 via deep").
+When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.3 via deep").
 
 ## Input
 

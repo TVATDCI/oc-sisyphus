@@ -1,0 +1,189 @@
+{
+  "recorded-at": "2026-09-13T12:49:30.822Z",
+  "surface-scope": "sis",
+  "last-audit-commit": {
+    "~/.config/opencode": "0ee6e4d166dc640ad780c35c516b95fdbedec575"
+  },
+  "model-state": {
+    "source": {
+      "path": "~/.omo/omo.jsonc",
+      "sha256": "206782c6b582fe6b9f9db626c62904bbcd7bd2938858e8442fc89c9486e3e2c9"
+    },
+    "bindings": {
+      "agents/sisyphus": "zai-coding-plan/glm-5.3",
+      "agents/hephaestus": "zai-coding-plan/glm-5-turbo",
+      "agents/oracle": "opencode-go/kimi-k3",
+      "agents/librarian": "zai-coding-plan/glm-5.3-flash",
+      "agents/explore": "zai-coding-plan/glm-5.3-flash",
+      "agents/multimodal-looker": "zai-coding-plan/glm-5.3-flash",
+      "agents/prometheus": "zai-coding-plan/glm-5.3",
+      "agents/metis": "zai-coding-plan/glm-5.3",
+      "agents/momus": "opencode-go/grok-4.6",
+      "agents/atlas": "zai-coding-plan/glm-5.3",
+      "agents/sisyphus-junior": "zai-coding-plan/glm-5-turbo",
+      "agents/archivist": "zai-coding-plan/glm-5.3-flash",
+      "agents/athena": "zai-coding-plan/glm-5.3-flash",
+      "agents/auditor": "zai-coding-plan/glm-5.2",
+      "agents/explorer": "zai-coding-plan/glm-5.3-flash",
+      "agents/post-reviewer": "zai-coding-plan/glm-5.3",
+      "agents/reviewer": "zai-coding-plan/glm-5.3",
+      "agents/fullstack-dev-tester": "zai-coding-plan/glm-5.2",
+      "categories/visual-engineering": "zai-coding-plan/glm-5.3-flash",
+      "categories/ultrabrain": "zai-coding-plan/glm-5.3",
+      "categories/deep": "zai-coding-plan/glm-5.3",
+      "categories/artistry": "opencode-go/minimax-m3",
+      "categories/quick": "zai-coding-plan/glm-5.3-flash",
+      "categories/unspecified-low": "opencode-go/gpt-5.6-luna",
+      "categories/unspecified-high": "zai-coding-plan/glm-5.3",
+      "categories/writing": "zai-coding-plan/glm-5.3-flash",
+      "categories/git-commit-message": "zai-coding-plan/glm-5.3-flash"
+    },
+    "fallback-chains": {
+      "agents/sisyphus": [
+        "opencode-go/glm-5.3",
+        "opencode-go/grok-4.6",
+        "opencode-go/kimi-k2.7-code",
+        "opencode/glm-5.2"
+      ],
+      "agents/hephaestus": [
+        "zai-coding-plan/glm-5-2",
+        "opencode-go/kimi-k2.7-code",
+        "opencode-go/glm-5.2",
+        "opencode/glm-5.2"
+      ],
+      "agents/oracle": [
+        "opencode-go/grok-4.6",
+        "zai-coding-plan/glm-5.3",
+        "opencode/deepseek-v4-pro"
+      ],
+      "agents/librarian": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode-go/longcat-2.0",
+        "opencode/glm-5.3-flash"
+      ],
+      "agents/explore": [
+        "opencode-go/qwen3.8-flash",
+        "opencode-go/gpt-5.6-luna",
+        "opencode/glm-5.3-flash"
+      ],
+      "agents/multimodal-looker": [
+        "opencode-go/mimo-v2.5-pro",
+        "opencode-go/deepseek-v4-flash-vision-exp"
+      ],
+      "agents/prometheus": [
+        "opencode-go/kimi-k2.7-code",
+        "opencode-go/glm-5.3",
+        "opencode/glm-5.2"
+      ],
+      "agents/metis": [
+        "opencode-go/qwen3.8-max",
+        "opencode-go/glm-5.3",
+        "opencode/glm-5.2"
+      ],
+      "agents/momus": [
+        "zai-coding-plan/glm-5.3",
+        "opencode-go/qwen3.8-max",
+        "opencode/glm-5.2"
+      ],
+      "agents/atlas": [
+        "zai-coding-plan/glm-5-turbo",
+        "opencode-go/kimi-k2.7-code",
+        "opencode-go/glm-5.3",
+        "opencode/glm-5.2"
+      ],
+      "agents/sisyphus-junior": [
+        "zai-coding-plan/glm-5.3-flash",
+        "opencode-go/gpt-5.6-luna",
+        "opencode-go/qwen3.8-flash",
+        "opencode/glm-5.3-flash"
+      ],
+      "agents/archivist": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode/gpt-5.6-luna"
+      ],
+      "agents/athena": [
+        "zai-coding-plan/glm-4.7",
+        "opencode-go/gpt-5.6-luna",
+        "opencode/gpt-5.6-luna"
+      ],
+      "agents/auditor": [
+        "opencode-go/glm-5.2",
+        "opencode/glm-5.2"
+      ],
+      "agents/explorer": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode/gpt-5.6-luna"
+      ],
+      "agents/post-reviewer": [
+        "opencode-go/glm-5.3",
+        "opencode/glm-5.2"
+      ],
+      "agents/reviewer": [
+        "opencode-go/glm-5.3",
+        "opencode/glm-5.2"
+      ],
+      "agents/fullstack-dev-tester": [
+        "opencode-go/glm-5.2",
+        "opencode/glm-5.2"
+      ],
+      "categories/visual-engineering": [
+        "opencode-go/minimax-m3",
+        "opencode/qwen3.6-plus",
+        "zai-coding-plan/glm-5.3",
+        "opencode/glm-5.1"
+      ],
+      "categories/ultrabrain": [
+        "opencode-go/grok-4.6",
+        "opencode-go/kimi-k3",
+        "opencode-go/qwen3.8-max",
+        "opencode/deepseek-v4-pro"
+      ],
+      "categories/deep": [
+        "opencode-go/kimi-k2.7-code",
+        "opencode-go/grok-4.6",
+        "opencode-go/glm-5.3",
+        "opencode/glm-5.2"
+      ],
+      "categories/artistry": [
+        "qwen3.8-max",
+        "opencode-go/grok-4.6",
+        "zai-coding-plan/glm-5.3",
+        "opencode/gemini-3-flash"
+      ],
+      "categories/quick": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode/glm-5.3-flash",
+        "opencode/ling-3.0-flash-fin-free"
+      ],
+      "categories/unspecified-low": [
+        "zai-coding-plan/glm-5.3-flash",
+        "opencode/glm-5.3-flash"
+      ],
+      "categories/unspecified-high": [
+        "zai-coding-plan/glm-5-turbo",
+        "opencode-go/gpt-5.6-luna",
+        "opencode-go/kimi-k2.7-code",
+        "opencode/glm-5.2"
+      ],
+      "categories/writing": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode/gpt-5.6-luna",
+        "opencode/ling-3.0-flash-fin-free"
+      ],
+      "categories/git-commit-message": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode/glm-5.3-flash",
+        "opencode/ling-3.0-flash-fin-free"
+      ]
+    }
+  },
+  "finding-hashes": [
+    "9602e73f93d1a132",
+    "ff4b7e7f3ed82504",
+    "65f69f9ce9ea92c7",
+    "dacf78f3d22a5191",
+    "8e57a682c5cad656",
+    "939bb53e31bfb80e",
+    "147b4c228ff3991f"
+  ]
+}

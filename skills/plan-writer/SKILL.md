@@ -40,7 +40,7 @@ Runtime model and fallbacks are resolved from `~/.omo/omo.jsonc` (`[opencode]` s
 **Rationale:** Plan creation is mechanical — read PRD, organize slices, structure waves. Architectural reasoning is already done.
 
 **Model Transparency:**
-When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.2 via unspecified-high").
+When delegating to subagents, always report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.3 via unspecified-high").
 
 ## Input
 

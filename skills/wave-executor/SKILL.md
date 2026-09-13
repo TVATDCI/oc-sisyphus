@@ -66,7 +66,7 @@ Executes one wave of an approved plan. Performs research, strategy, execution, a
 
 6. **Fix attempt limit: After 3 auto-fix attempts on a single task**, STOP fixing — document remaining issues in wave summary under "Deferred Issues". Do NOT restart builds hoping issues resolve themselves. [See Deviation Rules]
 
-7. **Model Transparency (MANDATORY):** When delegating to subagents, you MUST report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.2 via unspecified-high"). [See Model Selection]
+7. **Model Transparency (MANDATORY):** When delegating to subagents, you MUST report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.3 via unspecified-high"). [See Model Selection]
 
 8. **Without an eval, you are just changing words in a paragraph and hoping that it sticks.** Eval-first discipline (§6 of AGENTS.md) applies to all skill creation and modification. [Cross-skill constraint from [[9-step-harness]]]
 
@@ -113,7 +113,7 @@ Runtime model and fallbacks are resolved from `~/.omo/omo.jsonc` (`[opencode]` s
 **Escalation rule:** If tests fail after 2 attempts, retry with `category="deep"` for complex debugging.
 
 **Model Transparency (MANDATORY):**
-When delegating to subagents, you MUST report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.2 via unspecified-high").
+When delegating to subagents, you MUST report: `Executing with [model] via [category]` (e.g., "Executing with glm-5.3 via unspecified-high").
 
 **Also record execution metadata:**
 ```bash
@@ -696,7 +696,7 @@ Checkpoints formalize human-in-the-loop points for verification and decisions, n
     ## Wave {N} Summary
 
     **Model Used:** Executing with [model] via [category]
-    *(e.g., "Executing with glm-5.2 via unspecified-high")*
+    *(e.g., "Executing with glm-5.3 via unspecified-high")*
 
     ### Completed
     - {what was completed in this wave}
