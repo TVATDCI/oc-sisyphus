@@ -23,9 +23,17 @@
  * state to ~/.omo/omo.jsonc.bak.20260905-200307). The backup file is
  * machine-read at run time and passed through the SAME extractor as the
  * live file. No synthetic inventions (PRD §12).
+ *
+ * BUILD #14 patch 0007 (2026-09-14, per TNT's F1 ack — desk-portability):
+ * the pre/post comparison fixture is resolved at run time as the NEWEST
+ * omo.jsonc.bak* in the .omo dir (readdir + filter + mtime sort), not a
+ * hard-coded ddd-local filename. Desks with no .bak skip the
+ * fixture-dependent checks with a NAMED skip — never a faked fixture,
+ * never a failure. The frozen spot-check runs only when the resolved
+ * backup IS the 2026-09-05 provenance fixture named above.
  */
 
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -53,15 +61,32 @@ import type { Surface, SkillTree } from "../scripts/lib/surfaces.ts";
 const SCRIPT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const SKILL_DIR = join(SCRIPT_DIR, "..");
 const CONFIG_ROOT = join(SKILL_DIR, "..", "..");
-const LIVE_OMO = join(CONFIG_ROOT, "..", "..", ".omo", "omo.jsonc");
-const BAK_OMO =
-  join(CONFIG_ROOT, "..", "..", ".omo", "omo.jsonc.bak.20260905-200307");
+const OMO_DIR = join(CONFIG_ROOT, "..", "..", ".omo");
+const LIVE_OMO = join(OMO_DIR, "omo.jsonc");
+// Frozen spot-check fixture (PRD §12 provenance): only this backup may back
+// the hephaestus==glm-5.2 assertion below.
+const PROVENANCE_BAK = "omo.jsonc.bak.20260905-200307";
 const SPEC_SELF = join(SKILL_DIR, "spec", "spec-shared.md");
 const SPEC_PINNED_SHA =
   "962cddbda8635e8afc821a894482af0ed277f2fc216a94f6bc609c084c6200d3";
 
+/** mtime-ordered (bak filenames use two timestamp formats — lexical sort would misorder); undefined when none. */
+function newestBak(): string | undefined {
+  try {
+    return readdirSync(OMO_DIR)
+      .filter((n) => n.startsWith("omo.jsonc.bak"))
+      .map((n) => ({ n, mtime: statSync(join(OMO_DIR, n)).mtimeMs }))
+      .sort((a, b) => b.mtime - a.mtime)[0]?.n;
+  } catch {
+    return undefined;
+  }
+}
+const BAK_NAME = newestBak();
+const BAK_OMO = BAK_NAME === undefined ? undefined : join(OMO_DIR, BAK_NAME);
+
 let passed = 0;
 let failed = 0;
+let skipped = 0;
 function check(name: string, cond: boolean): void {
   if (cond) {
     passed++;
@@ -70,6 +95,10 @@ function check(name: string, cond: boolean): void {
     failed++;
     console.error(`NOT OK - ${name}`);
   }
+}
+function skip(reason: string): void {
+  skipped++;
+  console.log(`skip - ${reason}`);
 }
 
 function tryOutcome(fn: () => boolean): boolean {
@@ -160,10 +189,12 @@ check(
 // ─── model-state extraction ──────────────────────────────────────────────────
 
 const currentText = readFileSync(LIVE_OMO, "utf8");
-const preEditText = readFileSync(BAK_OMO, "utf8");
+const preEditText = BAK_OMO === undefined ? undefined : readFileSync(BAK_OMO, "utf8");
+const preEditState = preEditText === undefined
+  ? undefined
+  : extractModelState(preEditText, OMO_REL);
 
 const currentState = extractModelState(currentText, OMO_REL);
-const preEditState = extractModelState(preEditText, OMO_REL);
 
 check(
   "model-state: 27 fallback chains — 18 agents + 9 categories (AC-9 count)",
@@ -180,10 +211,17 @@ check(
   Object.keys(currentState.bindings).length === 27 &&
     Object.values(currentState.bindings).every((m) => m.includes("/")),
 );
-check(
-  "model-state: frozen pre-edit spot-check (agents/hephaestus primary, from the 2026-09-05 backup)",
-  tryOutcome(() => preEditState.bindings["agents/hephaestus"] === "zai-coding-plan/glm-5.2"),
-);
+if (preEditState === undefined) {
+  skip("no .bak fixture on this desk (desk-portable)");
+} else if (BAK_NAME !== PROVENANCE_BAK) {
+  skip("newest .bak is not the 2026-09-05 provenance fixture (desk-portable)");
+} else {
+  const pre = preEditState;
+  check(
+    "model-state: frozen pre-edit spot-check (agents/hephaestus primary, from the 2026-09-05 backup)",
+    tryOutcome(() => pre.bindings["agents/hephaestus"] === "zai-coding-plan/glm-5.2"),
+  );
+}
 check(
   "model-state: source anchor carries path + 64-hex sha256",
   currentState.source.path === OMO_REL &&
@@ -194,36 +232,48 @@ check(
   JSON.stringify(extractModelState(currentText, OMO_REL)) ===
     JSON.stringify(currentState),
 );
-check(
-  "model-state: pre-edit (2026-09-05 backup) ≠ current — the binding-edit drift class is visible",
-  JSON.stringify(preEditState) !== JSON.stringify(currentState),
-);
-check(
-  "model-state: pre-edit vs current BINDINGS differ (9ede93a deployment changed real bindings, not just comments)",
-  JSON.stringify(preEditState.bindings) !== JSON.stringify(currentState.bindings),
-);
+if (preEditState === undefined) {
+  skip("no .bak fixture on this desk (desk-portable)");
+} else {
+  check(
+    "model-state: pre-edit (newest .bak) ≠ current — the binding-edit drift class is visible",
+    JSON.stringify(preEditState) !== JSON.stringify(currentState),
+  );
+}
+if (preEditState === undefined) {
+  skip("no .bak fixture on this desk (desk-portable)");
+} else {
+  check(
+    "model-state: pre-edit vs current BINDINGS differ (the newest real backup captures real binding changes, not just comments)",
+    JSON.stringify(preEditState.bindings) !== JSON.stringify(currentState.bindings),
+  );
+}
 
 // ─── drift-flag branch (both manifest fixtures + boundaries) ─────────────────
 
 const staleDir = tempStateDir();
 const staleManifestPath = join(staleDir, "manifest.json");
-writeFileSync(staleManifestPath, manifestJson(preEditState), "utf8");
+if (preEditState === undefined) {
+  skip("no .bak fixture on this desk (desk-portable)");
+} else {
+  writeFileSync(staleManifestPath, manifestJson(preEditState), "utf8");
+
+  const staleResult = checkDrift(
+    readFileSync(staleManifestPath, "utf8"),
+    currentState,
+  );
+  check(
+    "drift: stale manifest (pre-edit newest-.bak state vs live omo.jsonc) → exactly the reminder flag and nothing else",
+    staleResult.outcome === "stale" &&
+      staleResult.output === DRIFT_FLAG,
+  );
+}
 
 const freshDir = tempStateDir();
 const freshManifestPath = join(freshDir, "manifest.json");
 writeFileSync(freshManifestPath, manifestJson(currentState), "utf8");
 
 const missingDir = tempStateDir();
-
-const staleResult = checkDrift(
-  readFileSync(staleManifestPath, "utf8"),
-  currentState,
-);
-check(
-  "drift: stale manifest (pre-edit 9ede93a state vs live omo.jsonc) → exactly the reminder flag and nothing else",
-  staleResult.outcome === "stale" &&
-    staleResult.output === DRIFT_FLAG,
-);
 
 const freshResult = checkDrift(
   readFileSync(freshManifestPath, "utf8"),
@@ -337,7 +387,7 @@ check(
 
 // ─── summary ─────────────────────────────────────────────────────────────────
 
-console.log(`\n${passed} passed, ${failed} failed`);
+console.log(`\n${passed} passed, ${failed} failed, ${skipped} skipped`);
 if (failed > 0) {
   throw new Error(`${failed} test(s) failed (RED)`);
 }
