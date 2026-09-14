@@ -7,6 +7,15 @@
  *
  * Invocation: deno run --allow-read --allow-run=git --allow-env \
  *   --allow-write=<skill-dir>/state scripts/manifest.ts --scope=full
+ *
+ * BUILD #14 rider — idempotence guard: a run whose extracted state
+ * (model-state + finding-hashes) is unchanged from the prior manifest is a
+ * NO-OP (nothing written). Before the guard, `recorded-at` +
+ * `last-audit-commit` churned on every run, so a second run always produced
+ * a self-reference diff (commit-loop bait). Trade-off, accepted: when only
+ * non-routing commits land, the anchor is intentionally NOT advanced — the
+ * no-op notice makes that visible, and the next real state change
+ * re-records with a fresh anchor.
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -72,6 +81,11 @@ function headCommit(): string {
   }).trim();
 }
 
+/** Stable serialization for value comparison (same-producer key order). */
+function stableJson(value: unknown): string {
+  return JSON.stringify(value) ?? "undefined";
+}
+
 function main(): void {
   const scope = parseScope(process.argv.slice(2));
   if (scope === undefined) usage();
@@ -81,10 +95,14 @@ function main(): void {
   const twinText = readIfExists(SPEC_TWIN);
 
   let anchor: ManifestAnchor = {};
+  let priorManifest: Record<string, unknown> | undefined;
   const priorText = readIfExists(MANIFEST_PATH);
   if (priorText !== undefined) {
     try {
       const prior: unknown = JSON.parse(priorText);
+      if (typeof prior === "object" && prior !== null) {
+        priorManifest = prior as Record<string, unknown>;
+      }
       if (
         typeof prior === "object" && prior !== null &&
         "last-audit-commit" in prior
@@ -127,12 +145,32 @@ function main(): void {
   if (!result.hashIdentical) process.exit(3);
 
   const omoText = readFileSync(OMO_ABS, "utf8");
+  const nextModelState = extractModelState(omoText, OMO_REL);
+  const nextFindingHashes = result.flags.map((f) => f.hash);
+
+  // BUILD #14 idempotence guard: no-op when extracted state unchanged.
+  // Compares model-state + finding-hashes ONLY — recorded-at and
+  // last-audit-commit are deliberately excluded from the comparison
+  // (timestamp/anchor churn alone must never produce a manifest diff).
+  if (
+    priorManifest !== undefined &&
+    stableJson(priorManifest["model-state"]) === stableJson(nextModelState) &&
+    stableJson(priorManifest["finding-hashes"]) ===
+      stableJson(nextFindingHashes)
+  ) {
+    process.stdout.write(
+      "\nmanifest unchanged (model-state + finding-hashes identical to prior)" +
+        " — no-op, nothing written.\n",
+    );
+    return;
+  }
+
   const manifest = {
     "recorded-at": new Date().toISOString(),
     "surface-scope": "sis",
     "last-audit-commit": { "~/.config/opencode": headCommit() },
-    "model-state": extractModelState(omoText, OMO_REL),
-    "finding-hashes": result.flags.map((f) => f.hash),
+    "model-state": nextModelState,
+    "finding-hashes": nextFindingHashes,
   };
   mkdirSync(STATE_DIR, { recursive: true });
   // INV-1 exception (a): the skill's own state-dir manifest, explicit non-dry

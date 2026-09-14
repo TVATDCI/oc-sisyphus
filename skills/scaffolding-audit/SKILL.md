@@ -104,6 +104,30 @@ deno run --allow-read ~/.config/opencode/skills/scaffolding-audit/scripts/drift-
 Zero writes, O(manifest), at most one stdout reminder line. The wiring rides
 the existing session-begin slot only — no new infra, no daemon, no store.
 
+## Known upstream traps (watch list — BUILD #14, 2026-09-14)
+
+Context for the doctor leg (workflow step 4) and any future config-format
+work. Pinned facts — re-verify statuses before acting on them:
+
+- **Doctor's migration nudge is a known trap until the readers are fixed.**
+  `omo doctor` on 4.19.4 flags every `fallback_models` as deprecated and
+  nudges "Replace fallback_models with models, or run: oh-my-openagent
+  config migrate" (captured live 2026-09-14: 27 warnings against the
+  runtime config — embedded doctor output should be read WITH this note).
+  Following the nudge now converts to canonical `models[]` chains, which
+  zod strips and the legacy-only readers ignore (upstream #6868; fix PR
+  #7209 open) → silent default-model routing. Migration gate:
+  **5.0 stable + #7209 merged + #6567 resolved** (timing memo in the
+  build14 lane).
+- **Version pin.** Desk runs oh-my-openagent **4.19.4 exact** —
+  `package.json` dependency, `opencode.json` plugin spec, and the plugin
+  cache all pin it (never `@latest`; `auto_update:false`). The lockfile
+  root spec carried a stale `^4.19.4` caret (BUILD #14 patch 0003
+  reconciles). Upgrades are explicit operator actions only.
+- **Deploy-direction hazard.** The live `~/.omo/omo.jsonc` drifted ahead
+  of the repo variants; running `scripts/deploy-omo.sh` before refreshing
+  the variant from live would regress the chains (BUILD #14 findings F1).
+
 ## Vendoring (OPEN-1)
 
 `spec/spec-shared.md` is byte-identical across both landings (sha256
