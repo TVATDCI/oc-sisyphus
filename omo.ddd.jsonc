@@ -1,36 +1,71 @@
 // OMO configuration
+//
+// ⚠️ KNOWN TRAP (BUILD #14, 2026-09-14) — do NOT follow `omo doctor`'s
+// "Replace fallback_models with models / run config migrate" nudge yet.
+// On oh-my-openagent 4.19.4, canonical `models[]` chains are stripped by
+// zod at load and invisible to the legacy-only runtime readers (upstream
+// #6868; fix PR #7209 still open). Converting now = silent default-model
+// routing. Re-evaluate only when: 5.0 stable + #7209 merged + #6567 resolved.
+// See: herdr-collab/build14-omo-align/ (timing memo + findings).
+//
+// ⚠️ DEPLOY HAZARD: as of 2026-09-14 the LIVE ~/.omo/omo.jsonc on ddd has
+// drifted AHEAD of this variant (richer chains, extra concurrency entries).
+// Refresh this file from live before ever running scripts/deploy-omo.sh —
+// deploying the stale variant would regress the live chains.
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/omo.schema.json",
   "[opencode]": {
     "auto_update": false,
     "runtime_fallback": {
       "enabled": true,
-      "retry_on_errors": [400, 401, 403, 404, 429, 500, 502, 503, 504],
+      "retry_on_errors": [401, 403, 404, 429, 500, 502, 503, 504],
       "cooldown_seconds": 15,
-      "timeout_seconds": 10,
+      "timeout_seconds": 45,
       "notify_on_fallback": true,
       "restore_primary_after_cooldown": true,
     },
     "agents": {
       "sisyphus": {
         "prompt_append": "file://~/.config/opencode/prompts/sisyphus-guidance.md",
+        "model": "zai-coding-plan/glm-5.3",
+        "reasoning": "max",
+        "temperature": 0.1,
         "ultrawork": {
           "model": "zai-coding-plan/glm-5.3",
           "reasoning": "high",
         },
-        "model": "zai-coding-plan/glm-5.3",
-        "reasoning": "max",
         "fallback_models": [
           {
             "model": "opencode-go/glm-5.3",
+            "reasoning": "max",
+          },
+          {
+            "model": "opencode-go/grok-4.6",
+            "reasoning": "high",
+          },
+          {
+            "model": "opencode-go/kimi-k2.7-code",
+            "reasoning": "high",
+          },
+          {
+            "model": "opencode/glm-5.3",
           },
         ],
       },
       "hephaestus": {
         "prompt_append": "file://~/.config/opencode/prompts/hephaestus-guidance.md",
-        "model": "zai-coding-plan/glm-5.2",
+        "model": "zai-coding-plan/glm-5-turbo",
+        "reasoning": "medium",
         "temperature": 0.1,
         "fallback_models": [
+          {
+            "model": "zai-coding-plan/glm-5-2",
+            "reasoning": "low",
+          },
+          {
+            "model": "opencode-go/kimi-k2.7-code",
+            "reasoning": "medium",
+          },
           {
             "model": "opencode-go/glm-5.2",
           },
@@ -42,69 +77,94 @@
       "oracle": {
         "prompt_append": "file://~/.config/opencode/prompts/oracle-guidance.md",
         "model": "opencode-go/kimi-k3",
-        "reasoning": "high",
+        "reasoning": "max",
+        "temperature": 0.0,
         "fallback_models": [
           {
-            "model": "zai-coding-plan/glm-5.3",
+            "model": "opencode-go/grok-4.6",
+            "reasoning": "max",
           },
           {
-            "model": "opencode-go/grok-4.6",
+            "model": "zai-coding-plan/glm-5.3",
+            "reasoning": "max",
+          },
+          {
+            "model": "opencode/deepseek-v4-pro",
           },
         ],
       },
       "librarian": {
         "prompt_append": "file://~/.config/opencode/prompts/librarian-guidance.md",
         "model": "zai-coding-plan/glm-5.3-flash",
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "reasoning": "low",
         "fallback_models": [
-          {
-            "model": "zai-coding-plan/glm-4.7",
-          },
           {
             "model": "opencode-go/gpt-5.6-luna",
           },
           {
-            "model": "opencode/gpt-5.6-luna",
+            "model": "opencode-go/longcat-2.0",
+          },
+          {
+            "model": "opencode/glm-5.3-flash",
           },
         ],
       },
       "explore": {
         "prompt_append": "file://~/.config/opencode/prompts/explore-guidance.md",
         "model": "zai-coding-plan/glm-5.3-flash",
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "reasoning": "low",
         "fallback_models": [
           {
-            "model": "zai-coding-plan/glm-4.7",
+            "model": "opencode-go/qwen3.8-flash",
           },
           {
-            "model": "opencode-go/glm-5.3-flash",
+            "model": "opencode-go/gpt-5.6-luna",
+          },
+          {
+            "model": "opencode/glm-5.3-flash",
           },
         ],
       },
       "multimodal-looker": {
         "model": "zai-coding-plan/glm-5.3-flash",
+        "temperature": 1.0,
+        "top_p": 0.95,
         "fallback_models": [
-          {
-            "model": "opencode-go/mimo-v2.5-pro",
-          },
-          {
-            "model": "opencode/mimo-v2.5-free",
-          },
+          { "model": "opencode-go/mimo-v2.5-pro", "temperature": 0.2 },
+          { "model": "opencode-go/deepseek-v4-flash-vision-exp" },
         ],
       },
       "prometheus": {
         "prompt_append": "file://~/.config/opencode/prompts/prometheus-guidance.md",
-        "model": "zai-coding-plan/glm-5.2",
+        "model": "zai-coding-plan/glm-5.3",
+        "reasoning": "high",
+        "temperature": 0.1,
         "fallback_models": [
           {
-            "model": "opencode-go/glm-5.2",
+            "model": "opencode-go/kimi-k2.7-code",
+            "reasoning": "high",
           },
           {
-            "model": "opencode-go/glm-5.2",
+            "model": "opencode-go/glm-5.3",
+          },
+          {
+            "model": "opencode/glm-5.2",
           },
         ],
       },
       "metis": {
         "model": "zai-coding-plan/glm-5.3",
+        "reasoning": "high",
+        "temperature": 0.1,
         "fallback_models": [
+          {
+            "model": "opencode-go/qwen3.8-max",
+            "reasoning": "high",
+          },
           {
             "model": "opencode-go/glm-5.3",
           },
@@ -114,8 +174,36 @@
         ],
       },
       "momus": {
-        "model": "zai-coding-plan/glm-5.3",
+        "model": "opencode-go/grok-4.6",
+        "reasoning": "high",
+        "temperature": 0.1,
         "fallback_models": [
+          {
+            "model": "zai-coding-plan/glm-5.3",
+            "reasoning": "high",
+          },
+          {
+            "model": "opencode-go/qwen3.8-max",
+            "reasoning": "high",
+          },
+          {
+            "model": "opencode/glm-5.2",
+          },
+        ],
+      },
+      "atlas": {
+        "model": "zai-coding-plan/glm-5.3",
+        "reasoning": "medium",
+        "temperature": 0.1,
+        "fallback_models": [
+          {
+            "model": "zai-coding-plan/glm-5-turbo",
+            "reasoning": "low",
+          },
+          {
+            "model": "opencode-go/kimi-k2.7-code",
+            "reasoning": "medium",
+          },
           {
             "model": "opencode-go/glm-5.3",
           },
@@ -124,31 +212,26 @@
           },
         ],
       },
-      "atlas": {
-        "model": "zai-coding-plan/glm-5.3-flash",
-        "fallback_models": [
-          {
-            "model": "zai-coding-plan/glm-4.7",
-          },
-          {
-            "model": "opencode/deepseek-v4-flash",
-          },
-        ],
-      },
       "sisyphus-junior": {
         "model": "zai-coding-plan/glm-5-turbo",
+        "reasoning": "low",
+        "temperature": 1.0,
+        "top_p": 0.95,
         "fallback_models": [
           {
             "model": "zai-coding-plan/glm-5.3-flash",
           },
           {
-            "model": "opencode-go/kimi-k2.6",
+            "model": "opencode-go/gpt-5.6-luna",
+            "reasoning": "low",
           },
           {
-            "model": "opencode/kimi-k2.6",
+            "model": "opencode-go/qwen3.8-flash",
+          },
+          {
+            "model": "opencode/glm-5.3-flash",
           },
         ],
-        "temperature": 0.2,
       },
       "archivist": {
         "model": "zai-coding-plan/glm-5.3-flash",
@@ -191,7 +274,6 @@
         "temperature": 1.0,
         "top_p": 0.95,
         "reasoning": "max",
-        
         "fallback_models": [
           {
             "model": "opencode-go/gpt-5.6-luna",
@@ -238,12 +320,21 @@
     "categories": {
       "visual-engineering": {
         "model": "zai-coding-plan/glm-5.3-flash",
+        "reasoning": "high",
+        "temperature": 1.0,
+        "top_p": 0.95,
         "fallback_models": [
           {
-            "model": "opencode-go/glm-5.2",
+            "model": "opencode-go/minimax-m3",
+            "temperature": 0.7,
           },
           {
             "model": "opencode/qwen3.6-plus",
+          },
+          {
+            "model": "zai-coding-plan/glm-5.3",
+            "reasoning": "medium",
+            "temperature": 0.1,
           },
           {
             "model": "opencode/glm-5.1",
@@ -252,9 +343,21 @@
       },
       "ultrabrain": {
         "model": "zai-coding-plan/glm-5.3",
+        "reasoning": "max",
+        "temperature": 0.0,
         "fallback_models": [
           {
             "model": "opencode-go/grok-4.6",
+            "reasoning": "max",
+            "temperature": 0.0,
+          },
+          {
+            "model": "opencode-go/kimi-k3",
+            "reasoning": "max",
+          },
+          {
+            "model": "opencode-go/qwen3.8-max",
+            "reasoning": "high",
           },
           {
             "model": "opencode/deepseek-v4-pro",
@@ -263,9 +366,20 @@
       },
       "deep": {
         "model": "zai-coding-plan/glm-5.3",
+        "reasoning": "high",
+        "temperature": 0.1,
         "fallback_models": [
           {
+            "model": "opencode-go/kimi-k2.7-code",
+            "reasoning": "high",
+          },
+          {
+            "model": "opencode-go/grok-4.6",
+            "reasoning": "high",
+          },
+          {
             "model": "opencode-go/glm-5.3",
+            "reasoning": "high",
           },
           {
             "model": "opencode/glm-5.2",
@@ -273,19 +387,34 @@
         ],
       },
       "artistry": {
-        "model": "zai-coding-plan/glm-5.3-flash",
+        "model": "opencode-go/minimax-m3",
         "temperature": 0.7,
+        "top_p": 0.9,
         "fallback_models": [
           {
-            "model": "opencode-go/glm-5.1",
+            "model": "qwen3.8-max",
+            "reasoning": "low",
+            "temperature": 0.6,
+          },
+          {
+            "model": "opencode-go/grok-4.6",
+            "temperature": 0.7,
+          },
+          {
+            "model": "zai-coding-plan/glm-5.3",
+            "reasoning": "low",
+            "temperature": 0.8,
           },
           {
             "model": "opencode/gemini-3-flash",
+            "temperature": 0.7,
           },
         ],
       },
       "quick": {
         "model": "zai-coding-plan/glm-5.3-flash",
+        "temperature": 1.0,
+        "top_p": 0.95,
         "fallback_models": [
           {
             "model": "opencode-go/gpt-5.6-luna",
@@ -293,28 +422,43 @@
           {
             "model": "opencode/glm-5.3-flash",
           },
+          {
+            "model": "opencode/ling-3.0-flash-fin-free",
+          },
         ],
       },
       "unspecified-low": {
         "model": "opencode-go/gpt-5.6-luna",
+        "reasoning": "low",
         "temperature": 0.2,
         "fallback_models": [
           {
             "model": "zai-coding-plan/glm-5.3-flash",
           },
           {
-            "model": "opencode/glm-5.1",
+            "model": "opencode/glm-5.3-flash",
           },
         ],
       },
       "unspecified-high": {
         "model": "zai-coding-plan/glm-5.3",
+        "reasoning": "high",
+        "temperature": 0.1,
         "fallback_models": [
           {
-            "model": "opencode-go/gpt-5.6-luna",
+            "model": "zai-coding-plan/glm-5-turbo",
+            "reasoning": "low",
           },
           {
-            "model": "opencode/gpt-5.6-luna",
+            "model": "opencode-go/gpt-5.6-luna",
+            "reasoning": "low",
+          },
+          {
+            "model": "opencode-go/kimi-k2.7-code",
+            "reasoning": "medium",
+          },
+          {
+            "model": "opencode/glm-5.2",
           },
         ],
       },
@@ -334,12 +478,14 @@
       },
       "git-commit-message": {
         "model": "zai-coding-plan/glm-5.3-flash",
+        "temperature": 1.0,
+        "top_p": 0.95,
         "fallback_models": [
           {
             "model": "opencode-go/gpt-5.6-luna",
           },
           {
-            "model": "opencode/gpt-5.6-luna",
+            "model": "opencode/glm-5.3-flash",
           },
           {
             "model": "opencode/ling-3.0-flash-fin-free",
@@ -363,13 +509,22 @@
         "zai-coding-plan/glm-5.2": 3,
         "zai-coding-plan/glm-5-turbo": 5,
         "zai-coding-plan/glm-4.7": 5,
+        "opencode-go/grok-4.6": 3,
+        "opencode-go/kimi-k2.7-code": 3,
+        "opencode-go/qwen3.8-max": 3,
+        "opencode-go/qwen3.8-flash": 3,
+        "opencode-go/glm-5.3": 3,
+        "opencode-go/glm-5.2": 3,
+        "opencode-go/glm-5.1": 3,
+        "opencode-go/kimi-k3": 2,
+        "opencode-go/gpt-5.6-luna": 5,
+        "opencode-go/glm-5.3-flash": 5,
+        "opencode-go/mimo-v2.5-pro": 1,
+        "opencode-go/kimi-k2.6": 2,
         "opencode/glm-5.2": 2,
         "opencode/glm-5.1": 3,
-        "opencode/chatglm-5.6-luna": 5,
-        "opencode/kimi-k3": 2,
-        "opencode/kimi-k2.7-code": 2,
+        "opencode/gpt-5.6-luna": 5,
         "opencode/qwen3.6-plus": 1,
-        "opencode/mimo-v2.5-pro": 1,
         "opencode/mimo-v2.5-free": 2,
         "opencode/grok-4.6": 2,
         "opencode/deepseek-v4-pro": 2,
@@ -392,6 +547,3 @@
     "2026-08-reasoning-unification",
   ],
 }
-
-
-
