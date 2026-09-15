@@ -97,6 +97,16 @@ archivist (executor)
 vault-ops reports: Pipeline complete
 ```
 
+### Execution Form (doctrine — verbatim, locked with ddd 2026-09-13)
+
+> **Archivist persona-read (locked with ddd):** vault writes execute via `task(subagent_type="archivist")`; in-session role-form = documented fallback with the full procedural envelope. Origin: sis's honest "precedent laundering" self-diagnosis (her gap-1 receipt coined the form; ddd never actually used it). First live persona run: BUILD #15 Stage-A, clean both at halt and at landing.
+
+TNT-side live application (verbatim):
+
+> DOCTRINE (first live application, per the persona-read locked with ddd 2026-09-13): Gate-3 write executes via task(subagent_type="archivist") — sis orchestrates + verifies, the persona lands every byte. Receipt must record the form used.
+
+Codified: execution form = `task(subagent_type="archivist")`; in-session role-form = documented fallback only, with the full procedural envelope; every execution receipt records the form used. Verbatim-quote discipline applies: any rewording of the clause = re-arbitration, not editorial.
+
 ## Error Handling
 
 | Error | Action |
