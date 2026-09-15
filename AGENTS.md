@@ -6,7 +6,7 @@ Use **bd** (beads) for task tracking. Run `bd prime` for full workflow context.
 
 | Trigger | Action |
 |---------|--------|
-| `session-begin`, `continue`, `pick up`, `where was I` | Run `skill:session-begin` — 5-step hydration: hotcache → `bd memories` → git sweep (`git status` + `git log --since=<hotcache ts>`) → pi handoff (`~/.pi/agent/exports/pi-handoff.md`) → surface proposed bd facts. Note: `state.json` is Layer 0 trust-root (operator-only); `hotcache.md` is the agent-readable projection. |
+| `session-begin`, `continue`, `pick up`, `where was I` | Run `skill:session-begin` — 5-step hydration: hotcache → `bd memories` → git sweep (`git status` + `git log --since=<hotcache ts>`) → pi handoff (`~/.pi/agent/exports/pi-handoff.md`) → surface proposed bd facts. Step 0 rider: routing-drift check (`deno run --allow-read skills/scaffolding-audit/scripts/drift-check.ts`; skip-on-gate, fail-open — OPEN-2). Note: `state.json` is Layer 0 trust-root (operator-only); `hotcache.md` is the agent-readable projection. |
 | `session-close`, `done`, `archive`, `wrap up` | Run `skill:session-close` |
 | `checkpoint`, `save state` | Delegated to `skill:session-close` — see its Checkpoint / Save State section |
 

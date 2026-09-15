@@ -1,6 +1,6 @@
 ---
 name: session-begin
-description: "Session startup protocol — hydrates context from 5 sources before reasoning. Use when: (1) user says 'session-begin', 'continue', 'pick up', 'where was I', (2) starting a new session, (3) resuming after compaction. Runs: read hotcache handoff, query bd memories, git sweep (changes since last handoff), read pi handoff if present, surface pi's proposed bd facts. Triggers: session-begin, continue, pick up, where was I, resume, new session."
+description: "Session startup protocol — hydrates context from 5 sources before reasoning. Use when: (1) user says 'session-begin', 'continue', 'pick up', 'where was I', (2) starting a new session, (3) resuming after compaction. Runs: routing-drift check (OPEN-2 rider), read hotcache handoff, query bd memories, git sweep (changes since last handoff), read pi handoff if present, surface pi's proposed bd facts. Triggers: session-begin, continue, pick up, where was I, resume, new session."
 compatibility: opencode
 ---
 
@@ -10,7 +10,9 @@ Hydrates five context sources at session start, then presents a unified status.
 **Target cost: ~12-15K tokens total.** If you're spending more, you're
 over-querying (especially bd memories — use targeted keywords, NOT bare dump).
 Closes two gaps: (1) what changed in the repos while opencode was away, (2) what
-pi did in its independent micro-session(s).
+pi did in its independent micro-session(s). Also carries the OPEN-2 drift rider
+(Step 0): one read-only command surfacing routing drift since the last
+scaffolding-audit.
 
 ## When to run
 
@@ -19,6 +21,24 @@ pi did in its independent micro-session(s).
 - After compaction completes (rehydrate preserved facts)
 
 ## The 5-step protocol
+
+### Step 0 — Routing-drift check (rider, one command)
+
+First, the OPEN-2 session-begin drift rider (ruling: rides this slot only — no
+new infra, no daemon, no store):
+
+```
+deno run --allow-read ~/.config/opencode/skills/scaffolding-audit/scripts/drift-check.ts
+```
+
+Read-only (`--allow-read` is the zero-write proof), O(manifest), at most one
+stdout line. Output contract:
+- **Silent** → routing surfaces fresh; no status line needed.
+- **One line** (e.g. `routing state drifted since last audit — run scaffolding-audit`)
+  → surface it verbatim in the status presentation under `### Routing drift`.
+- **Gate blocks it** (resuming mid-execution, or fail-closed) → note `drift check
+  skipped (gated)` and continue. Never force it, never retry — display-only,
+  fail-open.
 
 ### Step 1 — Read the opencode handoff
 
@@ -188,6 +208,9 @@ After all 5 steps, present a unified status:
 ### Injected memory [FROM MEMORY]
 - <constraint / fact relevant to current task>
 
+### Routing drift [FROM DRIFT-CHECK]  (only when non-fresh)
+- <verbatim drift-check stdout, or "skipped (gated)">
+
 ### Next
 - <immediate priority from hotcache "Next steps">
 ```
@@ -196,6 +219,7 @@ After all 5 steps, present a unified status:
 
 | Step | Tool | Gate layer | Blocks outside execution phase? |
 |------|------|------------|----------------------------------|
+| 0 (drift rider) | `deno run --allow-read …drift-check.ts` | Layer 4→6 (not allowlisted) | Can block outside discovery/prd phases — then skip (fail-open) |
 | 1 (hotcache) | `read` | Layer 3 | No — reads always allowed |
 | 2 (bd memories) | `bd memories` | Layer 4 (bd read) | No — bd reads allowed |
 | 3 (git sweep) | `git status` / `git log` | Layer 4 | No — both on safe-bash allowlist |
@@ -221,6 +245,9 @@ write, and it's opt-in via operator decision.
   hotcache > retrieved memory.
 - **Don't skip the git sweep** even when hotcache looks fresh — operator or pi
   may have committed after the handoff was written. The sweep catches this.
+- **Don't force the drift rider through a gate block** — if Layer 4/5/6 blocks
+  the `deno` call, note `drift check skipped (gated)` and move on. It is a
+  display-only reminder, never a precondition for the session.
 
 ## Relationship to session-close
 
