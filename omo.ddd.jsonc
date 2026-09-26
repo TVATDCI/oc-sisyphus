@@ -1,17 +1,4 @@
 // OMO configuration
-//
-// ⚠️ KNOWN TRAP (BUILD #14, 2026-09-14) — do NOT follow `omo doctor`'s
-// "Replace fallback_models with models / run config migrate" nudge yet.
-// On oh-my-openagent 4.19.4, canonical `models[]` chains are stripped by
-// zod at load and invisible to the legacy-only runtime readers (upstream
-// #6868; fix PR #7209 still open). Converting now = silent default-model
-// routing. Re-evaluate only when: 5.0 stable + #7209 merged + #6567 resolved.
-// See: herdr-collab/build14-omo-align/ (timing memo + findings).
-//
-// ⚠️ DEPLOY HAZARD: as of 2026-09-14 the LIVE ~/.omo/omo.jsonc on ddd has
-// drifted AHEAD of this variant (richer chains, extra concurrency entries).
-// Refresh this file from live before ever running scripts/deploy-omo.sh —
-// deploying the stale variant would regress the live chains.
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/omo.schema.json",
   "[opencode]": {
@@ -179,15 +166,15 @@
         "temperature": 0.1,
         "fallback_models": [
           {
-            "model": "zai-coding-plan/glm-5.3",
-            "reasoning": "high",
-          },
-          {
             "model": "opencode-go/qwen3.8-max",
             "reasoning": "high",
           },
           {
-            "model": "opencode/glm-5.2",
+            "model": "zai-coding-plan/glm-5.3",
+            "reasoning": "high",
+          },
+          {
+            "model": "opencode/glm-5.3",
           },
         ],
       },
