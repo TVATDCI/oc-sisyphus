@@ -6,23 +6,16 @@ Use **bd** (beads) for task tracking. Run `bd prime` for full workflow context.
 
 | Trigger | Action |
 |---------|--------|
-| `session-begin`, `continue`, `pick up`, `where was I` | Run `skill:session-begin` — 5-step hydration: hotcache → `bd memories` → git sweep (`git status` + `git log --since=<hotcache ts>`) → pi handoff (`~/.pi/agent/exports/pi-handoff.md`) → surface proposed bd facts. Step 0 rider: routing-drift check (`deno run --allow-read skills/scaffolding-audit/scripts/drift-check.ts`; skip-on-gate, fail-open — OPEN-2). Note: `state.json` is Layer 0 trust-root (operator-only); `hotcache.md` is the agent-readable projection. |
+| `session-begin`, `continue`, `pick up`, `where was I` | Run `skill:session-begin` — 5-step hydration (hotcache → `bd memories` → git sweep → pi handoff → surface bd facts) + Step 0 routing-drift rider (skip-on-gate, fail-open — OPEN-2). `state.json` is Layer 0 trust-root; `hotcache.md` is the agent-readable projection. |
 | `session-close`, `done`, `archive`, `wrap up` | Run `skill:session-close` |
-| `checkpoint`, `save state` | Delegated to `skill:session-close` — see its Checkpoint / Save State section |
+| `checkpoint`, `save state` | Delegated to `skill:session-close` (its Checkpoint / Save State section) |
 
 ## Beads
 
-```bash
-bd ready              # Find available work
-bd show <id>          # View issue details  
-bd update <id> --claim  # Claim work
-bd close <id>         # Complete work
-bd dolt push          # Push beads data to remote
-```
+`bd ready` / `bd show <id>` / `bd update <id> --claim` / `bd close <id>` / `bd dolt push` — full reference: `bd prime`.
 
 - Use `bd` for ALL task tracking — no TodoWrite, TaskCreate, or markdown TODO lists
 - Use `bd remember` for persistent knowledge — no MEMORY.md files
-- Run `bd prime` for detailed command reference and session close protocol
 
 ### bd subcommand phase policy (gate v0.4.1+)
 
@@ -34,13 +27,13 @@ For memory writes via `bd remember`, use `python3 scripts/bd_remember.py` (gate-
 
 ## Graph Shapes (Delegation Vocabulary)
 
-Name the delegation shape when fanning out work, so plan-writers and executors share the vocabulary (source: graph-engineering §15):
+Name the delegation shape when fanning out work (source: graph-engineering §15):
 
-- **chain** — serial `task()` calls; each node waits for the prior to finish before the next starts. Simplest, slowest, easiest to trace.
-- **diamond** — fan-out of parallel `task()` nodes, then fan-in to one merging agent. Best when independent angles reduce wall-time (e.g. `explore` + `librarian` swarms, multi-skill review).
-- **barrier** — parallel fan-out where the merge node **must not read results until ALL N nodes terminate** (the fan-out gate). Used when partial results would mislead (e.g. `momus`/`reviewer` gates, `regression-gate`).
+- **chain** — serial `task()` calls; simplest, slowest, easiest to trace.
+- **diamond** — parallel fan-out, merge as nodes arrive (independent angles).
+- **barrier** — parallel fan-out, merge ONLY when ALL N terminate (gates: momus/reviewer/regression — partial results mislead).
 
-Diamond vs barrier is the merge rule, not the fan-out: a diamond merges as nodes arrive; a barrier blocks on all N. Every `diamond`/`barrier` wave declares its node count and files one `execution-receipt` per node (see `execution-receipt` skill) before the merge runs.
+**Fan-out governance (routing default, E-trim 2026-09-27):** N≤3 per wave; declare node count; one `execution-receipt` per node before merge. If N× the per-window band (§17 #2) exceeds the comfortable band, **collapse diamond→chain by default** — parallelism must buy wall-time the operator actually consumes.
 
 ## Context Efficiency
 
@@ -49,7 +42,7 @@ Diamond vs barrier is the merge rule, not the fan-out: a diamond merges as nodes
 - 🟡 **50–80K** — next slice smaller
 - 🔴 **>80K** — split or archive
 - Thinking budget: 10K tokens/turn max
-- Mechanical task → cheap model, judgment task → expensive model
+- Tier routing (wallet frame, e66b212): mechanical → zai flat-rate tiers; judgment/gates → opencode-go diversity primaries (kimi-k3/grok-4.6); zai-max = fallback floor; opencode pay-go = last resort. Optimize quota + pay-go dollars — session list-price dollars are NOT wallet impact.
 - Always report: `Executing with [model] via [category]`
 - **Judging/verify nodes never land a cheap model — even as fallback (§17 #3):** review, audit, `momus`, `oracle`, and `post-reviewer` nodes must prune cheap models from their fallback chains. One bad cheap-model review inside a graph means downstream agents fix non-bugs, and you can't trace which node started it.
 - **Graph token multiplier (§17 #2):** fan-out multiplies total token burn across parallel windows. A wave running N parallel `task()` nodes should budget roughly **N×** the per-window band above (🟢/🟡/🔴); background fan-outs count against the same budget. If N× exceeds the comfortable band, collapse to serial (`chain`) or reduce N.
@@ -136,13 +129,9 @@ During compaction, write a structured handoff message (NOT freeform prose):
 - Deduplicate by `{scope}:{category}:{key}` (the wrapper passes this as `bd --key` for update-in-place)
 - If confidence is low, do NOT store
 
-**Examples:**
+**Example:**
 ```bash
-python3 scripts/bd_remember.py --scope global --turn 12 --category exact      --key retry_timeout   --value "30s"
-python3 scripts/bd_remember.py --scope global --turn 12 --category constraint --key new_deps        --value "no new dependencies"
-python3 scripts/bd_remember.py --scope global --turn 8  --category reason     --key db_choice       --value "Postgres because vendor rejects Redis"
-python3 scripts/bd_remember.py --scope global --turn 10 --category dependency --key auth_loginform  --value "AuthService.ts modified → affects LoginForm.tsx"
-python3 scripts/bd_remember.py --scope global --turn 3  --category preference --key response_style  --value "concise responses preferred"
+python3 scripts/bd_remember.py --scope global --turn 12 --category constraint --key new_deps --value "no new dependencies"
 ```
 
 ---
@@ -167,13 +156,7 @@ python3 scripts/bd_remember.py --scope global --turn 3  --category preference --
 - Never inject memories that conflict with the user's most recent message
 - Label injected facts as `[FROM MEMORY]` so they can be distinguished from live context
 
-**Retrieval policy:**
-```
-1. Query bd remember for entries matching current task/bead ID
-2. Sort by: hard constraints first, then recency
-3. Take top-K (suggest K=5 for constraints + 10 for facts)
-4. Format as bullet list under "## Injected Context" heading
-```
+**Retrieval policy:** query `bd remember` for entries matching the current task/bead ID; sort hard constraints first, then recency; take top-K (K=5 constraints + 10 facts); format as a bullet list under `## Injected Context`.
 
 ---
 
@@ -223,16 +206,13 @@ python3 scripts/bd_remember.py --scope global --turn 3  --category preference --
 **Execution:**
 ```
 1. Detect 50% threshold (token estimate)
-2. Run post-turn extractor on recent turns (capture 5 loss categories)
-3. python3 scripts/bd_remember.py --scope global --turn <N> --category intent   --key motion_plan     --value "rotating-x reduced-motion plan"
-4. python3 scripts/bd_remember.py --scope global --turn <N> --category files    --key motionreducer   --value "src/components/MotionReducer.tsx"
-5. python3 scripts/bd_remember.py --scope global --turn <N> --category decision --key motion_approach --value "CSS-only over JS runtime"
-6. python3 scripts/bd_remember.py --scope global --turn <N> --category next     --key wave2_blocker   --value "Complete wave 2, blocked by RM-001 test"
-7. Write structured handoff message to `~/.sisyphus/hotcache.md` (rotate: copy hotcache.md → hotcache-prev.md first, then overwrite)
-8. Archive detailed evidence to `~/.sisyphus/evidence/compaction-{timestamp}.md`
-9. Inject preserved facts from bd remember into working context
-10. Check for degraded mode conditions; signal if triggered
-11. Continue with compact context
+2. Run post-turn extractor on recent turns (capture 5 loss categories) via
+   scripts/bd_remember.py (intent / files / decision / next categories)
+3. Write structured handoff message to `~/.sisyphus/hotcache.md` (rotate: copy hotcache.md → hotcache-prev.md first, then overwrite)
+4. Archive detailed evidence to `~/.sisyphus/evidence/compaction-{timestamp}.md`
+5. Inject preserved facts from bd remember into working context
+6. Check for degraded mode conditions; signal if triggered
+7. Continue with compact context
 ```
 
 **Write-Before-Compaction Checklist:**
@@ -249,7 +229,7 @@ The full conversation history is always preserved in JSONL regardless of compact
 
 If a change touches **skills, agents, routing, permissions, canonical paths, or workflow docs**, update `./COMPLETE-CODEBASE.md` in the same change. The session-close protocol enforces this at close time; the pre-push `check-doc-claims.sh` validates it at push time.
 
-**Exception — routine model swaps are commit-message-only** (no timeline entry, no current-state prose sync): fallback-chain reshuffles, `modelConcurrency` cap tweaks, and free-tier model retirements/additions. (Primary-model changes — agent or category — stay prose-synced: they're rare, and category-primary swaps are hard-enforced by `check-completion-honesty.sh` Check 9, which fails the push if CC §Agent Routing diverges from `~/.omo/omo.jsonc` via the `omo-query.js` JSONC-aware helper.) `~/.omo/omo.jsonc` is the source of truth; prose summaries are refreshed on architectural change, not per-swap. Rationale: the LLM landscape evolves fast, so model swaps are frequent and low-decision-content — per-swap prose chase is high-cost/low-value. **Timeline + prose sync stays mandatory for architectural/decision changes**: new skills/agents, new gate layers, canonical-path changes, permission-model changes, workflow changes, process/convention changes, and non-obvious decisions (the *why*, not the *what* — git log covers the *what*).
+**Exception — routine model swaps are commit-message-only** (no timeline entry, no prose sync): fallback-chain reshuffles, `modelConcurrency` cap tweaks, free-tier retirements/additions. Primary-model changes stay prose-synced (category-primary swaps are hard-enforced by `check-completion-honesty.sh` Check 9 via `omo-query.js`). `~/.omo/omo.jsonc` is the source of truth. **Timeline + prose sync stays mandatory for architectural/decision changes**: new skills/agents, gate layers, canonical-path changes, permission-model changes, workflow/process changes, non-obvious decisions (the *why*).
 
 For routing decisions, refer to the skill system map in `COMPLETE-CODEBASE.md` or `skill:system-reference`. Skills are invoked by domain match against their trigger descriptions — and `session-close` includes a mandatory COMPLETE-CODEBASE.md drift check if system topology changed.
 
@@ -286,28 +266,21 @@ Always use non-interactive flags: `cp -f`, `mv -f`, `rm -f`, `scp -o BatchMode=y
 
 ## Compound bash & Layer-3-first (brain-2q4)
 
-The `sisyphus-gates` shell-metacharacter defense blocks **any** bash command containing `|`, `&&`, `||`, `;`, `&`, `>`, `>>`, `<`, `2>&1`, `$(…)`, or backticks — classifying it as `"Destructive commands blocked"` — even when every component is read-only (e.g. `git status && git log`, `ls -la | head -30`, `git ls-files | wc -l`). This is **intended design, not a bug to casually work around**: the gate deliberately pushes file-content reads to the Layer 3 tools and rejects compound chaining to close `ls && rm -rf /`-style bypasses. Work with it, not against it:
+The `sisyphus-gates` metachar defense blocks **any** bash command containing `|`, `&&`, `||`, `;`, `&`, `>`, `>>`, `<`, `2>&1`, `$(…)`, or backticks — even read-only compounds (`git status && git log`). **Intended design**: it pushes file-content reads to Layer 3 and closes `ls && rm -rf /`-style bypasses. Work with it:
 
-- **Prefer Layer 3 tools for file *content*** — `read`, `grep`, `glob`. They are never gated and give better ergonomics for searching/reading than bash pipelines (`grep | head`, `find | sed`, `cat | wc`).
-- **Split compound bash into bare single commands.** Run `git status`, then `git log --oneline -5`, then `git remote -v` as three separate calls instead of chaining with `&&`. Bare single commands pass the safe-readonly allowlist (Layer 4).
-- **No redirect/pipe games.** Don't reach for `2>&1 | head`, `> /tmp/x`, or `| tee`. If you need filtered/aggregated output that has no Layer-3 equivalent, run the bare producer command and reason about its full output, or use `grep`/`glob` directly.
+- **Layer 3 tools for file content** — `read`, `grep`, `glob`; never gated.
+- **Split compounds into bare single commands** — `git status`, then `git log --oneline -5`, as separate calls (Layer 4 allowlist).
+- **No redirect/pipe games** — run the bare producer and reason about full output.
 
-Reference: `brain-2q4` (issue + adversarial spec-lock at `plugins/sisyphus-gates/test/adversarial/brain-2q4-compound-readonly.test.js`). A narrow additive allow-path for read-only compounds (Layer 4.5) is planned behind a security re-audit; until then, the metachar defense holds and compounds stay blocked.
+Reference: `brain-2q4` (adversarial spec-lock in `plugins/sisyphus-gates/test/adversarial/`). Layer 4.5 read-only-compound allow-path planned behind a security re-audit; until then compounds stay blocked.
 
 ## On-Demand Reference
 
-- **System map** → `./COMPLETE-CODEBASE.md` — full topology, routing, timeline, permissions
-- **Full system history + rationale** → `SYSTEM-NARRATIVE.md` — covers Apr 30–present, structured by era, cross-references deep archive at `~/developer/Reference/meta/`
-- **Architecture / workflow / skills** → `skill:system-reference`
-- **Session close protocol** → `skill:session-close`
-- **System architecture, gates, hardening** → `skill:system-reference`
-- **Language rules** → loaded by `scripts/load-rules.sh` (automated, called by wave-executor Step 0)
-- **Agent full prompts** → loaded at delegation time
-- **LSP tools** (diagnostics, references, rename) → `skill:toolkit-lsp`
-- **Research tools** (web search, docs, GitHub) → `skill:toolkit-research`
-- **Session tools** (history, search, list) → `skill:toolkit-session`
-- **Compaction protocol** (details, anchors) → inline above in Context Efficiency
-- **Code search** (semantic, ~98% fewer tokens than grep+read) → use `semble search "description" ./path` or the MCP tools from the `semble` server — prefer over grep/glob/read for any question about how code works
+- **System map + topology + timeline** → `./COMPLETE-CODEBASE.md` · **system history** → `SYSTEM-NARRATIVE.md` · **architecture/gates/workflow** → `skill:system-reference`
+- **Session protocols** → `skill:session-close` / `skill:session-begin`
+- **Language rules** → loaded by `scripts/load-rules.sh` (wave-executor Step 0) · **Agent full prompts** → loaded at delegation time
+- **Toolkits** → `skill:toolkit-lsp` (LSP) · `skill:toolkit-research` (web/docs/GitHub) · `skill:toolkit-session` (session history)
+- **Code search** (semantic, ~98% fewer tokens than grep+read) → `semble search "description" ./path` or the `semble` MCP tools — prefer over grep/glob/read for code-understanding questions
 
 <!-- CODEGRAPH_START -->
 ## CodeGraph
