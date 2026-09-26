@@ -75,10 +75,13 @@ Work is NOT complete until `git push` succeeds.
 7. **PUSH TO REMOTE**:
    ```bash
    git pull --rebase
-   bd dolt push
+   BEADS_DIR="${BEADS_DIR:-$HOME/Main-vault/.beads}" bd dolt push
    git push
    git status  # MUST show "up to date with origin"
    ```
+   (BEADS_DIR prefix: leg 1 hardening, lane-opencode-v2 2026-09-26 — `bd dolt push`
+   runs from session-close which may be non-interactive; same pattern as doctor.sh
+   Check 10, commit 3330d37.)
 8. **Clean up** - Clear stashes, prune remote branches
 9. **Verify** - All changes committed AND pushed
 10. **Hand off** - Provide context for next session

@@ -34,6 +34,7 @@ Never hand-run:  bd remember "scope=...|turn=...|..."  (gate-blocked).
 """
 
 import argparse
+import os
 import subprocess
 import sys
 
@@ -145,9 +146,17 @@ def main() -> int:
     try:
         # bd's output may contain non-UTF-8 bytes; strict decoding crashed the
         # wrapper AFTER the write committed, reading as a false failure.
+        # BEADS_DIR pin (leg 1, lane-opencode-v2 2026-09-26): a stripped env
+        # must never re-resolve the bd workspace by cwd (Check 10 pattern, 3330d37).
+        bd_env = {
+            **os.environ,
+            "BEADS_DIR": os.environ.get(
+                "BEADS_DIR", os.path.expanduser("~/Main-vault/.beads")
+            ),
+        }
         result = subprocess.run(
             bd_cmd, capture_output=True, text=True,
-            encoding="utf-8", errors="replace", check=False,
+            encoding="utf-8", errors="replace", check=False, env=bd_env,
         )
     except FileNotFoundError:
         print(
