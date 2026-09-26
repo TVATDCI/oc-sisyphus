@@ -62,10 +62,18 @@ try {
   } else if (query === 'categories') {
     console.log(Object.keys(oc.categories || {}).length);
   } else if (query === 'categories-routing') {
+    // Shape-tolerant: read 4.19.4 `model`+`fallback_models` FIRST (we stay on
+    // that shape deliberately — omo #7209 trap, do NOT convert), then v5 `models[]`.
     const routing = {};
     for (const [name, cfg] of Object.entries(oc.categories || {})) {
-      const m = (cfg.models || [])[0];
-      routing[name] = { model: typeof m === 'string' ? m : (m && m.model) || '' };
+      const chain = cfg.models || [];
+      const chainFirst = chain[0];
+      const model =
+        (typeof cfg.model === 'string' && cfg.model) ||
+        (typeof chainFirst === 'string' && chainFirst) ||
+        (chainFirst && typeof chainFirst === 'object' && chainFirst.model) ||
+        '';
+      routing[name] = { model };
     }
     console.log(JSON.stringify(routing));
   } else {
