@@ -15,6 +15,7 @@ description: |
   "audit routing text", "drift check", "routing state drifted". Do NOT use
   for: live endpoint verification (model-audit), skill gap/overlap maps
   (skill-auditor), applying proposed edits, or pi-side surfaces.
+compatibility: opencode
 ---
 
 # Scaffolding Audit (sis twin)
