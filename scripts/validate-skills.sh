@@ -35,13 +35,13 @@ validate_agent() {
 
     local frontmatter=$(sed -n '/^---$/,/^---$/p' "$agent_file")
 
-    if echo "$frontmatter" | grep -A1 '^  websearch:' | grep -q '"\*".*allow'; then
+    if grep -A1 '^  websearch:' <<< "$frontmatter" | grep -q '"\*".*allow'; then
         echo -e "${RED}FAIL${NC} (websearch permission uses invalid object format)"
         ((FAIL++)) || true
         has_errors=true
     fi
 
-    if echo "$frontmatter" | grep -A1 '^  webfetch:' | grep -q '"\*".*allow'; then
+    if grep -A1 '^  webfetch:' <<< "$frontmatter" | grep -q '"\*".*allow'; then
         echo -e "${RED}FAIL${NC} (webfetch permission uses invalid object format)"
         ((FAIL++)) || true
         has_errors=true
@@ -76,13 +76,13 @@ validate_skill() {
     local frontmatter=$(sed -n '/^---$/,/^---$/p' "$skill_dir/SKILL.md")
     local missing_fields=()
 
-    if ! echo "$frontmatter" | grep -q '^name:'; then
+    if ! grep -q '^name:' <<< "$frontmatter"; then
         missing_fields+=("name")
     fi
-    if ! echo "$frontmatter" | grep -q '^description:'; then
+    if ! grep -q '^description:' <<< "$frontmatter"; then
         missing_fields+=("description")
     fi
-    if ! echo "$frontmatter" | grep -q '^compatibility:'; then
+    if ! grep -q '^compatibility:' <<< "$frontmatter"; then
         missing_fields+=("compatibility")
     fi
 

@@ -180,15 +180,15 @@
         "temperature": 0.1,
         "fallback_models": [
           {
-            "model": "zai-coding-plan/glm-5.3",
-            "reasoning": "high",
-          },
-          {
             "model": "opencode-go/qwen3.8-max",
             "reasoning": "high",
           },
           {
-            "model": "opencode/glm-5.2",
+            "model": "zai-coding-plan/glm-5.3",
+            "reasoning": "high",
+          },
+          {
+            "model": "opencode/glm-5.3",
           },
         ],
       },
