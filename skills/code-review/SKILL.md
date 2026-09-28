@@ -1,20 +1,16 @@
 ---
 name: code-review
 compatibility: opencode
-description: >
-  Use this skill whenever the user asks to review, critique, audit, assess, or
-  inspect existing code, pull requests, or implementations. Triggers include
-  phrases like "review my code", "review this PR", "code review", "check my code
-  for issues", "what do you think of this implementation", "critique this", "find
-  problems in", "audit this code", "assess code quality", "look for bugs in",
-  "security review", "open, or any request for feedback on
-  code that already exists. The skill produces a structured review covering
-  correctness, security, performance, maintainability, architecture,
-  error handling, and testing. Do NOT use this skill for writing new code,
-  generating tests, fixing bugs, refactoring, debugging failing tests, explaining
-  how code works, or answering general programming questions. Do NOT use it when
-  the user wants the assistant to implement, modify, or repair code rather than
-  evaluate it.
+description: >-
+  Use this skill whenever the user asks to review, critique, audit, assess, or inspect
+  existing code, pull requests, or implementations. Triggers include phrases like 'review
+  my code', 'review this PR', 'code review', 'critique this', 'audit this code', or any
+  request for feedback on code that already exists. The skill produces a structured review
+  covering correctness, security, performance, maintainability, architecture, error
+  handling, and testing. Do NOT use this skill for writing new code, generating tests,
+  fixing bugs, refactoring, debugging failing tests, explaining how code works, or
+  answering general programming questions. Do NOT use it when the user wants the assistant
+  to implement, modify, or repair code rather than evaluate it.
 license: MIT
 allowed-tools: [read, grep, edit, git]
 metadata:

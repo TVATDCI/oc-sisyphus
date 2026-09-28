@@ -1,20 +1,17 @@
 ---
 name: scaffolding-audit
-description: |
-  Audit prompt/skill scaffolding for stale model claims when models or plans
-  change — the 9-step-harness Step-9 pruning gap, closed (sis twin of the
-  pi skill; one hash-pinned shared spec). Deterministic 5-class scan
-  (historical model ids, workaround prose, era-pinned quota constants,
-  doctrine residue, dated knowledge) over sis routing surfaces — omo
-  binding config (agents + categories, primary + fallback_models chains),
-  the skill tree, repo-root routing/count docs — plus skill-count claim
-  verification, doctrine diff vs the last audited commit, manifest-diff
-  drift check, and the omo doctor leg. Read-only, propose-only: flags carry
-  file:line + class + quote + suggested action; the operator arbitrates
-  every change. Triggers: "scaffolding audit", "stale scaffolding",
-  "audit routing text", "drift check", "routing state drifted". Do NOT use
-  for: live endpoint verification (model-audit), skill gap/overlap maps
-  (skill-auditor), applying proposed edits, or pi-side surfaces.
+description: >-
+  Audit prompt/skill scaffolding for stale model claims when models or plans change — the
+  9-step-harness Step-9 pruning gap, closed (sis twin of the pi skill; one hash-pinned
+  shared spec). Deterministic 5-class scan over sis routing surfaces — omo binding config
+  (agents + categories, primary + fallback chains), the skill tree, repo-root
+  routing/count docs — plus skill-count claim verification, doctrine diff vs the last
+  audited commit, manifest-diff drift check, and the omo doctor leg. Read-only,
+  propose-only: flags carry file:line + class + quote + suggested action; the operator
+  arbitrates every change. Triggers: 'scaffolding audit', 'stale scaffolding', 'audit
+  routing text', 'drift check', 'routing state drifted'. Do NOT use for: live endpoint
+  verification (model-audit), skill gap/overlap maps (skill-auditor), applying proposed
+  edits, or pi-side surfaces.
 compatibility: opencode
 ---
 

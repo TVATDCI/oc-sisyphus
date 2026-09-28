@@ -1,6 +1,6 @@
 ---
 name: discovery-orchestrator
-description: "Turns vague or ambiguous user requests into a planning brief via social Q&A (one question at a time, max 7). (1) Use when the request is underspecified or scope is unclear. (2) Use when multiple interpretations are possible. (3) Use before any planning when the user has 'an idea' or wants to 'add a feature'. Triggers: 'I have an idea', 'help me think this through', 'this is fuzzy', 'not sure about scope', 'clarify requirements', 'ambiguous goal', 'grill me', 'stress-test this idea', 'I want to add', 'help scope this', 'explore this concept', 'vague request'. Not for: concrete well-defined tasks (use sisyphus-plan directly), single-file bug fixes, or work that already has a PRD or detailed spec."
+description: "Turns vague or ambiguous user requests into a planning brief via social Q&A (one question at a time, max 7). (1) Use when the request is underspecified or scope is unclear. (2) Use when multiple interpretations are possible. (3) Use before any planning when the user has 'an idea' or wants to 'add a feature'. Triggers: 'I have an idea', 'help me think this through', 'not sure about scope', 'clarify requirements', 'grill me', 'vague request'. Not for: concrete well-defined tasks (use sisyphus-plan directly), single-file bug fixes, or work that already has a PRD or detailed spec."
 compatibility: opencode
 triggers:
   - "I have an idea"

@@ -1,7 +1,13 @@
 ---
 name: shader-dev
-description: |
-  Constrained WebGL2 fragment-shader development skill. Use this skill whenever the user asks for GLSL shaders, WebGL effects, fragment shaders, shaderToy-style code, 2D SDF graphics, procedural noise, color palette generation, UV transforms, post-processing effects, or basic raymarching. Also use when the user mentions shader compilation, GLSL errors, WebGL rendering, or canvas visual effects. This skill produces verified, compile-checked fragment shaders using a fixed WebGL2 harness. Triggers on: shader, GLSL, WebGL, fragment shader, SDF, raymarching, procedural noise, color palette, post-processing, vignette, chromatic aberration, grain, tone mapping, UV transform.
+description: >-
+  Constrained WebGL2 fragment-shader development skill. Use this skill whenever the user
+  asks for GLSL shaders, WebGL effects, fragment shaders, shaderToy-style code, 2D SDF
+  graphics, procedural noise, color palettes, UV transforms, post-processing effects, or
+  basic raymarching. Also use when the user mentions shader compilation, GLSL errors, or
+  WebGL rendering. Produces verified, compile-checked fragment shaders using a fixed
+  WebGL2 harness. Triggers on: shader, GLSL, WebGL, fragment shader, SDF, raymarching,
+  procedural noise.
 triggers:
   - shader
   - GLSL

@@ -1,6 +1,6 @@
 ---
 name: agent-development
-description: "Creates and configures agents for OpenCode (JSON or Markdown format). (1) Use when creating a new agent or adding to agents.json/opencode.json. (2) Use when configuring agent permissions, mode (primary vs subagent), model, or tools. (3) Use when writing agent system prompts, designing agent triggering, or debugging why an agent does/does not fire. Triggers: 'create agent', 'add agent', 'agents.json', 'subagent', 'primary agent', 'agent permissions', 'agent configuration', 'agent prompt', 'configure agent', 'agent triggering', 'new agent', 'agent design spec'. Format choice: JSON for central management, Markdown for per-project. Not for: general skill creation (use skill-creator), tool/plugin development, or one-off task automation."
+description: "Creates and configures agents for OpenCode (JSON or Markdown format). (1) Use when creating a new agent or adding to agents.json/opencode.json. (2) Use when configuring agent permissions, mode (primary vs subagent), model, or tools. (3) Use when writing agent system prompts, designing agent triggering, or debugging why an agent does/does not fire. Triggers: 'create agent', 'agents.json', 'subagent', 'agent permissions', 'agent triggering', 'agent design spec'. Format choice: JSON for central management, Markdown for per-project. Not for: general skill creation (use skill-creator), tool/plugin development, or one-off task automation."
 compatibility: opencode
 triggers:
   - "agent requirements"

@@ -1,6 +1,6 @@
 ---
 name: momus-reviewer
-description: "Ruthless deep review of PRDs and execution plans to find blockers before they become expensive mistakes. (1) Use at Checkpoint 1 (PRD complete) before execution starts. (2) Use at Checkpoint 3 (pre-Slice-2) to audit foundation before building on it. (3) Use when user asks for deep review or 'find blockers' on a plan. Triggers: 'momus review', 'deep review', 'find blockers', 'ruthless review', 'momus check', 'review the PRD', 'audit the plan', 'check for contradictions', 'gate review', 'pre-slice audit'. Checks 6 categories: logical contradictions, scope creep, missing verification, dependency gaps, integration risks, resource risks. Not for: mechanical format checks (use vault-lint or auditor), plan structure validation (use reference-checker), or security/code review (use security-auditor)."
+description: "Ruthless deep review of PRDs and execution plans to find blockers before they become expensive mistakes. (1) Use at Checkpoint 1 (PRD complete) before execution starts. (2) Use at Checkpoint 3 (pre-Slice-2) to audit foundation before building on it. (3) Use when user asks for deep review or 'find blockers' on a plan. Triggers: 'momus review', 'deep review', 'find blockers', 'ruthless review', 'audit the plan', 'check for contradictions'. Not for: mechanical format checks (use vault-lint or auditor), plan structure validation (use reference-checker), or security/code review (use security-auditor)."
 compatibility: opencode
 triggers:
   - "momus review"
