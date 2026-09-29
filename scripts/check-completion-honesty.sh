@@ -218,6 +218,131 @@ NODE
   fi
 fi
 
+# === Check 9b: Named-Agents runtime line matches ~/.omo/omo.jsonc ===
+# Kills the hand-synced-drift class: the '18 Named Agents (runtime)' line is a
+# current-state claim and must match the live agents block, same as categories.
+if [ -f "$OMO" ]; then
+  AGENT_MISMATCHES=$(OMO="$OMO" DOC="$DOC" node - <<'NODE'
+const fs = require('fs');
+const doc = fs.readFileSync(process.env.DOC, 'utf8');
+const raw = fs.readFileSync(process.env.OMO, 'utf8');
+
+// brace-match the first "agents" block; extract name -> first "model" per agent
+const ai = raw.indexOf('"agents"');
+if (ai < 0) { console.log('no agents block in ~/.omo/omo.jsonc'); process.exit(0); }
+let j = raw.indexOf('{', ai), depth = 0, k = j;
+for (;; k++) {
+  const c = raw[k];
+  if (c === '"') { k++; while (raw[k] !== '"') k += raw[k] === '\\' ? 2 : 1; }
+  else if (c === '{') depth++;
+  else if (c === '}') { depth--; if (depth === 0) break; }
+}
+const block = raw.slice(j, k + 1);
+const live = new Map();
+for (const m of block.matchAll(/^ {6}"([a-z][a-z0-9-]*)": \{$/gm)) {
+  const name = m[1];
+  const seg = block.slice(m.index, m.index + 2200);
+  const mm = seg.match(/^ {8}"model": "([^"]+)"/m);
+  if (mm) live.set(name, mm[1]);
+}
+
+const line = doc.split('\n').find(l => l.includes('Named Agents (runtime)'));
+if (!line) { console.log('Could not find Named-Agents line in COMPLETE-CODEBASE.md'); process.exit(0); }
+const body = line.replace(/^.*?\(runtime\):\s*/, '');
+const docAgents = new Map();
+for (const chunk of body.split(/, (?=[a-z][a-z0-9-]* \()/)) {
+  const m = chunk.match(/^([a-z][a-z0-9-]*) \(([^;,)]+)/);
+  if (m) docAgents.set(m[1], m[2].trim());
+}
+
+const out = [];
+for (const [name, model] of docAgents) {
+  const lm = live.get(name);
+  if (!lm) out.push(`${name}: documented but missing in ~/.omo/omo.jsonc`);
+  else if (lm !== model) out.push(`${name}: doc claims ${model}, config has ${lm}`);
+}
+for (const [name] of live) if (!docAgents.has(name)) out.push(`${name}: in config but missing from doc`);
+console.log(out.join('\n'));
+NODE
+  )
+
+  if [ -n "$AGENT_MISMATCHES" ]; then
+    while IFS= read -r line; do
+      add_error "Named-Agents mismatch: $line"
+    done <<< "$AGENT_MISMATCHES"
+    else
+      add_pass "Named-Agents runtime line matches ~/.omo/omo.jsonc"
+    fi
+fi
+
+# === Check 9c: provider tallies on the Provider-mix line match live config ===
+if [ -f "$OMO" ]; then
+  TALLY_MISMATCHES=$(OMO="$OMO" DOC="$DOC" node - <<'NODE'
+const fs = require('fs');
+const doc = fs.readFileSync(process.env.DOC, 'utf8');
+const raw = fs.readFileSync(process.env.OMO, 'utf8');
+const ai = raw.indexOf('"agents"');
+let j = raw.indexOf('{', ai), depth = 0, k = j;
+for (;; k++) {
+  const c = raw[k];
+  if (c === '"') { k++; while (raw[k] !== '"') k += raw[k] === '\\' ? 2 : 1; }
+  else if (c === '{') depth++;
+  else if (c === '}') { depth--; if (depth === 0) break; }
+}
+const block = raw.slice(j, k + 1);
+let zai = 0, go = 0, oc = 0;
+for (const m of block.matchAll(/^ {6}"([a-z][a-z0-9-]*)": \{$/gm)) {
+  const seg = block.slice(m.index, m.index + 2200);
+  const mm = seg.match(/^ {8}"model": "([^"]+)"/m);
+  if (!mm) continue;
+  const p = mm[1].split('/')[0];
+  if (p === 'zai-coding-plan') zai++; else if (p === 'opencode-go') go++; else if (p === 'opencode') oc++;
+}
+const ci = raw.indexOf('"categories"', k);
+let czai = 0, cgo = 0, coc = 0;
+if (ci > 0) {
+  let j2 = raw.indexOf('{', ci), d2 = 0, k2 = j2;
+  for (;; k2++) {
+    const c = raw[k2];
+    if (c === '"') { k2++; while (raw[k2] !== '"') k2 += raw[k2] === '\\' ? 2 : 1; }
+    else if (c === '{') d2++;
+    else if (c === '}') { d2--; if (d2 === 0) break; }
+  }
+  const cblock = raw.slice(j2, k2 + 1);
+  for (const m of cblock.matchAll(/^ {6}"([a-z][a-z0-9-]*)": \{$/gm)) {
+    const seg = cblock.slice(m.index, m.index + 2200);
+    const mm = seg.match(/^ {8}"model": "([^"]+)"/m);
+    if (!mm) continue;
+    const p = mm[1].split('/')[0];
+    if (p === 'zai-coding-plan') czai++; else if (p === 'opencode-go') cgo++; else if (p === 'opencode') coc++;
+  }
+}
+const line = doc.split('\n').find(l => l.startsWith('Provider mix:'));
+if (!line) { console.log('Could not find Provider-mix line'); process.exit(0); }
+const out = [];
+const az = line.match(/Agents on zai-coding-plan primary \((\d+) of 18/);
+const ago = line.match(/opencode-go \((\d+) of 18/);
+const aoc = line.match(/opencode \((\d+)\)/);
+const cz = line.match(/Categories: zai-coding-plan \((\d+):/);
+const cgo2 = line.match(/Categories:.*opencode-go \((\d+):/);
+if (az && +az[1] !== zai) out.push(`agent tally: doc claims ${az[1]} zai primaries, config has ${zai}`);
+if (ago && +ago[1] !== go) out.push(`agent tally: doc claims ${ago[1]} opencode-go primaries, config has ${go}`);
+if (aoc && +aoc[1] !== oc) out.push(`agent tally: doc claims ${aoc[1]} opencode primaries, config has ${oc}`);
+if (cz && +cz[1] !== czai) out.push(`category tally: doc claims ${cz[1]} zai categories, config has ${czai}`);
+if (cgo2 && +cgo2[1] !== cgo) out.push(`category tally: doc claims ${cgo2[1]} opencode-go categories, config has ${cgo}`);
+console.log(out.join('\n'));
+NODE
+  )
+
+  if [ -n "$TALLY_MISMATCHES" ]; then
+    while IFS= read -r line; do
+      add_error "Provider-mix tally mismatch: $line"
+    done <<< "$TALLY_MISMATCHES"
+    else
+      add_pass "Provider-mix tallies match ~/.omo/omo.jsonc"
+    fi
+fi
+
 # === Summary ===
 echo ""
 echo "═══════════════════════════════════════════════════════"
