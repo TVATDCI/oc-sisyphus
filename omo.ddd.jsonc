@@ -41,14 +41,10 @@
       },
       "hephaestus": {
         "prompt_append": "file://~/.config/opencode/prompts/hephaestus-guidance.md",
-        "model": "zai-coding-plan/glm-5-turbo",
+        "model": "zai-coding-plan/glm-5.3",
         "reasoning": "medium",
         "temperature": 0.1,
         "fallback_models": [
-          {
-            "model": "zai-coding-plan/glm-5-2",
-            "reasoning": "low",
-          },
           {
             "model": "opencode-go/kimi-k2.7-code",
             "reasoning": "medium",
@@ -57,7 +53,7 @@
             "model": "opencode-go/glm-5.2",
           },
           {
-            "model": "opencode/glm-5.2",
+            "model": "opencode/glm-5.3",
           },
         ],
       },
@@ -136,10 +132,10 @@
             "reasoning": "high",
           },
           {
-            "model": "opencode-go/glm-5.3",
+            "model": "opencode-go/glm-5.2",
           },
           {
-            "model": "opencode/glm-5.2",
+            "model": "opencode/glm-5.3",
           },
         ],
       },
@@ -153,10 +149,10 @@
             "reasoning": "high",
           },
           {
-            "model": "opencode-go/glm-5.3",
+            "model": "opencode-go/glm-5.2",
           },
           {
-            "model": "opencode/glm-5.2",
+            "model": "opencode/glm-5.3",
           },
         ],
       },
@@ -175,6 +171,7 @@
           },
           {
             "model": "opencode/glm-5.3",
+            "reasoning": "high",
           },
         ],
       },
@@ -184,30 +181,24 @@
         "temperature": 0.1,
         "fallback_models": [
           {
-            "model": "zai-coding-plan/glm-5-turbo",
-            "reasoning": "low",
-          },
-          {
             "model": "opencode-go/kimi-k2.7-code",
             "reasoning": "medium",
           },
           {
-            "model": "opencode-go/glm-5.3",
+            "model": "opencode-go/glm-5.2",
           },
           {
-            "model": "opencode/glm-5.2",
+            "model": "opencode/glm-5.3",
+            "reasoning": "medium",
           },
         ],
       },
       "sisyphus-junior": {
-        "model": "zai-coding-plan/glm-5-turbo",
+        "model": "zai-coding-plan/glm-5.3-flash",
         "reasoning": "low",
         "temperature": 1.0,
         "top_p": 0.95,
         "fallback_models": [
-          {
-            "model": "zai-coding-plan/glm-5.3-flash",
-          },
           {
             "model": "opencode-go/gpt-5.6-luna",
             "reasoning": "low",
@@ -235,9 +226,6 @@
         "model": "zai-coding-plan/glm-5.3-flash",
         "fallback_models": [
           {
-            "model": "zai-coding-plan/glm-4.7",
-          },
-          {
             "model": "opencode-go/gpt-5.6-luna",
           },
           {
@@ -246,13 +234,13 @@
         ],
       },
       "auditor": {
-        "model": "zai-coding-plan/glm-5.2",
+        "model": "zai-coding-plan/glm-5.3",
         "fallback_models": [
           {
-            "model": "opencode-go/glm-5.2",
+            "model": "opencode-go/glm-5.3",
           },
           {
-            "model": "opencode/glm-5.2",
+            "model": "opencode/glm-5.3",
           },
         ],
       },
@@ -277,7 +265,7 @@
             "model": "opencode-go/glm-5.3",
           },
           {
-            "model": "opencode/glm-5.2",
+            "model": "opencode/glm-5.3",
           },
         ],
       },
@@ -288,12 +276,12 @@
             "model": "opencode-go/glm-5.3",
           },
           {
-            "model": "opencode/glm-5.2",
+            "model": "opencode/glm-5.3",
           },
         ],
       },
       "fullstack-dev-tester": {
-        "model": "zai-coding-plan/glm-5.2",
+        "model": "zai-coding-plan/glm-5.3",
         "fallback_models": [
           {
             "model": "opencode-go/glm-5.2",
@@ -319,17 +307,12 @@
             "model": "opencode/qwen3.6-plus",
           },
           {
-            "model": "zai-coding-plan/glm-5.3",
-            "reasoning": "medium",
-            "temperature": 0.1,
-          },
-          {
             "model": "opencode/glm-5.1",
           },
         ],
       },
       "ultrabrain": {
-        "model": "zai-coding-plan/glm-5.3",
+        "model": "opencode-go/qwen3.8-max",
         "reasoning": "max",
         "temperature": 0.0,
         "fallback_models": [
@@ -343,7 +326,7 @@
             "reasoning": "max",
           },
           {
-            "model": "opencode-go/qwen3.8-max",
+            "model": "zai-coding-plan/glm-5.3",
             "reasoning": "high",
           },
           {
@@ -361,15 +344,13 @@
             "reasoning": "high",
           },
           {
-            "model": "opencode-go/grok-4.6",
-            "reasoning": "high",
-          },
-          {
             "model": "opencode-go/glm-5.3",
             "reasoning": "high",
           },
           {
-            "model": "opencode/glm-5.2",
+            "model": "opencode/glm-5.3",
+            "reasoning": "high",
+            "temperature": 0.1,
           },
         ],
       },
@@ -388,7 +369,7 @@
             "temperature": 0.7,
           },
           {
-            "model": "zai-coding-plan/glm-5.3",
+            "model": "zai-coding-plan/glm-5.3-flash",
             "reasoning": "low",
             "temperature": 0.8,
           },
@@ -433,19 +414,11 @@
         "temperature": 0.1,
         "fallback_models": [
           {
-            "model": "zai-coding-plan/glm-5-turbo",
-            "reasoning": "low",
-          },
-          {
-            "model": "opencode-go/gpt-5.6-luna",
-            "reasoning": "low",
-          },
-          {
             "model": "opencode-go/kimi-k2.7-code",
             "reasoning": "medium",
           },
           {
-            "model": "opencode/glm-5.2",
+            "model": "opencode/glm-5.3",
           },
         ],
       },
@@ -491,11 +464,8 @@
         "zai-coding-plan": 10,
       },
       "modelConcurrency": {
-        "zai-coding-plan/glm-5.3": 3,
-        "zai-coding-plan/glm-5.3-flash": 5,
-        "zai-coding-plan/glm-5.2": 3,
-        "zai-coding-plan/glm-5-turbo": 5,
-        "zai-coding-plan/glm-4.7": 5,
+        "zai-coding-plan/glm-5.3": 5,
+        "zai-coding-plan/glm-5.3-flash": 8,
         "opencode-go/grok-4.6": 3,
         "opencode-go/kimi-k2.7-code": 3,
         "opencode-go/qwen3.8-max": 3,
