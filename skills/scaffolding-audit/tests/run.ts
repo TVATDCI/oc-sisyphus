@@ -68,7 +68,7 @@ const LIVE_OMO = join(OMO_DIR, "omo.jsonc");
 const PROVENANCE_BAK = "omo.jsonc.bak.20260905-200307";
 const SPEC_SELF = join(SKILL_DIR, "spec", "spec-shared.md");
 const SPEC_PINNED_SHA =
-  "962cddbda8635e8afc821a894482af0ed277f2fc216a94f6bc609c084c6200d3";
+  "da16a113313d90e17b4839d5a0f67fe7f2b2fcd53a60a6ddf71fcb7f2cc86176";
 
 /** mtime-ordered (bak filenames use two timestamp formats — lexical sort would misorder); undefined when none. */
 function newestBak(): string | undefined {

@@ -96,7 +96,7 @@ Example (pi, abridged):
     },
     "judging-locks": {
       "categories": ["unspecified-high", "deep", "ultrabrain"],
-      "chains": { "unspecified-high": ["zai-coding-cn/glm-5-turbo", "opencode-go/gpt-5.6-luna", "opencode-go/kimi-k2.7-code", "opencode/glm-5.2"] }
+      "chains": { "unspecified-high": ["zai-coding-cn/glm-5.3", "opencode-go/gpt-5.6-luna", "opencode-go/kimi-k2.7-code", "opencode/glm-5.2"] }
     }
   },
   "finding-hashes": ["0123456789abcdef0123456789abcdef"]

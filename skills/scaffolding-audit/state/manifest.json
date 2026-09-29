@@ -1,8 +1,8 @@
 {
-  "recorded-at": "2026-09-29T00:59:36.485Z",
+  "recorded-at": "2026-09-29T16:08:27.876Z",
   "surface-scope": "sis",
   "last-audit-commit": {
-    "~/.config/opencode": "d05c84dc8dd58e6d21f0da7ab8242b7dfe7ef410"
+    "~/.config/opencode": "c0192a40613c241e22ef8b6b0369afd11ae2320b"
   },
   "model-state": {
     "source": {
@@ -170,7 +170,6 @@
     }
   },
   "finding-hashes": [
-    "639b02b511f4e2bb",
     "ff4b7e7f3ed82504",
     "65f69f9ce9ea92c7",
     "dacf78f3d22a5191",
