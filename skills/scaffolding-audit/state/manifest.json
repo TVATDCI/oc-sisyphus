@@ -1,13 +1,13 @@
 {
-  "recorded-at": "2026-09-13T15:46:32.755Z",
+  "recorded-at": "2026-09-29T00:00:58.655Z",
   "surface-scope": "sis",
   "last-audit-commit": {
-    "~/.config/opencode": "faf77390e4f23a7130eeea009de5fba4e7e4ea09"
+    "~/.config/opencode": "7dcbd7b19b30a0a6cece873966b05f1f3bed9689"
   },
   "model-state": {
     "source": {
       "path": "~/.omo/omo.jsonc",
-      "sha256": "92907fe17a8336ef05123996c2c65e5fc89162d900347e4bed7cef2abceed1d2"
+      "sha256": "402479187e4a783d8868fc7d08f5c134d02970622736612da429fb2c4b95b1b2"
     },
     "bindings": {
       "agents/sisyphus": "zai-coding-plan/glm-5.3",
@@ -81,9 +81,9 @@
         "opencode/glm-5.2"
       ],
       "agents/momus": [
-        "zai-coding-plan/glm-5.3",
         "opencode-go/qwen3.8-max",
-        "opencode/glm-5.2"
+        "zai-coding-plan/glm-5.3",
+        "opencode/glm-5.3"
       ],
       "agents/atlas": [
         "zai-coding-plan/glm-5-turbo",
@@ -178,7 +178,8 @@
     }
   },
   "finding-hashes": [
-    "9602e73f93d1a132",
+    "639b02b511f4e2bb",
+    "23a014ec8e581a81",
     "ff4b7e7f3ed82504",
     "65f69f9ce9ea92c7",
     "dacf78f3d22a5191",
