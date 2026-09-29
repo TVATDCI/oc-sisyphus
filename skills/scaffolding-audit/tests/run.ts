@@ -314,10 +314,10 @@ const COUNT_DOC_STALE = [
 ].join("\n");
 const COUNT_DOC_FRESH = [
   "Some doc",
-  "│ ├── skills/ # 51 real skill directories + 1 \\_shared refs (52 total)",
+  "│ ├── skills/ # 49 real skill directories + 2 symlinked SKILL.md from ~/.agents (herdr, herdr-collab) + _shared refs (52 total)",
   "clean line",
 ].join("\n");
-const TREE_51: SkillTree = { realDirs: 51, sharedDirs: 1, names: [] };
+const TREE_51: SkillTree = { realDirs: 49, symlinkDirs: 2, sharedDirs: 1, names: [] };
 const countSurface: Surface = {
   path: "COMPLETE-CODEBASE.md",
   absPath: "COMPLETE-CODEBASE.md",
@@ -335,7 +335,7 @@ check(
     staleCountFlags[0]?.action.startsWith("PROPOSE ONLY — operator arbitrates:"),
 );
 check(
-  "count claim: fresh '51 real skill directories (52 total)' → silent",
+  "count claim: fresh '49 real + 2 symlinked (52 total)' → silent",
   countClaimFlags(COUNT_DOC_FRESH, countSurface, TREE_51).length === 0,
 );
 check(
@@ -361,8 +361,9 @@ check(
 
 const tree = enumerateSkillDirs(CONFIG_ROOT);
 check(
-  "surfaces: skill tree self-enumerates 51 real dirs + 1 shared (twin = 51st at authoring; the scan never hardcodes it)",
-  tree.realDirs === 51 &&
+  "surfaces: skill tree self-enumerates 49 real + 2 symlinked + 1 shared (real = native only, aligned with gate + CC; the scan never hardcodes it)",
+  tree.realDirs === 49 &&
+    tree.symlinkDirs === 2 &&
     tree.sharedDirs === 1 &&
     tree.names.includes(SKILL_SELF_DIR),
 );

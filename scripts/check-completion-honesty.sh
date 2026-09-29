@@ -130,6 +130,18 @@ else
   add_warning "Could not parse skills/ count claim"
 fi
 
+# Skills total: "(N total)" on the same skills/ tree line — counts ALL entries
+# (real + symlinked + _shared), aligned with the scaffolding-audit scanner.
+TOTAL_CLAIM=$(grep -oE '\([0-9]+ total\)' "$DOC" | grep -oE '[0-9]+' | head -1 || true)
+TOTAL_ACTUAL=$(ls "$REPO/skills" | wc -l)
+if [ -n "$TOTAL_CLAIM" ]; then
+  if [ "$TOTAL_ACTUAL" -eq "$TOTAL_CLAIM" ]; then
+    add_pass "skills/ total claim matches: $TOTAL_CLAIM entries (real + symlinked + _shared)"
+  else
+    add_error "skills/ total claim $TOTAL_CLAIM but filesystem has $TOTAL_ACTUAL entries"
+  fi
+fi
+
 # Scripts
 SCRIPT_CLAIM=$(claim scripts 'scripts/ # [0-9]+ scripts')
 SCRIPT_ACTUAL=$(find "$REPO/scripts" -maxdepth 1 -type f \( -name "*.sh" -o -name "*.py" -o -name "*.js" \) | wc -l)

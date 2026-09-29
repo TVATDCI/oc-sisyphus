@@ -34,31 +34,41 @@ export type Surface = {
 
 export type SkillTree = {
   realDirs: number;
+  symlinkDirs: number;
   sharedDirs: number;
   names: string[];
 };
 
-/** Skill-tree self-enumeration: real skill dirs + `_`-prefixed shared-ref entries. */
+/** Skill-tree self-enumeration: real (native) dirs, symlinked dirs (~/.agents twins),
+ * and `_`-prefixed shared-ref entries. "Real" means native — symlinks are NOT real
+ * dirs; total = real + symlinked + shared. Aligned with check-completion-honesty.sh
+ * (gate) and COMPLETE-CODEBASE.md's skills/ line so all three count one way. */
 export function enumerateSkillDirs(configRoot: string): SkillTree {
   const skillsDir = join(configRoot, "skills");
   const names: string[] = [];
   let shared = 0;
+  let symlinks = 0;
   let entries;
   try {
     entries = readdirSync(skillsDir, { withFileTypes: true });
   } catch {
-    return { realDirs: 0, sharedDirs: 0, names: [] };
+    return { realDirs: 0, symlinkDirs: 0, sharedDirs: 0, names: [] };
   }
   for (const entry of entries) {
     if (entry.name.startsWith("_")) {
       shared++;
       continue;
     }
-    if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
+    if (entry.isSymbolicLink()) {
+      symlinks++;
+      names.push(entry.name);
+      continue;
+    }
+    if (!entry.isDirectory()) continue;
     names.push(entry.name);
   }
   names.sort();
-  return { realDirs: names.length, sharedDirs: shared, names };
+  return { realDirs: names.length - symlinks, symlinkDirs: symlinks, sharedDirs: shared, names };
 }
 
 export function sisSurfaces(configRoot: string): Surface[] {

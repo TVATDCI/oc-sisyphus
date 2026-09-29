@@ -130,7 +130,7 @@ export function countClaimFlags(
 ): FlagRecord[] {
   const flags: FlagRecord[] = [];
   const lines = text.split("\n");
-  const actualTotal = tree.realDirs + tree.sharedDirs;
+  const actualTotal = tree.realDirs + tree.symlinkDirs + tree.sharedDirs;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (line === undefined) continue;
