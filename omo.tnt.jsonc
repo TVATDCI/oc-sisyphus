@@ -1,18 +1,4 @@
 // OMO configuration
-//
-// ⚠️ KNOWN TRAP (BUILD #14, 2026-09-14) — do NOT follow `omo doctor`'s
-// "Replace fallback_models with models / run config migrate" nudge yet.
-// On oh-my-openagent 4.19.4, canonical `models[]` chains are stripped by
-// zod at load and invisible to the legacy-only runtime readers (upstream
-// #6868; fix PR #7209 still open). Converting now = silent default-model
-// routing. Re-evaluate only when: 5.0 stable + #7209 merged + #6567 resolved.
-// See: herdr-collab/build14-omo-align/ (timing memo + findings).
-//
-// ⚠️ DEPLOY HAZARD (TNT, 2026-09-14): the LIVE ~/.omo/omo.jsonc drifted
-// AHEAD of this variant (184+/45−, +139 net — richer chains/concurrency).
-// This variant was refreshed FROM live 2026-09-14 (F1 reconciliation).
-// scripts/deploy-omo.sh now refuses when live≠variant — use --capture only
-// for intentional snapshots. Never follow the config-migrate nudge (above).
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/omo.schema.json",
   "[opencode]": {
