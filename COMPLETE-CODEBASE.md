@@ -22,7 +22,7 @@
    │ └── commands/ # Slash-command definitions (reflection)
    │
    ├── 3. SKILL LAYER
-    │ ├── skills/ # 49 real skill directories + 2 symlinked from ~/.agents (herdr, herdr-collab) + 1 \_shared refs (52 entries)
+    │ ├── skills/ # 51 SKILL.md dirs (49 real + 2 symlinked from ~/.agents: herdr, herdr-collab) + _shared refs (52 entries total)
    │ ├── each has SKILL.md + optional scripts/evals
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator; operator-owned fan-out review: orchestrator-review (fork of plugin-bundled review-work; Sisyphus gate lanes — code-review + security-auditor + ui-auditor + goal-verify + conditional regression-gate + oracle second-opinion)
    │
