@@ -5,6 +5,10 @@
 > with a cryptographic governance layer that makes the agent trustworthy
 > enough to actually deploy.
 
+## Desk components
+
+- **Firstmate** (ddd-only) — project-execution crew supervisor at `~/firstmate/` (pinned upstream clone; ADR-0009 in TVATDCI/dotfiles)
+
 ## Table of contents
 
 - [The 30-second version](#the-30-second-version)
