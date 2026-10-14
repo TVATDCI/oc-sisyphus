@@ -420,6 +420,8 @@ every decision since. When in doubt, return to these.
 - **2026-10-01** — Firstmate contract era opened (ADR-0009, dotfiles decisions/shared): firstmate (~/firstmate, pinned clone of kunchenguid/firstmate, fork commit e43d5483 lineage, mirror TVATDCI/firstmate) adopted as the desk's project-execution layer — crews/worktrees/PRs, PI_PURPOSE on every spawn, ships HOLD for the fleet gates (sis-validated ritual) and the captain's ruling. The operator fleet home (~/operator) retired dormant, no machinery ports. oc-sisyphus itself unchanged: gates, signing CLI, and routing all stand; firstmate never judges its own crews and never writes ~/.config/opencode or ~/.sisyphus.
 - **2026-10-14** — Hygiene close: operator-confirmed promotion of 4 pi-proposed bd facts (incl. `upstream_issue_filing_discipline` constraint — T1 out-of-band satisfied); verified ship-002 B1 fix-forward already merged (41de3e0, PR #2 2026-09-30) → 2026-10-01 hotcache open-item stale; no substrate changes. Evidence: `~/.sisyphus/evidence/session-close-2026-10-14-pi-facts-promotion-ship002-verify.md`.
 
+- **2026-10-14** — Hydration + pi-fact promotion session (no code changes): fresh pi handoff (2026-10-13) surfaced 4 proposed bd facts; operator promoted 3 — `upstream_filing_rule` (constraint; cross-agent standing rule, captain-ruled), `pi_120_both_desks`, `codemode_options_loud_120` (each with operator-confirmation provenance appended) — skipped `dashboard_launcher_as_is` by operator word. Stale hotcache (2026-09-05, 5-week lag) rotated + refreshed. COMPLETE-CODEBASE check: no update needed (no skills/agents/routing/permissions/docs/canonical paths touched). Evidence: `~/.sisyphus/evidence/session-close-2026-10-14-pi-fact-promotion.md`.
+
 ---
 
 ## How to Go Deeper
