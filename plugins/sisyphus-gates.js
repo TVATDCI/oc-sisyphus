@@ -12,11 +12,18 @@
  * `server` export. Exactly one generation of the gate loads per host
  * (verified in the sandbox probes for both installs).
  *
+ * Why the V2 default export lives HERE and not in dist/index.js: V1
+ * 1.18.31 double-instantiates a module that exports BOTH a named
+ * `server` and a default definition (empirically proven in the sandbox:
+ * two startup markers per run vs one with the single named export).
+ * dist/index.js therefore stays byte-identical to the pre-port file
+ * (guarded by a unit test), and each generation gets its own entry.
+ *
  * Options note: auto-discovery delivers no ctx.options; src/v2.js
  * resolveOptions() falls back to reading the sisyphus-gates options
  * block from opencode.json(c) in this config tree.
  */
 
-import definition from "./sisyphus-gates/dist/index.js";
+import { v2Definition } from "./sisyphus-gates/src/v2.js";
 
-export default definition;
+export default v2Definition;

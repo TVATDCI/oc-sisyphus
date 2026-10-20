@@ -24,7 +24,8 @@ import assert from "node:assert/strict";
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 
-import v2DefinitionDist from "../dist/index.js";
+import v2DefinitionDist from "../src/v2.js";
+import shimDefault from "../../sisyphus-gates.js";
 import { server as namedServer } from "../dist/index.js";
 import { v2Definition, GATED_COMMAND_NAMES, readOptionsFromConfig, resolveOptions } from "../src/v2.js";
 import { withTempHome, writeStateFile, removeStateFile, createMockState } from "./helpers.js";
@@ -150,12 +151,20 @@ beforeEach(() => {
 
 // ─── Dual-export shape ─────────────────────────────────────────────────────
 
-test("dual export: default definition carries id + setup + server (official dual-support shape)", () => {
-  assert.equal(v2DefinitionDist.id, "sisyphus-gates", "dist default is the V2 definition");
+test("dual export: src definition carries id + setup + server; dist stays V1-shaped", async () => {
   assert.equal(v2Definition.id, "sisyphus-gates");
   assert.equal(typeof v2Definition.setup, "function");
   assert.equal(typeof v2Definition.server, "function");
   assert.equal(typeof namedServer, "function", "named server export must survive (V1 path)");
+  // V1 double-load guard (empirically proven hazard): exporting BOTH a
+  // named server and a default definition from dist/index.js makes V1
+  // 1.18.31 instantiate the plugin twice (two startup markers per run
+  // vs one). dist must stay byte-equivalent to the pre-port file:
+  // named server only, NO default export. The V2 default lives in the
+  // repo-level plugins/sisyphus-gates.js shim.
+  const distNs = await import("../dist/index.js");
+  assert.equal(distNs.default, undefined, "dist/index.js must NOT export a default while V1 is pinned");
+  assert.equal(shimDefault, v2Definition, "repo-level auto-discovery shim re-exports the definition");
 });
 
 test("dual export: default.server() delegates to the untouched V1 implementation", async () => {

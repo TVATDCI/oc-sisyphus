@@ -40,6 +40,19 @@
  * the hook (the empirically proven enforcement mechanism — output.parts
  * does NOT block). V2 hook callbacks propagate throws the same way
  * (guide example: `throw new Error("Do not read .env files")`).
+ *
+ * Loading layout (empirically settled in the sandbox probes):
+ *   - V1 (pinned 1.18.31) loads the package via the opencode.json tuple
+ *     -> dist/index.js named `server` export (byte-identical pre-port
+ *     file). IMPORTANT: dist must NOT also export a default definition —
+ *     V1 1.18.31 double-instantiates a module carrying both shapes
+ *     (two startup markers per run, proven by A/B in the proof sandbox).
+ *   - V2 (2.1.0) auto-discovers the repo-level plain file
+ *     plugins/sisyphus-gates.js, whose default export is this
+ *     definition. Config-declared local-dir routes are ignored by
+ *     2.1.0 (scout matrix rows 2-5); if a later V2 fixes them, the
+ *     package's dist entry would need the default moved back in —
+ *     re-verify single-load behavior before any pin move.
  */
 
 import { getState, syncStateWithDisk, setMemoryKey, setSandboxConfig } from "./state.js";
@@ -177,10 +190,13 @@ export function resultToText(result) {
  * load under 2.1.0) — Plugin.define() from @opencode/plugin is a typed
  * identity helper and is not required at runtime.
  *
- * Also carries `server` so the single default export satisfies the
- * official dual-support shape (V1 >= 1.18.29 calls server(), V2 reads
- * id + setup()). The named `server` re-export in dist/index.js stays
- * the primary V1 path; both resolve to the same untouched function.
+ * Also carries `server` so a future npm-package consolidation can use
+ * the official one-default-export dual-support shape (V1 >= 1.18.29
+ * calls server(), V2 reads id + setup()). Today the repo deliberately
+ * splits entries instead: dist/index.js keeps ONLY the named `server`
+ * (byte-identical pre-port file, single V1 instance — see the loading
+ * layout note at the top of this file), and the V2 default lives in the
+ * repo-level plugins/sisyphus-gates.js auto-discovery shim.
  */
 export const v2Definition = {
   id: "sisyphus-gates",
