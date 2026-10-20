@@ -90,12 +90,18 @@ else
   add_error "~/.omo/omo.jsonc missing"
 fi
 
-# === Check 6: agents/*.md have no model: lines ===
+# === Check 6: agents/*.md model: pins (scoped Wave-2 rule) ===
+# No agent file carries a model pin EXCEPT agents/sisyphus.md — the
+# fleet-owned primary (2026-10-20 port) whose deliberate frontmatter pin is
+# the file's whole point. Structural validation of that file (parse, keys,
+# posture, live-roster membership) is owned by scripts/validate-agents.py.
 MODEL_LINES=$(grep -c "^model:" "$REPO"/agents/*.md 2>/dev/null | awk -F: '{s+=$2} END {print s+0}' || true)
-if [ "$MODEL_LINES" -eq 0 ]; then
-  add_pass "agents/*.md have no model: lines"
+SISYPHUS_MODEL_LINES=$(grep -c "^model:" "$REPO"/agents/sisyphus.md 2>/dev/null || true)
+OTHER_MODEL_LINES=$((MODEL_LINES - SISYPHUS_MODEL_LINES))
+if [ "$OTHER_MODEL_LINES" -eq 0 ] && [ "$SISYPHUS_MODEL_LINES" -eq 1 ]; then
+  add_pass "agents/*.md model pins scoped: only sisyphus.md carries the deliberate primary pin"
 else
-  add_error "agents/*.md contain $MODEL_LINES model: lines (JSON is source of truth)"
+  add_error "agents/*.md model pins wrong shape: sisyphus.md has $SISYPHUS_MODEL_LINES (want 1), others have $OTHER_MODEL_LINES (want 0)"
 fi
 
 # === Check 7: archivist.md scope ===
@@ -144,7 +150,7 @@ fi
 
 # Scripts
 SCRIPT_CLAIM=$(claim scripts 'scripts/ # [0-9]+ scripts')
-SCRIPT_ACTUAL=$(find "$REPO/scripts" -maxdepth 1 -type f \( -name "*.sh" -o -name "*.py" -o -name "*.js" \) | wc -l)
+SCRIPT_ACTUAL=$(find "$REPO/scripts" -maxdepth 1 -type f -not -path '*/__pycache__/*' 2>/dev/null | wc -l)
 if [ -n "$SCRIPT_CLAIM" ]; then
   if [ "$SCRIPT_ACTUAL" -eq "$SCRIPT_CLAIM" ]; then
     add_pass "scripts/ claim matches: $SCRIPT_CLAIM files"
@@ -169,11 +175,11 @@ else
 fi
 
 # Subagent .md count
-SUBAGENT_CLAIM=$(claim agents 'agents/ # [0-9]+ subagent')
+SUBAGENT_CLAIM=$(claim agents 'agents/ # [0-9]+ agent')
 SUBAGENT_ACTUAL=$(ls "$REPO/agents"/*.md 2>/dev/null | wc -l)
 if [ -n "$SUBAGENT_CLAIM" ]; then
   if [ "$SUBAGENT_ACTUAL" -eq "$SUBAGENT_CLAIM" ]; then
-    add_pass "agents/ claim matches: $SUBAGENT_CLAIM subagent .md files"
+    add_pass "agents/ claim matches: $SUBAGENT_CLAIM agent .md files"
   else
     add_error "agents/ claim $SUBAGENT_CLAIM but filesystem has $SUBAGENT_ACTUAL .md files"
   fi

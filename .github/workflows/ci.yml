@@ -115,9 +115,13 @@ jobs:
             echo "INFO: ~/.omo/omo.jsonc not present in CI — skipping agent count check (config is user-local since 4.19.4 migration)"
           fi
 
-          MODEL_LINES=$(grep -c "^model:" agents/*.md 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')
-          echo "model: lines in agents/*.md: $MODEL_LINES"
-          [ "$MODEL_LINES" -eq 0 ] || (echo "FAIL: agents/*.md should not have model: (Wave 2 cleanup)" && exit 1)
+          # model: pins: single owner is scripts/validate-agents.py, called
+          # below. The Wave-2 rule survives there, scoped: no agent file
+          # carries a model pin EXCEPT agents/sisyphus.md, the fleet-owned
+          # primary whose deliberate frontmatter pin is the whole point of
+          # the file.
+
+          python3 scripts/validate-agents.py
 
       - name: Tier 2.5 — markdown link check (root docs)
         run: |
