@@ -163,7 +163,7 @@ Verify everything works:
 
 ```bash
 cd plugins/sisyphus-gates
-npm test              # 648 unit tests across 25 files (~5s)
+npm test              # 674 unit tests across 27 files (~5s)
 npm run self-test     # 22 end-to-end scenarios (~50ms)
 npm run test:all      # unit + self-test combined
 ```
@@ -176,7 +176,7 @@ Five layers work together.
 
 A Node.js plugin that sits between OpenCode and every tool call the AI tries.
 It inspects each action, blocks the dangerous ones, and enforces a phased
-workflow. 19 source modules, 648 unit tests across 25 test files, 22
+workflow. 20 source modules, 674 unit tests across 27 test files, 22
 end-to-end scenarios.
 
 **Decision stack** (checked in order, first match wins):
@@ -256,14 +256,19 @@ manuals triggered by domain match:
 ### 5. Agents (18 Specialized Personas)
 
 Different tasks need different AI models. The system routes work to 18 agents,
-each with its own model, tools, and permissions. Of these 18, **8 are user-defined**
-(`~/.config/opencode/agents/*.md`: oracle, archivist, athena, auditor, explorer,
-reviewer, post-reviewer, fullstack-dev-tester) and **10 are plugin-bundled** inside
-the oh-my-openagent plugin install (sisyphus, hephaestus, librarian, explore,
+each with its own model, tools, and permissions. Of these 18, **9 are user-defined**
+(`~/.config/opencode/agents/*.md`: **sisyphus — the default primary agent, fleet-owned
+since 2026-10-20 as an in-house port of the omo runtime agent**, plus oracle,
+archivist, athena, auditor, explorer, reviewer, post-reviewer, fullstack-dev-tester)
+and **9 are plugin-bundled** inside
+the oh-my-openagent plugin install (hephaestus, librarian, explore,
 multimodal-looker, prometheus, metis, momus, atlas, sisyphus-junior). Most agents
 are read-only. Only 2 have write access — archivist (scoped to vault paths) and
 fullstack-dev-tester (broad `edit: *`, needed to build apps anywhere in a project
 workspace) — and even those are blocked by Layer 0 from touching governance files.
+The plugin-bundled agents stay inert under OpenCode V2 by upstream design, so the
+file-based nine are what the V2 runtime actually resolves; `~/.omo/omo.jsonc`
+remains the routing source for its own consumers (categories, fallback chains).
 
 9 categories dispatch tasks by domain (deep, quick, visual-engineering, writing,
 etc.) using a 3-tier fallback strategy: subscription primary → lite subscription
@@ -303,9 +308,9 @@ the cryptographic signature — never from forgeable text.
 ├── COMPLETE-CODEBASE.md       # Full system map (architecture, timeline, routing)
 ├── SYSTEM-NARRATIVE.md        # Era-structured developmental history + rationale
 ├── plugins/sisyphus-gates/    # Governance plugin
-│   ├── src/                   # 19 source modules
+│   ├── src/                   # 20 source modules
 │   ├── cli.js                 # Operator-only signing CLI (sign-verdict, approve, protocol)
-│   ├── test/                  # 25 test files (648 tests) + 22 self-test scenarios
+│   ├── test/                  # 27 test files (674 tests) + 22 self-test scenarios
 │   └── THREAT-MODEL.md        # Attack surface analysis
 ├── skills/                    # 47 skill packs
 ├── rules/                     # Language + concern rules
@@ -359,7 +364,7 @@ tool, no agent, no phase, and no approval can override.
 **The system is fail-closed by design.** Missing state, unknown gates, invalid
 config, or a missing signing key → block everything except read-only tools.
 
-**Everything is tested adversarially.** 648 unit tests include attack
+**Everything is tested adversarially.** 674 unit tests include attack
 simulations: chaining bypass (`ls && rm -rf /`), command substitution
 (`echo $(rm -rf /)`), shell wrappers (`bash -c`, `eval`, `npx`), MCP bypass,
 subagent escape, trust-root path traversal, forged verdicts, and session-close
@@ -416,7 +421,7 @@ That's the gap most patterns leave open.
 ## Verify
 
 ```bash
-npm test                      # 648 unit tests
+npm test                      # 674 unit tests
 npm run self-test             # 22 end-to-end scenarios
 npm run test:all              # unit + self-test combined
 bash scripts/pre-push.sh      # full pre-push suite
@@ -424,7 +429,13 @@ bash scripts/pre-push.sh      # full pre-push suite
 
 ## Status
 
-- **648/648 unit tests + 22/22 self-test scenarios passing**
+- **Sisyphus agent: fleet-owned since 2026-10-20** — `agents/sisyphus.md` is the
+  tracked in-house port of the omo runtime agent (ultraworker identity, gates
+  workflow discipline, fleet comms), pinned to `zai-coding-plan/glm-5.3` in its own
+  frontmatter, with `default_agent: "sisyphus"` resolving to it under V2.
+  `~/.omo/omo.jsonc` stays untouched for its routing consumers; omo's own agents
+  remain inert under V2 by upstream design.
+- **674/674 unit tests + 22/22 self-test scenarios passing**
 - `oh-my-openagent` pinned to `4.19.4`
 - `sisyphus-gates` local plugin — current: `v0.4.1` (Layer 3.7 sandbox allowlist
   Jun 27; Layer 6.5 session-close gate Jun 30; Layer 1 catastrophic-defense

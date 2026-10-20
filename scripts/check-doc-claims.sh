@@ -67,10 +67,10 @@ extract_p1() {
 }
 
 # Pattern 2: Parenthetical count in inline comment (lines 11, 17, 19, 22, 37, 38)
-#   grep -E '#\s*\b[0-9]+\b\s+(rule files|subagent|directories|scripts|src/|unit tests|categories|agents|model:)'
+#   grep -E '#\s*\b[0-9]+\b\s+(rule files|agents?|directories|scripts|src/|unit tests|categories|model:)'
 extract_p2() {
-  local greppat='#\s*\b[0-9]+\b\s+(rule files|subagent|directories|scripts|src/|unit tests|categories|agents|model:)'
-  local re='#[[:space:]]*([0-9]+)[[:space:]]+(rule files|subagent|directories|scripts|src/|unit tests|categories|agents|model:)'
+  local greppat='#\s*\b[0-9]+\b\s+(rule files|agents?|directories|scripts|src/|unit tests|categories|model:)'
+  local re='#[[:space:]]*([0-9]+)[[:space:]]+(rule files|agents?|directories|scripts|src/|unit tests|categories|model:)'
   while IFS=: read -r ln rest; do
     is_excluded "$ln" && continue
     if [[ "$rest" =~ $re ]]; then
@@ -144,18 +144,18 @@ if [ "${1:-}" = "--self-test" ]; then
     exit 1
   fi
 
-  echo "==> Self-test 2/3: breaking a claim (# 8 subagent -> # 99 subagent)..."
+  echo "==> Self-test 2/3: breaking a claim (# 9 agent -> # 99 agent)..."
   TMP_DOC=$(mktemp)
   cp "$DOC_FILE" "$TMP_DOC"
   # Retarget note (2nd occurrence of the L-historical trap, fixed 2026-09-07):
   # breaking a *textual* first occurrence is useless if no pattern extracts it —
   # '18 Named Agents' (L244) extracts noun 'Named' (unmapped), and bare '18 agents'
   # first lands in excluded timeline L143. Break the tree-annotation claim P2
-  # actually verifies: '# 8 subagent' on the agents/ line.
-  sed -i '0,/# 8 subagent/s//# 99 subagent/' "$TMP_DOC"
+  # actually verifies: '# 9 agent' on the agents/ line.
+  sed -i '0,/# 9 agent/s//# 99 agent/' "$TMP_DOC"
   if DOC_CLAIMS_FILE="$TMP_DOC" bash "$0" 2>&1; then
     rm -f "$TMP_DOC"
-    echo "FAIL: guard should have detected drift (8->99 subagent)"
+    echo "FAIL: guard should have detected drift (9->99 agent)"
     exit 1
   fi
   echo "==> PASS: guard correctly caught drift"
@@ -214,7 +214,7 @@ while IFS='|' read -r claimed_num noun; do
     directories)
       cmd="find \"$REPO_ROOT/skills\" -maxdepth 1 -mindepth 1 -type d -not -name node_modules | wc -l"
       ;;
-    subagent)
+    agent)
       cmd="ls \"$REPO_ROOT/agents\"/*.md 2>/dev/null | wc -l"
       ;;
     scripts)

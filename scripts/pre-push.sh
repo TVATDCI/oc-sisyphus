@@ -37,4 +37,8 @@ bash "$REPO_ROOT/scripts/check-doc-claims.sh"
 echo "    [5/5] completion-honesty topology gate"
 bash "$REPO_ROOT/scripts/check-completion-honesty.sh"
 
+# 6. Fleet agent definition validation (parse, posture, live roster)
+echo "    [6/6] fleet agent definition validation"
+python3 "$REPO_ROOT/scripts/validate-agents.py"
+
 echo "==> pre-push: PASS"
