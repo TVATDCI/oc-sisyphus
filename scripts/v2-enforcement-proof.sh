@@ -37,7 +37,7 @@ if [ ! -x "$BIN" ]; then
   exit 1
 fi
 
-SB="$(mktemp -d "/tmp/oc-adapt-proof-${VERSION}-XXXXXX")"
+SB="$(mktemp -d "${SCRATCH_ROOT:-/tmp}/oc-adapt-proof-${VERSION}-XXXXXX")"
 KEEP=0
 
 cleanup() {
