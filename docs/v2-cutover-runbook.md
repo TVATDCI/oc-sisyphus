@@ -8,7 +8,7 @@ Times assume a healthy machine; free RAM matters (sandbox probes failed once und
 ## What already landed V1-safe (pre-cutover, on main via the PR)
 
 - sisyphus-gates dual entry: `dist/index.js` stays byte-identical (V1 path), `plugins/sisyphus-gates.js` auto-discovery shim carries the V2 `setup(ctx)` definition.
-- `scripts/v2-enforcement-proof.sh [version]` — the hard-gate prover for either generation.
+- `scripts/v2-enforcement-proof.sh [version]` — the hard-gate prover for either generation, deterministic since fm/canary-harden: the canary drives the gate's own enforcement path (`scripts/v2-proof-canary.mjs`) instead of a free model, with the free-model e2e kept as an opt-in informational signal (`V2_PROOF_E2E=1`).
 - `opencode.json` carries `permission.external_directory: {"*": "ask"}` (V1 object form; V2 normalizes it to the prescribed ask rule).
 - `.gitignore` covers `/cli.json` and `/service.json`.
 - omo stays pinned at 4.19.4 in `opencode.json` and `package.json`; no variant changes are staged (omo 5.1.40 parses our 4.19.4-shaped variants but does not activate agents under V2 — see the omo posture section).
@@ -40,7 +40,7 @@ Times assume a healthy machine; free RAM matters (sandbox probes failed once und
    The omo agents (Sisyphus, Prometheus, Atlas) are EXPECTED to be absent under V2 — see the omo posture section before flipping.
 7. Permissions: an out-of-project read in a headless `opencode run` must come back ask/auto-rejected (the external_directory rule firing — verified behavior in the sandbox).
 8. MCP: the server log shows `mcp connected` for `home` (14 tools) and `codegraph` (1 tool).
-9. GATES ENFORCEMENT PROOF — hard gate, do not skip: `bash ~/.config/opencode/scripts/v2-enforcement-proof.sh 2.1.0` — must print `verdict: PASS` (loads once, canary write blocked, file absent).
+9. GATES ENFORCEMENT PROOF — hard gate, do not skip: `bash ~/.config/opencode/scripts/v2-enforcement-proof.sh 2.1.0` — must print `verdict: PASS` (deterministic: the harness drives the gate's own entry, asserts it loads once, the canary write is blocked by the fail-closed verdict path, no artifact, one metric verdict).
    If it does not: abort and roll back (D); the port is not done.
 10. Smoke: one herdr pane round-trip; one low-stakes real session.
 
