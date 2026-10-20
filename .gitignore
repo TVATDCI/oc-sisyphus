@@ -40,6 +40,12 @@ coverage/
 tasks/
 lsp-install-decisions.json
 
+# V2-era terminal-client droppings (machine-generated; service.json is a
+# credential — never track). cli.json is auto-migrated from tui.json on first
+# V2 TUI start. Verified 2026-10-20: V1 1.18.31 never reads either file.
+/cli.json
+/service.json
+
 # Archived session state (historical snapshots)
 archive/
 *.bak.*

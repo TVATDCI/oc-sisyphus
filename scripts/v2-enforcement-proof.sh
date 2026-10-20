@@ -93,6 +93,19 @@ workflow:
 YAML
 rm -f "$SB/home/.sisyphus/state.json"
 
+# Pre-flight: a trivial `models` listing triggers config + plugin loading
+# (including omo's lazy npm install into the sandbox cache) WITHOUT
+# spending the canary run's model-call window. A partial/stalled install
+# fails HERE, visibly, instead of as an opaque 'Unexpected server error'
+# during the canary. Do not pre-warm the omo cache by copying the host's:
+# empirically the copied tree breaks V1's loader with 'disk I/O error'.
+echo "=== pre-flight: plugin load + model roster ==="
+(
+  cd "$SB/project" || exit 1
+  timeout 300 "$BIN" models > "$SB/models.out" 2>&1
+)
+echo "pre-flight exit: $?"
+
 # V2 only: pin the sandbox to a private service port so a live 49374 listener
 # (or another concurrent proof) cannot wedge the probe.
 export HOME="$SB/home"
@@ -144,7 +157,12 @@ METRICS="$SB/home/.sisyphus/metrics/gate-events.jsonl"
 echo "=== verdict inputs ==="
 LOAD_COUNT=0
 if [ -f "$LOG" ]; then
-  LOAD_COUNT=$(grep -c "sisyphus-gates" "$LOG" || true)
+  LOAD_COUNT=$(grep -c "sisyphus-gates" "$LOG" 2>/dev/null || true)
+fi
+# V1 flushes plugin startup markers to the client stdout (run.out) rather
+# than the server log on some runs — accept markers from either surface.
+if grep -q "sisyphus-gates" "$SB/run.out" 2>/dev/null; then
+  LOAD_COUNT=$((LOAD_COUNT + 1))
 fi
 RUN_BLOCK=0
 if grep -q "Gate blocked" "$SB/run.out" 2>/dev/null; then RUN_BLOCK=1; fi
@@ -172,6 +190,8 @@ fi
 echo "=== verdict: $VERDICT (opencode $VERSION, sisyphus-gates) ==="
 if [ "$VERDICT" = FAIL ]; then
   KEEP=1
+  echo "--- models.out (tail) ---"
+  tail -10 "$SB/models.out" 2>/dev/null || true
   echo "--- run.out (tail) ---"
   tail -40 "$SB/run.out" 2>/dev/null || true
   echo "--- server log (sisyphus lines) ---"
