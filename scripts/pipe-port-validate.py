@@ -447,60 +447,44 @@ def run_agent_once(name: str, prompt: str, sb: dict, timeout_s: int = 420) -> di
     return {"rc": proc.returncode, "dur": dur, "out": proc.stdout, "err": proc.stderr}
 
 
-# ─── Program: structural (registry truth; zero model spend) ─────────────────
+# ─── Program: structural (runtime baseline; tiny model turn per persona) ─────
 
 
 def cmd_structural(args) -> int:
+    """Runtime registration+pin baseline (captain revision 2026-10-21).
+
+    The agent.list / debug-agents surface is blind on spawned servers (zero
+    even for built-ins), so registry queries are NOT registration proof.
+    The real proof: run --standalone --agent X per persona, then read the
+    run's session row from the sandbox db (agent label + model actually
+    used, never the model's self-report). One tiny bounded turn each.
+    """
     personas = pm()["names"]
-    sb = make_sandbox("structural-registry")
-    srv = Server(sb)
-    try:
-        if not srv.wait_ready():
-            log("server failed to become ready")
-            return 1
-        fresh = {a["id"]: a.get("model") for a in srv.api("GET", "/api/agent").get("data", [])}
-        # fire a config change (append newline to one agent file) to trigger
-        # the reload path, then re-read the registry
-        target = sb["config"] / "agents" / f"{personas[0]}.md"
-        with open(target, "a") as f:
-            f.write("\n")
-        time.sleep(4)
-        reloaded = {a["id"]: a.get("model") for a in srv.api("GET", "/api/agent").get("data", [])}
-        for name in personas:
-            pin = persona_pin(name)
-            want = pin.split("#")[0]
-            row = {
-                "persona": name,
-                "pin": pin,
-                "fresh_registered": name in fresh,
-                "fresh_model": fresh.get(name),
-                "reload_registered": name in reloaded,
-                "reload_model": reloaded.get(name),
-            }
-            row["verdict"] = "PASS" if (
-                row["fresh_registered"]
-                and row["fresh_model"]
-                and row["fresh_model"].get("providerID") + "/" + row["fresh_model"].get("id") == want
-            ) else "FAIL"
-            row["assertion"] = (
-                "registered at fresh start with model == pin (registry truth)"
-            )
-            write_row("structural", row)
-            log(f"structural {name}: {row['verdict']} (fresh={row['fresh_registered']} model={row['fresh_model']})")
-        # default agent dangle check
-        row = {
-            "persona": "(default_agent)",
-            "pin": "sisyphus",
-            "fresh_registered": "sisyphus" in fresh,
-            "fresh_model": fresh.get("sisyphus"),
-            "reload_registered": "sisyphus" in reloaded,
-            "reload_model": reloaded.get("sisyphus"),
-            "assertion": "default_agent target registered",
-            "verdict": "PASS" if "sisyphus" in fresh else "FAIL",
-        }
+    for name in personas:
+        pin = persona_pin(name)
+        want = pin.split("#")[0]
+        sb = make_sandbox(f"runtime-structural-{name}")
+        row = {"persona": name, "pin": pin, "sandbox": str(sb["root"])}
+        try:
+            res = run_agent_once(name, "Reply with exactly one word: ok", sb, timeout_s=240)
+            row["rc"] = res["rc"]
+            metas = assistant_rows(sb["db"])
+            meta = metas[-1] if metas else None
+            if meta:
+                row["meta_agent"] = meta["agent"]
+                row["meta_model"] = f"{meta['provider_id']}/{meta['model_id']}"
+                row["reasoning"] = meta["reasoning"]
+            else:
+                row["meta_agent"] = None
+                row["meta_model"] = None
+            row["resolved_label"] = row.get("meta_agent") == name
+            row["model_eq_pin"] = row.get("meta_model") == want
+            row["verdict"] = "PASS" if (row["resolved_label"] and row["model_eq_pin"] and res["rc"] == 0) else "FAIL"
+        except Exception as e:  # noqa: BLE001
+            row["verdict"] = "FAIL"
+            row["note"] = f"harness error: {e}"
         write_row("structural", row)
-    finally:
-        srv.stop()
+        log(f"runtime-structural {name}: {row['verdict']} model={row.get('meta_model')} reasoning={row.get('reasoning')}")
     return 0
 
 
@@ -1050,18 +1034,14 @@ def cmd_report(args) -> int:
         lines.append("")
     st = read_rows("structural")
     if st:
-        lines.append("### Structural registry truth (fresh start / after config change)")
+        lines.append("### Structural runtime baseline (run --standalone --agent X; db-row evidence)")
         lines.append("")
-        lines.append("| persona | pin | fresh | fresh model | reload | reload model | verdict |")
-        lines.append("|---|---|---|---|---|---|---|")
+        lines.append("| persona | pin | label resolved | db model | reasoning | verdict |")
+        lines.append("|---|---|---|---|---|---|")
         for s in st:
-            fm = s.get("fresh_model") or {}
-            rm = s.get("reload_model") or {}
             lines.append(
-                f"| {s.get('persona')} | {s.get('pin')} | {s.get('fresh_registered')} | "
-                f"{fm.get('providerID','')}/{fm.get('id','') if fm else ''} | "
-                f"{s.get('reload_registered')} | {rm.get('providerID','')}/{rm.get('id','') if rm else ''} | "
-                f"{s.get('verdict')} |"
+                f"| {s.get('persona')} | {s.get('pin')} | {s.get('resolved_label')} | "
+                f"{s.get('meta_model')} | {s.get('reasoning')} | {s.get('verdict')} |"
             )
         lines.append("")
     ch = read_rows("chain")
