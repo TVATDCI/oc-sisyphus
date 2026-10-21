@@ -23,7 +23,11 @@ import { join } from "node:path";
 
 // ─── Verb classification (heuristic) ────────────────────────────────────────
 
-const MCP_READ_VERBS = /^(read|get|list|stat|info|head|search|query|find|exists|is_)/;
+const MCP_READ_VERBS = /^(read|get|list|stat|info|head|search|query|find|exists|is_|directory_tree|explore)/;
+// oc-v2-fixbundle (PR-8 Program 6, decision 5): directory_tree covers the
+// `home` server's filesystem tree listing (runtime-observed unknown-class
+// denials 9x, 2026-10-21); explore covers the `codegraph` server, which
+// self-names its tools with its own server prefix.
 const MCP_WRITE_VERBS = /^(write|create|update|delete|remove|move|rename|edit|put|patch|set|save|upload|copy|mkdir|rmdir|append)/;
 
 // ─── MCP prefix set (loaded from opencode.json at startup) ──────────────────
@@ -75,7 +79,14 @@ export function getMcpClassification(tool) {
 
   for (const prefix of MCP_PREFIXES) {
     if (lower.startsWith(prefix)) {
-      const toolName = lower.slice(prefix.length);
+      // Strip the server prefix. Servers that self-name their tools with
+      // their own server prefix (codegraph -> codegraph_explore, dispatched
+      // as codegraph_codegraph_explore) carry the prefix twice; strip it
+      // repeatedly so the verb heuristic sees the tool's real name.
+      let toolName = lower;
+      while (toolName.startsWith(prefix)) {
+        toolName = toolName.slice(prefix.length);
+      }
       const server = prefix.slice(0, -1); // remove trailing _
       if (MCP_READ_VERBS.test(toolName)) {
         return { type: "mcp", classification: "read", server };
