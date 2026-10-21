@@ -439,10 +439,11 @@ bash scripts/pre-push.sh      # full pre-push suite
 
 - **Sisyphus agent: fleet-owned since 2026-10-20** — `agents/sisyphus.md` is the
   tracked in-house port of the omo runtime agent (ultraworker identity, gates
-  workflow discipline, fleet comms), pinned to `zai-coding-plan/glm-5.3` in its own
-  frontmatter, with `default_agent: "sisyphus"` resolving to it under V2.
-  `~/.omo/omo.jsonc` stays untouched for its routing consumers; omo's own agents
-  remain inert under V2 by upstream design.
+  workflow discipline, fleet comms); its model pin (`zai-coding-plan/glm-5.3#max`)
+  lives in the `opencode.json` `agent` map — the sole pin authority since
+  oc-v2-fixbundle, emitted live from `~/.omo/omo.jsonc` (which stays read-only
+  for its routing consumers; omo's own agents remain inert under V2 by
+  upstream design), with `default_agent: "sisyphus"` resolving to it under V2.
 - **674/674 unit tests + 22/22 self-test scenarios passing**
 - `oh-my-openagent` pinned to `4.19.4`
 - `sisyphus-gates` local plugin — current: `v0.4.1` (Layer 3.7 sandbox allowlist
