@@ -10,14 +10,24 @@ Single owner of the agent-file rules that CI and pre-push both enforce:
      stays the real enforcement layer).
   2. opencode.json keeps default_agent = "sisyphus" so the default resolves
      to the file agent.
-  3. Every OTHER agents/*.md carries no model: pin (the Wave-2 cleanup rule,
-     scoped: routing-owned models live in omo.jsonc for subagents; the ONE
-     deliberate exception is the fleet-owned primary agent file).
+  3. Generated pipeline personas (scripts/generate-pipeline-personas.py,
+     ship pipe-port-m1): the generator's drift gate (regenerated output must
+     equal the committed files), the routing-token resolution gate (every
+     category=/subagent_type=/load_skills=/**Category:** token in skills/
+     resolves to a port-map stanza, a file agent, or a skill), and the DAG
+     edge-vs-permission assertion (manifest §9 edges == task allows) all run
+     here. Model pins are allowed ONLY on sisyphus.md and the generated set
+     (the port moved routing ownership for the pipeline cast from the dormant
+     omo.jsonc stanzas to these fleet-owned files); every other agents/*.md
+     stays pin-free (the scoped Wave-2 rule).
   4. --roster (default): the pinned model id exists in the live roster at
      https://models.dev/api.json — the same catalog `opencode models` reads.
      Network failure FAILS (a check that checked nothing must not pass);
      pass --offline (or AGENTS_VALIDATE_OFFLINE=1) to skip the roster leg
-     explicitly in airgapped or rollback situations.
+     explicitly in airgapped or rollback situations. (Generated-persona pins
+     are proven against the live `opencode models` roster by the generator's
+     --check-pins leg instead — their providers are fleet-local aliases the
+     public catalog does not know.)
 
 Usage:  python3 scripts/validate-agents.py [--offline]
 Exit:   0 = PASS, 1 = FAIL, 2 = environment error (e.g. PyYAML missing)
@@ -136,10 +146,19 @@ def main() -> int:
     else:
         passes.append(f"opencode.json: default_agent is {EXPECTED_DEFAULT_AGENT!r}")
 
-    # --- 3. no other agent carries a model pin ----------------------------
+    # --- 3. model: pins scoped to sisyphus.md + the generated pipeline set --
+    import importlib.util
+
+    _spec = importlib.util.spec_from_file_location(
+        "generate_pipeline_personas", REPO_ROOT / "scripts" / "generate-pipeline-personas.py"
+    )
+    gpp = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(gpp)
+
+    generated = set(gpp.persona_names())
     offenders = []
     for path in sorted(AGENTS_DIR.glob("*.md")):
-        if path.name == "sisyphus.md":
+        if path.name == "sisyphus.md" or path.stem in generated:
             continue
         try:
             other_fm_text, _ = split_frontmatter(path.read_text(encoding="utf-8"))
@@ -150,11 +169,54 @@ def main() -> int:
             offenders.append(path.name)
     if offenders:
         errors.append(
-            "agents/*.md other than sisyphus.md carry model: pins "
-            f"(routing-owned): {', '.join(offenders)}"
+            "agents/*.md outside sisyphus.md + the generated pipeline set "
+            f"carry model: pins (routing-owned): {', '.join(offenders)}"
         )
     else:
-        passes.append("no unintended model: pins outside sisyphus.md")
+        passes.append("no unintended model: pins outside sisyphus.md + generated set")
+
+    # --- 3b. generated-persona drift gate + pin schema + DAG assertion ------
+    drift_errors, generated_count = gpp.check_drift(AGENTS_DIR, REPO_ROOT / "skills")
+    for de in drift_errors:
+        errors.append(de)
+    if not drift_errors:
+        passes.append(
+            f"drift gate: {generated_count} generated persona files match "
+            "the port map"
+        )
+
+    pin_re = re.compile(r"^[^/#]+/[^#]+(#[^#]+)?$")
+    bad_pins = []
+    for name in sorted(generated):
+        path = AGENTS_DIR / f"{name}.md"
+        if not path.is_file():
+            continue  # drift leg owns missing files
+        try:
+            fm_text, _ = split_frontmatter(path.read_text(encoding="utf-8"))
+            fm = yaml.safe_load(fm_text)
+        except Exception:  # noqa: BLE001
+            bad_pins.append(f"{name}.md (unparseable)")
+            continue
+        model_value = fm.get("model") if isinstance(fm, dict) else None
+        if not isinstance(model_value, str) or not pin_re.match(model_value):
+            bad_pins.append(f"{name}.md ({model_value!r})")
+    if bad_pins:
+        errors.append(
+            "generated personas with malformed model#variant pins: "
+            + ", ".join(bad_pins)
+        )
+    else:
+        passes.append("generated persona pins match the provider/model#variant schema")
+
+    dag_errors, _dag_checks = gpp.check_dag(AGENTS_DIR, REPO_ROOT / "skills")
+    errors.extend(dag_errors)
+    if not dag_errors:
+        passes.append("DAG assertion: manifest §9 edges == task permissions")
+
+    token_errors, _token_count = gpp.check_tokens(REPO_ROOT / "skills", AGENTS_DIR)
+    errors.extend(token_errors)
+    if not token_errors:
+        passes.append("routing tokens: every skills/ token resolves")
 
     # --- 4. live roster membership ----------------------------------------
     if args.offline:
