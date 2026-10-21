@@ -811,17 +811,29 @@ def _child_sessions(db: Path, parent_id: str) -> list[tuple]:
 
 
 def _child_text(db: Path, session_id: str) -> str:
-    """Concatenated text parts of a session (for output-verdict artifacts)."""
+    """Concatenated text parts of a session (for output-verdict artifacts).
+
+    Sandbox V2 schema stores parts in session_message's data JSON ($.text);
+    the live host db uses a separate part table — handle both.
+    """
     if not db.exists():
         return ""
     con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
     try:
-        rows = con.execute(
-            "select json_extract(data,'$.part.text') from part "
-            "where session_id=? and json_extract(data,'$.part.type')='text' "
-            "order by time_created",
-            (session_id,),
-        ).fetchall()
+        try:
+            rows = con.execute(
+                "select json_extract(data,'$.text') from session_message "
+                "where session_id=? and json_extract(data,'$.text') is not null "
+                "order by time_created",
+                (session_id,),
+            ).fetchall()
+        except sqlite3.OperationalError:
+            rows = con.execute(
+                "select json_extract(data,'$.part.text') from part "
+                "where session_id=? and json_extract(data,'$.part.type')='text' "
+                "order by time_created",
+                (session_id,),
+            ).fetchall()
     finally:
         con.close()
     return "\n".join(r[0] or "" for r in rows)
