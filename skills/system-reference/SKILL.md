@@ -276,7 +276,7 @@ dump full file contents — synthesize and point to sources for detail.
 |------|---------------|
 | Evidence validator | Evidence files exist in `.sisyphus/evidence/` |
 | Goal-backward check | Verification tables present for each slice |
-| Model transparency | "Executing with [model] via [category]" in output |
+| Model transparency | "Executing with [model] via [persona]" in output |
 | DESIGN.md check | DESIGN.md exists when UI work detected |
 | Build evidence | Build output attached to evidence |
 

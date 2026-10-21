@@ -811,11 +811,15 @@ def self_test() -> int:
             failures.append(f"clean tree: drift check reported {err[:3]}")
 
         # Deliberately-broken routing token must be caught, with file:line.
+        # (pipe-port-m2: the omo category=/load_skills= grammars are retired
+        # from skills/; seed from the native subagent_type grammar instead.)
         victim = skills_copy / "sisyphus-plan" / "SKILL.md"
         text = victim.read_text(encoding="utf-8")
-        victim.write_text(text.replace('category="deep"', 'category="dept"', 1))
+        victim.write_text(
+            text.replace('subagent_type="brief-loader"', 'subagent_type="brief-lodr"', 1)
+        )
         err, _ = check_tokens(skills_copy, agents_copy)
-        if not any("dept" in e and "sisyphus-plan/SKILL.md:" in e for e in err):
+        if not any("brief-lodr" in e and "sisyphus-plan/SKILL.md:" in e for e in err):
             failures.append(f"broken token not caught: {err[:3]}")
 
         # Deliberate drift must be caught.

@@ -359,14 +359,14 @@ every decision since. When in doubt, return to these.
 > If a counter changes materially, also update `COMPLETE-CODEBASE.md`.
 
 - **Skills:** 50+ user-installed + 15 oh-my-openagent built-in + 12 shared
-- **Agents:** 18 named agents, 9 task categories
+- **Agents:** 24 file agents (9 hand-authored, incl. the fleet-owned sisyphus primary, + 15 generated pipeline personas from `scripts/generate-pipeline-personas.py`); the 18-agent/9-category `~/.omo/omo.jsonc` overlay is dormant legacy under V2 (pipeline skills delegate natively via `task(subagent_type=...)` since pipe-port-m2)
 - **Gate plugin:** `sisyphus-gates` v0.2.0+, **19 src modules, 648 unit + 22 e2e tests**; Layer 6.5 session-close gate active (blocks `git push` / `bd dolt push` when `session_close.status === "open"`)
 - **oh-my-openagent:** 4.19.4 (exact pin, no caret, auto_update: false; upgraded from 4.18.2 on Aug 10 — crossed the Jul 17 stop-short line after scoping showed zero `shared/`-alias and zero ralph references in repo files; verify-plugin-compat + 648 unit + 22 self-test PASS, delegate-task smoke OK)
 - **Workflow:** 9-phase HMAC-signed state machine
 - **Sandbox:** Layer 3.7 active for `/tmp/` (opt-in via `opencode.json`)
 - **Signing:** HMAC-SHA256 via `cli.js sign-verdict`; key at `~/.local/share/sisyphus-gate-key`
-- **Provider:** `zai-coding-plan` primary (14/18 agents + 8/9 categories) on a 5-model map (glm-5.3 — 5 consumers, glm-5.2 — 7, glm-5-turbo — 3, glm-4.7 — 7, deepseek-v4-flash-free — 1); `opencode-go` (oracle — kimi-k3, multimodal-looker — mimo-v2-omni) → `opencode` (explore, explorer, git-commit-message — all deepseek-v4-flash-free) fallback
-- **Last reviewed:** 2026-10-01
+- **Provider (omo.jsonc overlay, dormant under V2):** `zai-coding-plan` primary (14/18 agents + 8/9 categories) on a 5-model map (glm-5.3 — 5 consumers, glm-5.2 — 7, glm-5-turbo — 3, glm-4.7 — 7, deepseek-v4-flash-free — 1); `opencode-go` (oracle — kimi-k3, multimodal-looker — mimo-v2-omni) → `opencode` (explore, explorer, git-commit-message — all deepseek-v4-flash-free) fallback; the pipeline cast's pins live in `agents/*.md` (generator `--check-pins` proves them against the live roster)
+- **Last reviewed:** 2026-10-21
 
 ### Session log *(append, newest last)*
 
@@ -422,6 +422,7 @@ every decision since. When in doubt, return to these.
 
 - **2026-10-14** — Hydration + pi-fact promotion session (no code changes): fresh pi handoff (2026-10-13) surfaced 4 proposed bd facts; operator promoted 3 — `upstream_filing_rule` (constraint; cross-agent standing rule, captain-ruled), `pi_120_both_desks`, `codemode_options_loud_120` (each with operator-confirmation provenance appended) — skipped `dashboard_launcher_as_is` by operator word. Stale hotcache (2026-09-05, 5-week lag) rotated + refreshed. COMPLETE-CODEBASE check: no update needed (no skills/agents/routing/permissions/docs/canonical paths touched). Evidence: `~/.sisyphus/evidence/session-close-2026-10-14-pi-fact-promotion.md`.
 - **2026-10-20** — oc-v2-adapt staged V2 adoption shipped on fm/oc-v2-adapt (firstmate crewmate; follows the OS-update pin-break incident, pin restored same day): sisyphus-gates dual entry (dist byte-identical for V1 + plugins/sisyphus-gates.js auto-discovery shim for V2, enforcement proofs PASS on both 1.18.31 and 2.1.0, suite 669/669 (648 V1 + 21 new V2 tests)), external_directory ask rule in V1-object form, cli.json/service.json ignored, tui.json precedence settled (tui.json wins both generations), managed-service default-off verified, omo 5.1.40 findings (loads under V2 but agents inactive per upstream notice → default_agent dangles at cutover, captain decision pending; variants need no shape change), docs/v2-cutover-runbook.md (executes only on captain word). Details + evidence index in COMPLETE-CODEBASE Oct 20 timeline entry.
+- **2026-10-21** — PIPE-PORT-M2 invocation-contract rewrite shipped on fm/pipe-port-m2 (firstmate crewmate; Ship 2 of the pipeline-port program): sisyphus-plan's 10-edge stage spine + the three Skill Usage blocks (discovery-orchestrator, momus-prd-reviewer, momus-plan-reviewer) rewritten to native V2 `task(subagent_type=...)` persona delegation with gate semantics preserved; every surviving category=/load_skills=/**Category:** omo-routing token in skills/ retired (zero survivors — generator --check-tokens green, 32 native tokens all resolving); AGENTS.md/COMPLETE-CODEBASE/SYSTEM-NARRATIVE routing claims corrected to the new ownership statement (pipeline cast = generated fleet files, omo.jsonc dormant legacy); guards corrected not disabled (Check 9 finder retargeted to the overlay-framed category line, validate-skills anti-pattern guard extended to **Persona:**/**Seat:**); generator self-test seeding flipped to the native grammar (the one forced generator change). Details + PR body in COMPLETE-CODEBASE Oct 21 timeline entry.
 
 ---
 

@@ -144,18 +144,20 @@ if [ "${1:-}" = "--self-test" ]; then
     exit 1
   fi
 
-  echo "==> Self-test 2/3: breaking a claim (# 9 agent -> # 99 agent)..."
+  echo "==> Self-test 2/3: breaking a claim (# 24 agent -> # 99 agent)..."
   TMP_DOC=$(mktemp)
   cp "$DOC_FILE" "$TMP_DOC"
-  # Retarget note (2nd occurrence of the L-historical trap, fixed 2026-09-07):
-  # breaking a *textual* first occurrence is useless if no pattern extracts it —
-  # '18 Named Agents' (L244) extracts noun 'Named' (unmapped), and bare '18 agents'
-  # first lands in excluded timeline L143. Break the tree-annotation claim P2
-  # actually verifies: '# 9 agent' on the agents/ line.
-  sed -i '0,/# 9 agent/s//# 99 agent/' "$TMP_DOC"
+  # Retarget notes (L-historical trap, fixed 2026-09-07; seed retargeted
+  # pipe-port-m2): breaking a *textual* first occurrence is useless if no
+  # pattern extracts it — '18 Named Agents' extracts noun 'Named' (unmapped),
+  # and bare '18 agents' first lands in excluded timeline. Break the
+  # tree-annotation claim P2 actually verifies: the '# N agent' count on the
+  # agents/ line — update this seed whenever that tree count changes again
+  # (Ship 1's 9 -> 24 bump had left the old seed matching nothing).
+  sed -i '0,/# 24 agent/s//# 99 agent/' "$TMP_DOC"
   if DOC_CLAIMS_FILE="$TMP_DOC" bash "$0" 2>&1; then
     rm -f "$TMP_DOC"
-    echo "FAIL: guard should have detected drift (9->99 agent)"
+    echo "FAIL: guard should have detected drift (24->99 agent)"
     exit 1
   fi
   echo "==> PASS: guard correctly caught drift"

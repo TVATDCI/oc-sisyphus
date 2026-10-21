@@ -65,16 +65,15 @@ A skill for ruthless, deep review of planning artifacts. Momus finds what others
 - PASS decision allows execution to proceed
 
 **Skill Usage:**
-This skill is loaded via `load_skills` into category-routed tasks:
+No persona file backs this skill (the pipeline's ported gate seats are `momus-prd-reviewer` and `momus-plan-reviewer`). Load it in the reviewing session directly; when delegating, carry an explicit skill-load instruction in the task prompt — there is no `load_skills` injection under native V2 delegation:
 ```typescript
 task(
-  category="deep",            // or "ultrabrain" for maximum reasoning
-  load_skills=["momus-reviewer"],
-  prompt="Review PRD at .sisyphus/prds/{name}-prd.md. Find blockers."
+  subagent_type="<a persona available to the caller>",
+  prompt="Load and follow skills/momus-reviewer. Review PRD at .sisyphus/prds/{name}-prd.md. Find blockers."
 )
 ```
 
-**Category routing:** The framework automatically selects an appropriate reasoning model. Do not micromanage subagent model selection.
+**Routing:** the spawned persona's pinned seat (agents/<name>.md) decides the model. Do not micromanage subagent model selection.
 
 ## Hard Constraints (NEVER/MUST)
 
@@ -428,8 +427,8 @@ Agent loads momus-reviewer skill:
 ### Example 3: Checkpoint Gate — Auto-invoked
 ```
 Orchestrator completes PRD, reaches Checkpoint 1:
-- Delegates to momus-reviewer (category="deep"): "Review .sisyphus/prds/dashboard-enhancement-prd.md"
-- Framework routes to reasoning model, loads skill, performs deep review
+- Delegates a momus-reviewer pass (task prompt: "Load and follow skills/momus-reviewer. Review .sisyphus/prds/dashboard-enhancement-prd.md")
+- The spawned persona's pinned seat provides the reasoning model; the prompt's load instruction provides the skill; performs deep review
 - Returns: WARNING — "1 major: Settings API assumes atomic writes but PRD doesn't specify temp-file pattern. Recommend adding."
 - Orchestrator adds temp-file pattern to PRD, re-invokes review
 - Returns: PASS

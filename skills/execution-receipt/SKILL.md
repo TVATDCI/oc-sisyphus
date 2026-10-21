@@ -24,7 +24,7 @@ task-{N}:exec={status} verify={result} model={category} files={N} duration={N}s 
 |-------|--------|---------|
 | `exec` | `success` `refused` `error` `partial` | Subagent outcome |
 | `verify` | `pass` `fail(N)` `skipped({reason})` | Post-run verification |
-| `model` | category name, e.g. `quick`, `visual-engineering` | Which category was used |
+| `model` | persona name, e.g. `prd-writer`, `code-review` | Which persona agent ran the task (pin readable in `agents/<name>.md`) |
 | `files` | integer | Unique changed paths count |
 | `duration` | integer seconds | Wall-clock elapsed time |
 | `retry` | 0–2 | Attempt number (0 = first attempt) |
@@ -77,7 +77,7 @@ SESSION="${OPENCODE_SESSION_ID:-none}"
 ### 3. Execute task()
 
 ```bash
-task(category="...", load_skills=[...], prompt="...")
+task(subagent_type="...", prompt="...")
 ```
 
 ### 4. Note end time and compute duration

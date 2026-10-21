@@ -6,13 +6,15 @@
 #   ./validate-skills.sh [skill-name]
 #   ./validate-skills.sh --all
 #
-# Routing-token leg (pipe-port-m1): every category=/subagent_type=/load_skills=
-# and **Category:** token in skills/ must resolve to a port-map category stanza,
-# an agents/*.md file agent, or a skills/ directory. Owned by
+# Routing-token leg (pipe-port-m1, retargeted pipe-port-m2): every
+# subagent_type= token in skills/ must resolve to an agents/*.md file agent
+# (the omo category=/load_skills=/**Category:** grammars were retired by
+# pipe-port-m2 — zero survivors). Owned by
 # scripts/generate-pipeline-personas.py --check-tokens (single source of truth).
-# Self-test recipe: copy skills/ to a scratch dir, flip one category="deep" token
-# to a typo in the scratch copy, and point the generator at it -- the check must
-# FAIL naming file:line (the generator's --self-test automates this proof).
+# Self-test recipe: copy skills/ to a scratch dir, flip one
+# subagent_type="brief-loader" token to a typo in the scratch copy, and point
+# the generator at it -- the check must FAIL naming file:line (the generator's
+# --self-test automates this proof).
 
 set -euo pipefail
 
@@ -100,13 +102,16 @@ validate_skill() {
         return 1
     fi
 
-    # Anti-pattern guard: hardcoded model identifier after **Category:**
-    # Runtime model comes from ~/.omo/omo.jsonc (resolved by category at task() time).
-    # Hardcoding model names in skill bodies drifts on every model refresh.
-    # Pattern matches: **Category:** `X` → `Y`  or  **Category:** X → Y
-    if grep -qE '^\*\*Category:\*\*.*→' "$skill_dir/SKILL.md"; then
-        local offending_line=$(grep -nE '^\*\*Category:\*\*.*→' "$skill_dir/SKILL.md" | head -1)
-        echo -e "${RED}FAIL${NC} (hardcoded model after **Category:** — runtime model is resolved from ~/.omo/omo.jsonc; do not hardcode in skill body)"
+    # Anti-pattern guard: hardcoded model identifier after the seat line
+    # (Category/Persona/Seat). Runtime model comes from the persona's pinned
+    # seat in agents/<name>.md (generated pipeline cast;
+    # ~/.omo/omo.jsonc is dormant legacy). Hardcoding model names in skill
+    # bodies drifts on every model refresh.
+    # Pattern matches: **Persona:** `X` → `Y`  or  **Persona:** X → Y
+    # (also the retired **Category:** and the **Seat:** form)
+    if grep -qE '^\*\*(Category|Persona|Seat):\*\*.*→' "$skill_dir/SKILL.md"; then
+        local offending_line=$(grep -nE '^\*\*(Category|Persona|Seat):\*\*.*→' "$skill_dir/SKILL.md" | head -1)
+        echo -e "${RED}FAIL${NC} (hardcoded model after the seat line — runtime model is resolved from the persona's pinned seat in agents/<name>.md; do not hardcode in skill body)"
         echo "         offending: ${offending_line}"
         ((FAIL++)) || true
         return 1
