@@ -425,7 +425,7 @@ def read_rows(program: str) -> list[dict]:
 # ─── run one persona task (dry-run leg) ─────────────────────────────────────
 
 
-def run_agent_once(name: str, prompt: str, sb: dict, timeout_s: int = 300) -> dict:
+def run_agent_once(name: str, prompt: str, sb: dict, timeout_s: int = 420) -> dict:
     env = sandbox_env(sb)
     out_path = sb["root"] / "run.out"
     err_path = sb["root"] / "run.err"
@@ -433,7 +433,7 @@ def run_agent_once(name: str, prompt: str, sb: dict, timeout_s: int = 300) -> di
     proc = subprocess.run(
         [
             str(BIN), "run", "--standalone", "--agent", name,
-            "--format", "json", prompt,
+            "--auto", "--format", "json", prompt,
         ],
         cwd=str(sb["project"]),
         env=env,
@@ -893,16 +893,28 @@ def cmd_chain(args) -> int:
                     {"title": f"chain-{run_idx}-{stage}", "parentID": parent_id, "agent": persona},
                 )["data"]
                 cid = child["id"]
-                srv.api("POST", f"/api/session/{cid}/prompt", {"text": prompt})
-                # wait for the assistant turn in this child session
-                deadline = time.time() + 300
-                meta = None
-                while time.time() < deadline:
-                    time.sleep(3)
-                    rows_ = assistant_rows(sb["db"], cid)
-                    if rows_:
-                        meta = rows_[-1]
-                        break
+                # drive the child session's turn via the host CLI bound to the
+                # sandbox server (--auto: headless validation auto-approves
+                # non-denied permissions; the sisyphus-gates layers stay
+                # unconditional and independent of this flag)
+                run_env = sandbox_env(sb, {"OPENCODE_PASSWORD": srv.pw or ""})
+                t0 = time.time()
+                try:
+                    proc = subprocess.run(
+                        [
+                            str(BIN), "run", "--server", srv.base,
+                            "--session", cid, "--auto", "--format", "json", prompt,
+                        ],
+                        cwd=str(sb["project"]),
+                        env=run_env,
+                        capture_output=True,
+                        text=True,
+                        timeout=420,
+                    )
+                    node_rc = proc.returncode
+                    (sb["root"] / f"{stage}.out").write_text(proc.stdout)
+                except subprocess.TimeoutExpired:
+                    node_rc = 124
                 nr = {
                     "node": node_idx,
                     "stage": stage,
@@ -911,7 +923,17 @@ def cmd_chain(args) -> int:
                     "session": cid,
                     "parent_linked": child.get("parentID") == parent_id,
                     "session_agent_param_taken": child.get("agentID") == persona,
+                    "node_rc": node_rc,
+                    "dur_s": round(time.time() - t0, 1),
                 }
+                deadline = time.time() + 90
+                meta = None
+                while time.time() < deadline:
+                    rows_ = assistant_rows(sb["db"], cid)
+                    if rows_:
+                        meta = rows_[-1]
+                        break
+                    time.sleep(3)
                 if meta:
                     nr["meta_agent"] = meta["agent"]
                     nr["meta_model"] = f"{meta['provider_id']}/{meta['model_id']}"
