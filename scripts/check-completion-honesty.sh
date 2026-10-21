@@ -206,7 +206,7 @@ const fs = require('fs');
 const doc = fs.readFileSync(process.env.DOC, 'utf8');
 const omaCats = JSON.parse(process.env.OMO_ROUTING || '{}');
 
-const line = doc.split('\n').find(l => l.includes('Categories (via task(category'));
+const line = doc.split('\n').find(l => l.includes('Categories (omo.jsonc overlay'));
 if (!line) {
   console.log('Could not find Categories line in COMPLETE-CODEBASE.md');
   process.exit(0);
