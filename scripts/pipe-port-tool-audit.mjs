@@ -47,7 +47,8 @@ const EXTERNAL_DECLARED = new Set(["playwright", "browser"]);
 // tools already covered by the prefix rule; `home` wraps
 // @modelcontextprotocol/server-filesystem whose full surface is listed —
 // the runtime dimension Program 1 observed (a persona organically invoked
-// home_directory_tree and hit an unknown-class deny).
+// home_directory_tree and hit an unknown-class deny, fixed in oc-v2-fixbundle
+// by the directory_tree read verb + self-named-server prefix normalization).
 const MCP_SERVER_SURFACES = {
   home: [
     "read_file", "read_text_file", "read_media_file", "read_multiple_files",
@@ -58,8 +59,9 @@ const MCP_SERVER_SURFACES = {
   codegraph: ["codegraph_explore"],
 };
 // NOTE: the codegraph server names its tool `codegraph_explore` itself, so
-// under the gates' prefix rule the classified fragment is `explore` — not a
-// read verb — an unknown-class deny recorded below as a finding.
+// under the gates' prefix rule the dispatched name carries the prefix twice
+// (`codegraph_codegraph_explore`); since oc-v2-fixbundle the classifier
+// strips a self-repeated server prefix and the `explore` read verb applies.
 
 // MCP prefixes exactly as the gate loads them: from opencode.json mcp keys.
 function mcpPrefixes() {

@@ -24,6 +24,16 @@ Programs (subcommands):
   tool-audit   Program 6: every tool class referenced by each persona's
                skill contract resolves in the gates' classification; zero
                unknown-tool deaths.
+  pin-proof    oc-v2-fixbundle Build 3: under the emitted opencode.json agent
+               map, a structural runtime baseline plus a bounded dry-run
+               sample driven through REAL subagent-tool child sessions (the
+               pipeline's spawn path; the only headless path that composes
+               agent-configured models under 2.1.0 — subagent.ts applies
+               `override ?? agent.model ?? parent.model`; the run --agent
+               client never composes agent.model). Asserts model==pin — base
+               AND variant — from session-db rows, plus a client-path
+               evidence leg recording the refined R2 boundary. Gate: at
+               least one pinned execution proves, or the bundle fails.
   threshold    Program 4: two-class measurement from recorded results
                (chain-completes-without-human-intervention rate and
                per-checkpoint verdict distribution; never blended).
@@ -88,6 +98,7 @@ def load_port_map() -> dict:
         "categories": mod.CATEGORIES,
         "personas": mod.PERSONAS,
         "names": [p["name"] for p in mod.PERSONAS],
+        "agent_pins": mod.agent_pin_map(),
     }
 
 
@@ -102,17 +113,10 @@ def pm() -> dict:
 
 
 def persona_pin(name: str) -> str:
-    for p in pm()["personas"]:
-        if p["name"] == name:
-            return pm()["categories"][p["category"]]["model"] + (
-                "#" + pm()["categories"][p["category"]]["variant"]
-                if pm()["categories"][p["category"]].get("variant")
-                else ""
-            )
-    # pre-existing agents: pin from their own frontmatter
-    src = (REPO_ROOT / "agents" / f"{name}.md").read_text()
-    m = re.search(r"^model:\s*(\S+)", src, re.M)
-    return m.group(1) if m else ""
+    pins = pm()["agent_pins"]
+    if name in pins:
+        return pins[name]
+    return ""
 
 
 def log(msg: str) -> None:
@@ -360,7 +364,8 @@ def assistant_rows(db: Path, session_id: str | None = None) -> list[dict]:
         " json_extract(data,'$.model.id'),"
         " json_extract(data,'$.model.providerID'),"
         " json_extract(data,'$.time.created'),"
-        " json_extract(data,'$.tokens.reasoning')"
+        " json_extract(data,'$.tokens.reasoning'),"
+        " json_extract(data,'$.model.variant')"
         " from session_message"
         " where json_extract(data,'$.model.providerID') is not null"
     )
@@ -380,9 +385,30 @@ def assistant_rows(db: Path, session_id: str | None = None) -> list[dict]:
             "provider_id": r[2],
             "created": r[3],
             "reasoning": r[4],
+            "variant": r[5],
         }
         for r in rows
     ]
+
+
+def session_models(db: Path) -> dict[str, dict]:
+    """{session_id: {agent, model_obj}} from session_v2 (variant-bearing)."""
+    if not db.exists():
+        return {}
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    out: dict[str, dict] = {}
+    try:
+        rows = con.execute(
+            "select id, agent, model from session_v2 where model is not null"
+        ).fetchall()
+        for sid, agent, model_json in rows:
+            try:
+                out[sid] = {"agent": agent, "model": json.loads(model_json)}
+            except (ValueError, TypeError):
+                continue
+    finally:
+        con.close()
+    return out
 
 
 def gate_denials(sb: dict) -> list[dict]:
@@ -752,6 +778,290 @@ def cmd_dryrun(args) -> int:
             write_row("dryrun", row)
             log(f"dryrun {name}#{i}: {row['verdict']} model={row.get('meta_model')} art={row.get('artifact_ok')}")
     return 0
+
+
+# ─── Program: pin-proof (oc-v2-fixbundle Build 3; closes the R2 loop) ─────
+
+
+def _session_id_from_output(run_out: str) -> str | None:
+    for line in (run_out or "").splitlines():
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        sid = d.get("sessionID")
+        if sid:
+            return sid
+    return None
+
+
+def _child_sessions(db: Path, parent_id: str) -> list[tuple]:
+    """(id, agent, model_json) of the parent's child sessions, oldest first."""
+    if not db.exists():
+        return []
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    try:
+        return con.execute(
+            "select id, agent, model from session_v2 where parent_id=? "
+            "order by time_created",
+            (parent_id,),
+        ).fetchall()
+    finally:
+        con.close()
+
+
+def _child_text(db: Path, session_id: str) -> str:
+    """Concatenated text parts of a session (for output-verdict artifacts).
+
+    Sandbox V2 schema stores parts in session_message's data JSON ($.text);
+    the live host db uses a separate part table — handle both.
+    """
+    if not db.exists():
+        return ""
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    try:
+        try:
+            rows = con.execute(
+                "select json_extract(data,'$.text') from session_message "
+                "where session_id=? and json_extract(data,'$.text') is not null "
+                "order by time_created",
+                (session_id,),
+            ).fetchall()
+        except sqlite3.OperationalError:
+            rows = con.execute(
+                "select json_extract(data,'$.part.text') from part "
+                "where session_id=? and json_extract(data,'$.part.type')='text' "
+                "order by time_created",
+                (session_id,),
+            ).fetchall()
+    finally:
+        con.close()
+    return "\n".join(r[0] or "" for r in rows)
+
+
+def _spawn_subagent(
+    srv: "Server",
+    sb: dict,
+    name: str,
+    prompt: str,
+    parent_id: str,
+    wait_s: int = 300,
+) -> dict:
+    """Drive a real parent turn that invokes the subagent tool for `name`.
+
+    The subagent tool composes `override ?? agent.model ?? parent.model` for
+    the child session (opencode v2.1.0 source, packages/core/src/tool/
+    plugin/subagent.ts) — the pipeline's actual spawn path, and the only
+    headless path that applies agent-configured models (the run --agent
+    client never composes agent.model; source: cli/src/run/noninteractive.ts).
+    After the child's first assistant row, keeps polling until the child's
+    row count is stable for 30s (bounded task completes) or wait_s elapses.
+    """
+    instr = (
+        f"Spawn a subagent now using your subagent/task tool with "
+        f"agent='{name}', description='pin proof', prompt={prompt!r}. "
+        "Do not answer the task yourself; only spawn the subagent and wait "
+        "for its result."
+    )
+    srv.api("POST", f"/api/session/{parent_id}/prompt", {"text": instr})
+    deadline = time.time() + wait_s
+    child = None
+    metas: list[dict] = []
+    last_count = -1
+    stable_since: float | None = None
+    while time.time() < deadline:
+        time.sleep(5)
+        kids = _child_sessions(sb["db"], parent_id)
+        if not kids:
+            continue
+        child = kids[0]
+        metas = assistant_rows(sb["db"], child[0])
+        if not metas:
+            continue
+        if len(metas) == last_count:
+            if stable_since is None:
+                stable_since = time.time()
+            elif time.time() - stable_since >= 30:
+                break
+        else:
+            last_count = len(metas)
+            stable_since = None
+    return {"child": child, "metas": metas}
+
+
+def _pin_assertions(name: str, sb: dict, spawn: dict) -> dict:
+    """Model+variant==pin assertions from session-db rows (never self-report)."""
+    pin = persona_pin(name)
+    want_base, _, want_variant = pin.partition("#")
+    child = spawn["child"]
+    metas = spawn["metas"]
+    meta = metas[-1] if metas else None
+    out: dict = {
+        "pin": pin,
+        "child_created": bool(child),
+        "meta_agent": meta["agent"] if meta else None,
+        "meta_model": f"{meta['provider_id']}/{meta['model_id']}" if meta else None,
+        "resolved_label": bool(meta and meta["agent"] == name),
+        "model_eq_pin": bool(
+            meta and f"{meta['provider_id']}/{meta['model_id']}" == want_base
+        ),
+    }
+    if child:
+        _sid, _agent, model_json = child
+        try:
+            sm = json.loads(model_json) if model_json else None
+        except ValueError:
+            sm = None
+        if sm:
+            out["session_model"] = f"{sm.get('providerID')}/{sm.get('id')}"
+            got_variant = sm.get("variant") or ""
+            out["session_variant"] = got_variant
+            out["variant_eq_pin"] = (
+                got_variant == want_variant if want_variant else True
+            )
+        else:
+            out["session_model"] = None
+            out["session_variant"] = None
+            out["variant_eq_pin"] = False
+    else:
+        out["session_model"] = None
+        out["session_variant"] = None
+        out["variant_eq_pin"] = False
+    return out
+
+
+def cmd_pin_proof(args) -> int:
+    """Pin-execution proof under the emitted opencode.json agent map, on the
+    DELEGATION path (real subagent-tool child sessions) — the pipeline's
+    actual spawn mechanism and the only headless path that composes
+    agent-configured models under opencode 2.1.0 (source: subagent.ts
+    `override ?? agent.model ?? parent.model`; the run --agent client never
+    composes agent.model). Structural baseline: one tiny child turn per
+    zai-pinned persona. Bounded dry-run sample: N task-legs per zai Mode-A
+    persona. Plus a client-path evidence leg recording the refined R2
+    boundary. Gate: >=1 pinned execution (base AND variant) from db rows.
+    """
+    pins = pm()["agent_pins"]
+    structural_set = [
+        n for n, p in pins.items()
+        if p.startswith("zai") and n in set(pm()["names"])
+    ]
+    local_rows: list[dict] = []
+    proven = 0
+
+    def run_leg(leg: str, name: str, prompt: str, sb_name: str,
+                project_files: dict | None = None, spec: dict | None = None,
+                wait_s: int = 300) -> None:
+        nonlocal proven
+        sb = make_sandbox(sb_name, project_files=project_files)
+        row = {"leg": leg, "persona": name, "sandbox": str(sb["root"])}
+        srv = Server(sb)
+        try:
+            if not srv.wait_ready():
+                row["note"] = "server not ready"
+                write_row("pin-proof", row)
+                local_rows.append(row)
+                return
+            # Parent pinned to the zai plan model: the spawn instruction is
+            # deterministic and the free-default parent endpoint proved flaky
+            # (stalled turns, 2026-10-21 matrix). Explicit model selection is
+            # the client-composed path (mirror of noninteractive.ts -m).
+            parent = srv.api(
+                "POST",
+                "/api/session",
+                {
+                    "title": f"{sb_name}-parent",
+                    "model": {
+                        "providerID": "zai-coding-plan",
+                        "id": "glm-5.3",
+                        "variant": "low",
+                    },
+                },
+            )["data"]
+            spawn = _spawn_subagent(srv, sb, name, prompt, parent["id"], wait_s=wait_s)
+            row.update(_pin_assertions(name, sb, spawn))
+            denies = gate_denials(sb)
+            unknown = [d for d in denies if "classification unknown" in json.dumps(d)]
+            row["unknown_class_denials"] = len(unknown)
+            ok_art = True
+            if spec:
+                child_text = (
+                    _child_text(sb["db"], spawn["child"][0]) if spawn["child"] else ""
+                )
+                ok_art, art_note = artifact_ok(spec, sb, child_text)
+                row["artifact_note"] = art_note
+            row["artifact_ok"] = ok_art
+            row["pinned_execution"] = (
+                bool(row.get("model_eq_pin")) and bool(row.get("variant_eq_pin"))
+                and bool(row.get("resolved_label")) and ok_art
+            )
+            if row["pinned_execution"]:
+                proven += 1
+        except Exception as e:  # noqa: BLE001
+            row["pinned_execution"] = False
+            row["note"] = f"harness error: {e}"
+        finally:
+            srv.stop()
+        write_row("pin-proof", row)
+        local_rows.append(row)
+        log(
+            f"pinproof {leg} {name}: pinned={row.get('pinned_execution')} "
+            f"model={row.get('meta_model')} variant={row.get('session_variant')}"
+        )
+
+    for name in structural_set:
+        run_leg("structural", name, "Reply with exactly one word: ok",
+                f"pinproof-structural-{name}")
+
+    n = args.n
+    specs = task_specs()
+    dry_set = [
+        p["name"] for p in pm()["personas"]
+        if p["mode"] == "A" and persona_pin(p["name"]).startswith("zai")
+        and p["name"] in specs
+    ]
+    for name in dry_set:
+        spec = specs[name]
+        for i in range(1, n + 1):
+            run_leg("dryrun", name, spec["prompt"], f"pinproof-dry-{name}-{i}",
+                    project_files=spec["files"], spec=spec, wait_s=480)
+
+    # Client-path evidence leg (refined R2): the run --agent client never
+    # composes agent.model (source: noninteractive.ts) — record the boundary.
+    for name in ("brief-loader", "code-review"):
+        sb = make_sandbox(f"pinproof-client-{name}")
+        row = {"leg": "client-path", "persona": name, "sandbox": str(sb["root"]),
+               "expected": "not_pinned_source_confirmed"}
+        try:
+            res = run_agent_once(name, "Reply with exactly one word: ok", sb, timeout_s=240)
+            row["rc"] = res["rc"]
+            metas = assistant_rows(sb["db"])
+            meta = metas[-1] if metas else None
+            row["meta_model"] = f"{meta['provider_id']}/{meta['model_id']}" if meta else None
+            row["model_eq_pin"] = bool(
+                meta and f"{meta['provider_id']}/{meta['model_id']}" == persona_pin(name).split("#")[0]
+            )
+        except Exception as e:  # noqa: BLE001
+            row["note"] = f"harness error: {e}"
+        write_row("pin-proof", row)
+        local_rows.append(row)
+        log(f"pinproof client-path {name}: model={row.get('meta_model')} (expected not pinned)")
+
+    rows = local_rows
+    total = len(rows)
+    pinned = sum(1 for r in rows if r.get("pinned_execution"))
+    unknown_total = sum(r.get("unknown_class_denials", 0) for r in rows)
+    verdict = "PASS" if pinned >= 1 else "FAIL"
+    summary = {
+        "bundle_gate": "at least one persona proves pinned execution on headless (delegation path)",
+        "rows": total,
+        "pinned_executions": pinned,
+        "unknown_class_denials": unknown_total,
+        "verdict": verdict,
+    }
+    write_row("pin-proof-summary", summary)
+    print(json.dumps(summary, indent=2))
+    return 0 if verdict == "PASS" else 1
 
 
 # ─── Program 5: opencode-go single attempts ─────────────────────────────────
@@ -1158,12 +1468,26 @@ def cmd_self_test(args) -> int:
     if ("brief-loader" in fresh) is not False:
         failures.append("registry-truth check passed for unregistered persona")
 
-    # 7. port map pins load and match generated frontmatter (drift guard)
-    for name in pm()["names"]:
+    # 7. pin map consistency: no agents/*.md carries a model/variant line
+    #    (the opencode.json agent map is the sole pin authority) and every
+    #    generated persona's map entry matches the port map.
+    oc = json.loads((REPO_ROOT / "opencode.json").read_text(encoding="utf-8"))
+    emitted = oc.get("agent", {})
+    for name, pin in pm()["agent_pins"].items():
         src = (REPO_ROOT / "agents" / f"{name}.md").read_text()
-        m = re.search(r"^model:\s*(\S+)", src, re.M)
-        if not m or m.group(1) != persona_pin(name):
-            failures.append(f"persona {name}: frontmatter pin != port map pin")
+        lines = src.split("\n")
+        try:
+            close = next(i for i, l in enumerate(lines[1:], start=1) if l.strip() == "---")
+        except StopIteration:
+            failures.append(f"persona {name}: no frontmatter")
+            continue
+        if any(l.startswith(("model:", "variant:")) for l in lines[:close]):
+            failures.append(f"persona {name}: file carries a model/variant pin (map is sole authority)")
+            break
+        base, _, variant = pin.partition("#")
+        entry = emitted.get(name, {})
+        if entry.get("model") != base or entry.get("variant", "") != variant:
+            failures.append(f"persona {name}: opencode.json map entry != port map pin {pin!r}")
             break
 
     if failures:
@@ -1171,7 +1495,7 @@ def cmd_self_test(args) -> int:
         for f in failures:
             print(" -", f)
         return 1
-    print("self-test: PASS (7 checks)")
+    print("self-test: PASS (8 checks)")
     return 0
 
 
@@ -1194,6 +1518,8 @@ def main() -> int:
     p = sub.add_parser("dryrun", help="Program 1: N dry-runs per zai Mode-A persona")
     p.add_argument("--n", type=int, default=5)
     p.add_argument("--personas", nargs="*", default=None)
+    p = sub.add_parser("pin-proof", help="oc-v2-fixbundle: structural + bounded dry-run, model==pin from session-db rows")
+    p.add_argument("--n", type=int, default=2)
     p = sub.add_parser("og-single", help="Program 5: single attempts for opencode-go personas")
     p.add_argument("--n", type=int, default=1)
     p.add_argument("--personas", nargs="*", default=None)
@@ -1209,6 +1535,7 @@ def main() -> int:
     handlers = {
         "structural": cmd_structural,
         "dryrun": cmd_dryrun,
+        "pin-proof": cmd_pin_proof,
         "og-single": cmd_og_single,
         "chain": cmd_chain,
         "tool-audit": cmd_tool_audit,

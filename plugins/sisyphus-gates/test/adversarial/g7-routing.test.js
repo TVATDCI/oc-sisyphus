@@ -191,6 +191,36 @@ test("G7-ε-h: myfiles_read_file to /tmp → allowed in approved state", () => {
   assert.equal(d.blocked, false);
 });
 
+// oc-v2-fixbundle (PR-8 Program 6, decision 5): the two runtime-observed
+// unknown-class denials become read-classified. home_directory_tree is the
+// `home` filesystem server's tree listing (9 observed denials, 2026-10-21);
+// codegraph_codegraph_explore is the `codegraph` server, which self-names
+// its tool with its own server prefix so the dispatched name carries the
+// prefix twice.
+
+test("G7-ε-i: home_directory_tree classified as MCP read", () => {
+  mcpInternal.setPrefixes(["home_"]);
+  const result = getMcpClassification("home_directory_tree");
+  assert.equal(result.type, "mcp");
+  assert.equal(result.classification, "read");
+  assert.equal(result.server, "home");
+});
+
+test("G7-ε-j: codegraph_codegraph_explore classified as MCP read (self-named server)", () => {
+  mcpInternal.setPrefixes(["codegraph_"]);
+  const result = getMcpClassification("codegraph_codegraph_explore");
+  assert.equal(result.type, "mcp");
+  assert.equal(result.classification, "read");
+  assert.equal(result.server, "codegraph");
+});
+
+test("G7-ε-k: self-named server write tool still classified write (strip normalization does not blunt writes)", () => {
+  mcpInternal.setPrefixes(["codegraph_"]);
+  const result = getMcpClassification("codegraph_codegraph_write_file");
+  assert.equal(result.type, "mcp");
+  assert.equal(result.classification, "write");
+});
+
 // ─── G7-task: task blocked during fail-closed ───────────────────────────────
 
 test("G7-task: task tool blocked when fail-closed (subagent escape prevention)", () => {

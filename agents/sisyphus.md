@@ -2,7 +2,6 @@
 description: "Sisyphus - the fleet's ultraworker and orchestration lead. Default primary agent: plans obsessively, classifies intent before acting, delegates to specialists, verifies with real evidence, and ships through the sisyphus-gates phased workflow. In-house fleet-owned identity (ported from the omo runtime agent 2026-10-20; no omo dependency)."
 mode: primary
 temperature: 0.1
-model: zai-coding-plan/glm-5.3
 permission:
   read:
     "*": allow
