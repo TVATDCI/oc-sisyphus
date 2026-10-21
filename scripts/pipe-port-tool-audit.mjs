@@ -41,6 +41,26 @@ const ALL_BUILTIN = new Set([
 ]);
 const EXTERNAL_DECLARED = new Set(["playwright", "browser"]);
 
+// Known tool surfaces of the CONFIGURED MCP servers (opencode.json), as
+// enumerated live via tools/list handshake during methodology development
+// (2026-10-21). The `codegraph` server exposes codegraph-explore style
+// tools already covered by the prefix rule; `home` wraps
+// @modelcontextprotocol/server-filesystem whose full surface is listed —
+// the runtime dimension Program 1 observed (a persona organically invoked
+// home_directory_tree and hit an unknown-class deny).
+const MCP_SERVER_SURFACES = {
+  home: [
+    "read_file", "read_text_file", "read_media_file", "read_multiple_files",
+    "write_file", "edit_file", "create_directory", "list_directory",
+    "list_directory_with_sizes", "directory_tree", "move_file",
+    "search_files", "get_file_info", "list_allowed_directories",
+  ],
+  codegraph: ["codegraph_explore"],
+};
+// NOTE: the codegraph server names its tool `codegraph_explore` itself, so
+// under the gates' prefix rule the classified fragment is `explore` — not a
+// read verb — an unknown-class deny recorded below as a finding.
+
 // MCP prefixes exactly as the gate loads them: from opencode.json mcp keys.
 function mcpPrefixes() {
   const cfg = JSON.parse(readFileSync(join(repo, "opencode.json"), "utf8"));
@@ -146,14 +166,25 @@ async function main() {
   }
 
   const verdict = unknownTotal === 0 ? "PASS" : "FAIL";
-  console.log(`tool-audit: ${personas.length} personas, ${unknownTotal} unknown-tool deaths — ${verdict}`);
-  for (const p of personas) {
-    console.log(
-      `  ${p.verdict === "PASS" ? "ok " : "FAIL"} ${p.persona}: ${p.tool_count} refs (${p.tools.map((t) => t.tool + ":" + t.cls).join(", ")})`
-    );
+  // server-surface leg: classify every tool of every configured MCP server
+  const serverRows = [];
+  for (const [server, tools] of Object.entries(MCP_SERVER_SURFACES)) {
+    const prefix = server.toLowerCase() + "_";
+    for (const t of tools) {
+      const full = prefix + t;
+      const c = classify(full, prefixes, classifier.getMcpClassification);
+      serverRows.push({ server, tool: full, ...c });
+      if (!c.ok) unknownTotal++;
+    }
   }
-  console.log(JSON.stringify({ personas, unknown: unknownTotal, verdict }));
-  process.exit(verdict === "PASS" ? 0 : 1);
+  console.log(
+    `tool-audit: ${personas.length} personas, ${personas.filter((p) => p.unknown).length} persona unknowns, server-surface unknowns: ${serverRows.filter((r) => !r.ok).length} — ${verdict === "PASS" && unknownTotal === 0 ? "PASS" : "FAIL"}`
+  );
+  for (const r of serverRows) {
+    if (!r.ok) console.log(`  FAIL server-surface ${r.tool}: ${r.cls}`);
+  }
+  console.log(JSON.stringify({ personas, server_surface: serverRows, unknown: unknownTotal, verdict: unknownTotal === 0 ? "PASS" : "FAIL" }));
+  process.exit(unknownTotal === 0 ? 0 : 1);
 }
 
 main().catch((e) => {
