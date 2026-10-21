@@ -10,7 +10,13 @@ generated persona file from it. Edit the map here, never the emitted files.
 
 oc-v2-fixbundle (2026-10-21, PR-8 decisions 1+2): ~/.omo/omo.jsonc is the
 PIN-AUTHORING surface. This generator LIVE-READS it (never a snapshot -
-manifest lesson WARNING-5) and derives every model pin from it:
+manifest lesson WARNING-5) and derives every model pin from it. The source
+is configurable for non-desk environments (CI has no ~/.omo): the
+--omo-source flag or OMO_JSONC_PATH env override the default, and the
+generator fail-closes when the CONFIGURED source is absent - never a silent
+fallback. CI points it at the committed repo-root per-desk variant
+(omo.ddd.jsonc), so the committed surfaces must reproduce from a committed
+source on every push:
   - the opencode.json `agent` map (the V1-object config form PR-8 D3 proved
     pins under opencode 2.1.0) is EMITTED as the runtime pin authority:
     bare `provider/model` + separate `variant` field per agent entry -
@@ -75,6 +81,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -86,7 +93,25 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO_ROOT / "skills"
 AGENTS_DIR = REPO_ROOT / "agents"
 OPENCODE_JSON = REPO_ROOT / "opencode.json"
-OMO_PATH = Path.home() / ".omo" / "omo.jsonc"
+
+
+def resolve_omo_path() -> tuple[Path, str]:
+    """The configured pin source: --omo-source flag > OMO_JSONC_PATH env >
+    the live ~/.omo/omo.jsonc. Returns (path, how_configured) — the caller
+    fail-closes when the CONFIGURED source is absent; no silent fallback.
+    """
+    for i, arg in enumerate(sys.argv[1:], start=1):
+        if arg == "--omo-source" and i + 1 < len(sys.argv):
+            return Path(sys.argv[i + 1]).expanduser(), "--omo-source flag"
+        if arg.startswith("--omo-source="):
+            return Path(arg.split("=", 1)[1]).expanduser(), "--omo-source flag"
+    env = os.environ.get("OMO_JSONC_PATH")
+    if env:
+        return Path(env).expanduser(), "OMO_JSONC_PATH env"
+    return Path.home() / ".omo" / "omo.jsonc", "default (live ~/.omo/omo.jsonc)"
+
+
+OMO_PATH, OMO_SOURCE_CONFIG = resolve_omo_path()
 MANIFEST = "pipe-port-m0 manifest (/home/vladi/firstmate/data/pipe-port-m0/report.md)"
 GENERATOR = "scripts/generate-pipeline-personas.py"
 
@@ -136,12 +161,15 @@ def _strip_jsonc_comments(text: str) -> str:
 
 
 def read_omo() -> dict:
-    """Parse the live ~/.omo/omo.jsonc and return its `[opencode]` block."""
+    """Parse the configured pin source and return its `[opencode]` block."""
     if not OMO_PATH.is_file():
         raise SystemExit(
-            f"FAIL: pin source {OMO_PATH} not found — the generator derives "
-            "every pin from the live omo.jsonc and will not fall back to a "
-            "snapshot"
+            f"FAIL: pin source {OMO_PATH} not found (configured via "
+            f"{OMO_SOURCE_CONFIG}) — the generator derives every pin from "
+            "the configured omo source and will not fall back silently. On "
+            "CI, point --omo-source / OMO_JSONC_PATH at a committed source "
+            "(the repo-root omo.<desk>.jsonc variants are the intended "
+            "fixture)."
         )
     raw = OMO_PATH.read_text(encoding="utf-8")
     clean = re.sub(r",(?=\s*[}\]])", "", _strip_jsonc_comments(raw))
@@ -1391,12 +1419,38 @@ def self_test() -> int:
     ) != 0:
         failures.append("variant check rejected a valid #xhigh pin")
 
+    # Source-override legs (subprocess: the override applies at import).
+    gen = [sys.executable, str(REPO_ROOT / "scripts" / "generate-pipeline-personas.py")]
+    fixture = str(REPO_ROOT / "omo.ddd.jsonc")
+
+    # a. the committed variant reproduces the committed surfaces (--check).
+    proc = subprocess.run(gen + ["--omo-source", fixture, "--check"],
+                          capture_output=True, text=True, timeout=120)
+    if proc.returncode != 0:
+        failures.append(
+            f"override --check against {fixture} failed: {(proc.stdout + proc.stderr).strip()[:200]}"
+        )
+
+    # b. env override accepted.
+    env = dict(os.environ, OMO_JSONC_PATH=fixture)
+    proc = subprocess.run(gen + ["--list"], capture_output=True, text=True,
+                          timeout=120, env=env)
+    if proc.returncode != 0 or "brief-loader" not in proc.stdout:
+        failures.append(f"OMO_JSONC_PATH override failed: {(proc.stdout + proc.stderr).strip()[:200]}")
+
+    # c. absent CONFIGURED source refuses (no silent fallback to the live file).
+    proc = subprocess.run(gen + ["--omo-source", "/nonexistent/omo-fixture.jsonc", "--list"],
+                          capture_output=True, text=True, timeout=120)
+    out = proc.stdout + proc.stderr
+    if proc.returncode == 0 or "nonexistent/omo-fixture" not in out or "fail" not in out.lower():
+        failures.append(f"absent configured source did not refuse: rc={proc.returncode} {out[:200]}")
+
     if failures:
         for f in failures:
             print(f"FAIL: {f}")
         print("self-test: FAIL")
         return 1
-    print("self-test: PASS (clean pass + broken token + drift + DAG + file-pin hazard + schema catch + json map + variant catch all proven)")
+    print("self-test: PASS (clean pass + broken token + drift + DAG + file-pin hazard + schema catch + json map + variant catch + source-override/refusal legs all proven)")
     return 0
 
 
@@ -1407,6 +1461,17 @@ def self_test() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--omo-source",
+        metavar="PATH",
+        default=None,
+        help=(
+            "pin source override (default: live ~/.omo/omo.jsonc; env "
+            "OMO_JSONC_PATH). CI uses the committed repo-root variant "
+            "(omo.ddd.jsonc). Applied at import time - the flag is accepted "
+            "here for --help visibility. Fail-closed when absent."
+        ),
+    )
     mutex = parser.add_mutually_exclusive_group()
     mutex.add_argument("--write", action="store_true", help="(default) regenerate agents/*.md")
     mutex.add_argument("--check", action="store_true", help="drift gate; exit 1 on drift")

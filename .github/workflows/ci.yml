@@ -106,6 +106,18 @@ jobs:
 
       - name: Tier 2.4 — structural integrity (agent drift check)
         run: |
+          # Pin source for CI: the committed repo-root per-desk variant.
+          # The generator live-reads ~/.omo/omo.jsonc on the desk (the
+          # pin-authoring surface); the runner has no home config, so Tier 2.4
+          # points --check at omo.ddd.jsonc. The committed surfaces
+          # (agents/*.md + opencode.json agent map) must reproduce from the
+          # committed source on every push — if an emitted pin diverges
+          # between the live file and the committed variant, this tier fails:
+          # that is the drift wire, not coupling. (Known non-issue: ddd's
+          # agents.momus grok-4.6 vs live grok-4.7 — momus has no repo agent
+          # file, so nothing is emitted from that stanza.)
+          export OMO_JSONC_PATH="$PWD/omo.ddd.jsonc"
+
           # Agent count: config is user-local (~/.omo/omo.jsonc since 4.19.4), skip on CI
           if [ -f "$HOME/.omo/omo.jsonc" ]; then
             AGENTS_JSON=$(node scripts/omo-query.js agents)
@@ -116,10 +128,9 @@ jobs:
           fi
 
           # model: pins: single owner is scripts/validate-agents.py, called
-          # below. The Wave-2 rule survives there, scoped: no agent file
-          # carries a model pin EXCEPT agents/sisyphus.md, the fleet-owned
-          # primary whose deliberate frontmatter pin is the whole point of
-          # the file.
+          # below. Since oc-v2-fixbundle NO agent file carries a model pin —
+          # the opencode.json `agent` map is the sole pin authority (a valid
+          # file pin would override the map under opencode 2.1.0).
 
           python3 scripts/validate-agents.py
 
