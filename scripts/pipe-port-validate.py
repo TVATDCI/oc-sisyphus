@@ -25,10 +25,14 @@ Programs (subcommands):
                skill contract resolves in the gates' classification; zero
                unknown-tool deaths.
   pin-proof    oc-v2-fixbundle Build 3: under the emitted opencode.json agent
-               map, a structural runtime baseline (tiny run per zai-pinned
-               persona + the sisyphus primary) plus a bounded dry-run sample
-               (N per zai Mode-A persona), asserting model==pin — base AND
-               variant — from session-db rows on the headless path. Gate: at
+               map, a structural runtime baseline plus a bounded dry-run
+               sample driven through REAL subagent-tool child sessions (the
+               pipeline's spawn path; the only headless path that composes
+               agent-configured models under 2.1.0 — subagent.ts applies
+               `override ?? agent.model ?? parent.model`; the run --agent
+               client never composes agent.model). Asserts model==pin — base
+               AND variant — from session-db rows, plus a client-path
+               evidence leg recording the refined R2 boundary. Gate: at
                least one pinned execution proves, or the bundle fails.
   threshold    Program 4: two-class measurement from recorded results
                (chain-completes-without-human-intervention rate and
@@ -791,69 +795,162 @@ def _session_id_from_output(run_out: str) -> str | None:
     return None
 
 
-def _pin_assertions(name: str, sb: dict, res: dict) -> dict:
+def _child_sessions(db: Path, parent_id: str) -> list[tuple]:
+    """(id, agent, model_json) of the parent's child sessions, oldest first."""
+    if not db.exists():
+        return []
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    try:
+        return con.execute(
+            "select id, agent, model from session_v2 where parent_id=? "
+            "order by time_created",
+            (parent_id,),
+        ).fetchall()
+    finally:
+        con.close()
+
+
+def _spawn_subagent(
+    srv: "Server",
+    sb: dict,
+    name: str,
+    prompt: str,
+    parent_id: str,
+    wait_s: int = 300,
+) -> dict:
+    """Drive a real parent turn that invokes the subagent tool for `name`.
+
+    The subagent tool composes `override ?? agent.model ?? parent.model` for
+    the child session (opencode v2.1.0 source, packages/core/src/tool/
+    plugin/subagent.ts) — the pipeline's actual spawn path, and the only
+    headless path that applies agent-configured models (the run --agent
+    client never composes agent.model; source: cli/src/run/noninteractive.ts).
+    """
+    instr = (
+        f"Spawn a subagent now using your subagent/task tool with "
+        f"agent='{name}', description='pin proof', prompt={prompt!r}. "
+        "Do not answer the task yourself; only spawn the subagent and wait "
+        "for its result."
+    )
+    srv.api("POST", f"/api/session/{parent_id}/prompt", {"text": instr})
+    deadline = time.time() + wait_s
+    child = None
+    metas: list[dict] = []
+    while time.time() < deadline:
+        time.sleep(5)
+        kids = _child_sessions(sb["db"], parent_id)
+        if kids:
+            child = kids[0]
+            metas = assistant_rows(sb["db"], child[0])
+            if metas:
+                break
+    return {"child": child, "metas": metas}
+
+
+def _pin_assertions(name: str, sb: dict, spawn: dict) -> dict:
     """Model+variant==pin assertions from session-db rows (never self-report)."""
     pin = persona_pin(name)
     want_base, _, want_variant = pin.partition("#")
-    metas = assistant_rows(sb["db"])
+    child = spawn["child"]
+    metas = spawn["metas"]
     meta = metas[-1] if metas else None
-    out = {
+    out: dict = {
         "pin": pin,
+        "child_created": bool(child),
         "meta_agent": meta["agent"] if meta else None,
         "meta_model": f"{meta['provider_id']}/{meta['model_id']}" if meta else None,
         "resolved_label": bool(meta and meta["agent"] == name),
-        "model_eq_pin": bool(meta and f"{meta['provider_id']}/{meta['model_id']}" == want_base),
+        "model_eq_pin": bool(
+            meta and f"{meta['provider_id']}/{meta['model_id']}" == want_base
+        ),
     }
-    sid = _session_id_from_output(res.get("out", ""))
-    sm = session_models(sb["db"]).get(sid) if sid else None
-    if sm:
-        got_variant = sm["model"].get("variant") or ""
-        out["session_variant"] = got_variant
-        out["variant_eq_pin"] = (
-            got_variant == want_variant if want_variant else True
-        )
+    if child:
+        _sid, _agent, model_json = child
+        try:
+            sm = json.loads(model_json) if model_json else None
+        except ValueError:
+            sm = None
+        if sm:
+            out["session_model"] = f"{sm.get('providerID')}/{sm.get('id')}"
+            got_variant = sm.get("variant") or ""
+            out["session_variant"] = got_variant
+            out["variant_eq_pin"] = (
+                got_variant == want_variant if want_variant else True
+            )
+        else:
+            out["session_model"] = None
+            out["session_variant"] = None
+            out["variant_eq_pin"] = False
     else:
+        out["session_model"] = None
         out["session_variant"] = None
         out["variant_eq_pin"] = False
     return out
 
 
 def cmd_pin_proof(args) -> int:
-    """Structural runtime baseline + bounded dry-run sample under the emitted
-    opencode.json agent map, asserting model==pin (base AND variant) from
-    session-db rows on the headless path. The opencode-go personas are
-    reserved for the post-balance-pass full matrix (quota protection); this
-    bundle proves the zai-pinned set + the sisyphus primary.
+    """Pin-execution proof under the emitted opencode.json agent map, on the
+    DELEGATION path (real subagent-tool child sessions) — the pipeline's
+    actual spawn mechanism and the only headless path that composes
+    agent-configured models under opencode 2.1.0 (source: subagent.ts
+    `override ?? agent.model ?? parent.model`; the run --agent client never
+    composes agent.model). Structural baseline: one tiny child turn per
+    zai-pinned persona. Bounded dry-run sample: N task-legs per zai Mode-A
+    persona. Plus a client-path evidence leg recording the refined R2
+    boundary. Gate: >=1 pinned execution (base AND variant) from db rows.
     """
     pins = pm()["agent_pins"]
-    zai_pinned = [n for n, p in pins.items() if p.startswith("zai")]
-    structural_set = [n for n in zai_pinned if n in set(pm()["names"])] + ["sisyphus"]
+    structural_set = [
+        n for n, p in pins.items()
+        if p.startswith("zai") and n in set(pm()["names"])
+    ]
     local_rows: list[dict] = []
     proven = 0
-    for name in structural_set:
-        sb = make_sandbox(f"pinproof-structural-{name}")
-        row = {"leg": "structural", "persona": name, "sandbox": str(sb["root"])}
+
+    def run_leg(leg: str, name: str, prompt: str, sb_name: str,
+                project_files: dict | None = None, spec: dict | None = None) -> None:
+        nonlocal proven
+        sb = make_sandbox(sb_name, project_files=project_files)
+        row = {"leg": leg, "persona": name, "sandbox": str(sb["root"])}
+        srv = Server(sb)
         try:
-            res = run_agent_once(name, "Reply with exactly one word: ok", sb, timeout_s=240)
-            row["rc"] = res["rc"]
-            row.update(_pin_assertions(name, sb, res))
+            if not srv.wait_ready():
+                row["note"] = "server not ready"
+                write_row("pin-proof", row)
+                local_rows.append(row)
+                return
+            parent = srv.api("POST", "/api/session", {"title": f"{sb_name}-parent"})["data"]
+            spawn = _spawn_subagent(srv, sb, name, prompt, parent["id"])
+            row.update(_pin_assertions(name, sb, spawn))
             denies = gate_denials(sb)
             unknown = [d for d in denies if "classification unknown" in json.dumps(d)]
             row["unknown_class_denials"] = len(unknown)
+            ok_art = True
+            if spec:
+                ok_art, art_note = artifact_ok(spec, sb, "")
+                row["artifact_note"] = art_note
+            row["artifact_ok"] = ok_art
             row["pinned_execution"] = (
-                row["model_eq_pin"] and row["variant_eq_pin"] and res["rc"] == 0
+                bool(row.get("model_eq_pin")) and bool(row.get("variant_eq_pin"))
+                and bool(row.get("resolved_label")) and ok_art
             )
             if row["pinned_execution"]:
                 proven += 1
         except Exception as e:  # noqa: BLE001
             row["pinned_execution"] = False
             row["note"] = f"harness error: {e}"
+        finally:
+            srv.stop()
         write_row("pin-proof", row)
         local_rows.append(row)
         log(
-            f"pinproof-structural {name}: pinned={row.get('pinned_execution')} "
+            f"pinproof {leg} {name}: pinned={row.get('pinned_execution')} "
             f"model={row.get('meta_model')} variant={row.get('session_variant')}"
         )
+
+    for name in structural_set:
+        run_leg("structural", name, "Reply with exactly one word: ok",
+                f"pinproof-structural-{name}")
 
     n = args.n
     specs = task_specs()
@@ -865,33 +962,29 @@ def cmd_pin_proof(args) -> int:
     for name in dry_set:
         spec = specs[name]
         for i in range(1, n + 1):
-            sb = make_sandbox(f"pinproof-dry-{name}-{i}", project_files=spec["files"])
-            row = {"leg": "dryrun", "persona": name, "run": i, "sandbox": str(sb["root"])}
-            try:
-                res = run_agent_once(name, spec["prompt"], sb)
-                row["rc"] = res["rc"]
-                row.update(_pin_assertions(name, sb, res))
-                ok_art, art_note = artifact_ok(spec, sb, res["out"])
-                row["artifact_ok"] = ok_art
-                denies = gate_denials(sb)
-                unknown = [d for d in denies if "classification unknown" in json.dumps(d)]
-                row["unknown_class_denials"] = len(unknown)
-                row["pinned_execution"] = (
-                    row["model_eq_pin"]
-                    and row["variant_eq_pin"]
-                    and res["rc"] == 0
-                )
-                if row["pinned_execution"]:
-                    proven += 1
-            except Exception as e:  # noqa: BLE001
-                row["pinned_execution"] = False
-                row["note"] = f"harness error: {e}"
-            write_row("pin-proof", row)
-            local_rows.append(row)
-            log(
-                f"pinproof-dry {name}#{i}: pinned={row.get('pinned_execution')} "
-                f"model={row.get('meta_model')} art={row.get('artifact_ok')}"
+            run_leg("dryrun", name, spec["prompt"], f"pinproof-dry-{name}-{i}",
+                    project_files=spec["files"], spec=spec)
+
+    # Client-path evidence leg (refined R2): the run --agent client never
+    # composes agent.model (source: noninteractive.ts) — record the boundary.
+    for name in ("brief-loader", "code-review"):
+        sb = make_sandbox(f"pinproof-client-{name}")
+        row = {"leg": "client-path", "persona": name, "sandbox": str(sb["root"]),
+               "expected": "not_pinned_source_confirmed"}
+        try:
+            res = run_agent_once(name, "Reply with exactly one word: ok", sb, timeout_s=240)
+            row["rc"] = res["rc"]
+            metas = assistant_rows(sb["db"])
+            meta = metas[-1] if metas else None
+            row["meta_model"] = f"{meta['provider_id']}/{meta['model_id']}" if meta else None
+            row["model_eq_pin"] = bool(
+                meta and f"{meta['provider_id']}/{meta['model_id']}" == persona_pin(name).split("#")[0]
             )
+        except Exception as e:  # noqa: BLE001
+            row["note"] = f"harness error: {e}"
+        write_row("pin-proof", row)
+        local_rows.append(row)
+        log(f"pinproof client-path {name}: model={row.get('meta_model')} (expected not pinned)")
 
     rows = local_rows
     total = len(rows)
@@ -899,7 +992,7 @@ def cmd_pin_proof(args) -> int:
     unknown_total = sum(r.get("unknown_class_denials", 0) for r in rows)
     verdict = "PASS" if pinned >= 1 else "FAIL"
     summary = {
-        "bundle_gate": "at least one persona proves pinned execution on headless",
+        "bundle_gate": "at least one persona proves pinned execution on headless (delegation path)",
         "rows": total,
         "pinned_executions": pinned,
         "unknown_class_denials": unknown_total,
