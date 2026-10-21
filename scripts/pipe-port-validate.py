@@ -810,6 +810,23 @@ def _child_sessions(db: Path, parent_id: str) -> list[tuple]:
         con.close()
 
 
+def _child_text(db: Path, session_id: str) -> str:
+    """Concatenated text parts of a session (for output-verdict artifacts)."""
+    if not db.exists():
+        return ""
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    try:
+        rows = con.execute(
+            "select json_extract(data,'$.part.text') from part "
+            "where session_id=? and json_extract(data,'$.part.type')='text' "
+            "order by time_created",
+            (session_id,),
+        ).fetchall()
+    finally:
+        con.close()
+    return "\n".join(r[0] or "" for r in rows)
+
+
 def _spawn_subagent(
     srv: "Server",
     sb: dict,
@@ -825,6 +842,8 @@ def _spawn_subagent(
     plugin/subagent.ts) — the pipeline's actual spawn path, and the only
     headless path that applies agent-configured models (the run --agent
     client never composes agent.model; source: cli/src/run/noninteractive.ts).
+    After the child's first assistant row, keeps polling until the child's
+    row count is stable for 30s (bounded task completes) or wait_s elapses.
     """
     instr = (
         f"Spawn a subagent now using your subagent/task tool with "
@@ -836,14 +855,25 @@ def _spawn_subagent(
     deadline = time.time() + wait_s
     child = None
     metas: list[dict] = []
+    last_count = -1
+    stable_since: float | None = None
     while time.time() < deadline:
         time.sleep(5)
         kids = _child_sessions(sb["db"], parent_id)
-        if kids:
-            child = kids[0]
-            metas = assistant_rows(sb["db"], child[0])
-            if metas:
+        if not kids:
+            continue
+        child = kids[0]
+        metas = assistant_rows(sb["db"], child[0])
+        if not metas:
+            continue
+        if len(metas) == last_count:
+            if stable_since is None:
+                stable_since = time.time()
+            elif time.time() - stable_since >= 30:
                 break
+        else:
+            last_count = len(metas)
+            stable_since = None
     return {"child": child, "metas": metas}
 
 
@@ -908,7 +938,8 @@ def cmd_pin_proof(args) -> int:
     proven = 0
 
     def run_leg(leg: str, name: str, prompt: str, sb_name: str,
-                project_files: dict | None = None, spec: dict | None = None) -> None:
+                project_files: dict | None = None, spec: dict | None = None,
+                wait_s: int = 300) -> None:
         nonlocal proven
         sb = make_sandbox(sb_name, project_files=project_files)
         row = {"leg": leg, "persona": name, "sandbox": str(sb["root"])}
@@ -935,14 +966,17 @@ def cmd_pin_proof(args) -> int:
                     },
                 },
             )["data"]
-            spawn = _spawn_subagent(srv, sb, name, prompt, parent["id"])
+            spawn = _spawn_subagent(srv, sb, name, prompt, parent["id"], wait_s=wait_s)
             row.update(_pin_assertions(name, sb, spawn))
             denies = gate_denials(sb)
             unknown = [d for d in denies if "classification unknown" in json.dumps(d)]
             row["unknown_class_denials"] = len(unknown)
             ok_art = True
             if spec:
-                ok_art, art_note = artifact_ok(spec, sb, "")
+                child_text = (
+                    _child_text(sb["db"], spawn["child"][0]) if spawn["child"] else ""
+                )
+                ok_art, art_note = artifact_ok(spec, sb, child_text)
                 row["artifact_note"] = art_note
             row["artifact_ok"] = ok_art
             row["pinned_execution"] = (
@@ -978,7 +1012,7 @@ def cmd_pin_proof(args) -> int:
         spec = specs[name]
         for i in range(1, n + 1):
             run_leg("dryrun", name, spec["prompt"], f"pinproof-dry-{name}-{i}",
-                    project_files=spec["files"], spec=spec)
+                    project_files=spec["files"], spec=spec, wait_s=480)
 
     # Client-path evidence leg (refined R2): the run --agent client never
     # composes agent.model (source: noninteractive.ts) — record the boundary.
