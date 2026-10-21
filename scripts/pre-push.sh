@@ -37,8 +37,13 @@ bash "$REPO_ROOT/scripts/check-doc-claims.sh"
 echo "    [5/5] completion-honesty topology gate"
 bash "$REPO_ROOT/scripts/check-completion-honesty.sh"
 
-# 6. Fleet agent definition validation (parse, posture, live roster)
-echo "    [6/6] fleet agent definition validation"
+# 6. Fleet agent definition validation (parse, posture, live roster,
+#    generated-persona drift gate, routing tokens, DAG assertion)
+echo "    [6/7] fleet agent definition validation"
 python3 "$REPO_ROOT/scripts/validate-agents.py"
+
+# 7. Pipeline persona generator self-test (broken token / drift / DAG catches)
+echo "    [7/7] pipeline persona generator self-test"
+python3 "$REPO_ROOT/scripts/generate-pipeline-personas.py" --self-test
 
 echo "==> pre-push: PASS"

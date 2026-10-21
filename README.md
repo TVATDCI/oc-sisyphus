@@ -253,7 +253,7 @@ manuals triggered by domain match:
 - **Development**: `fullstack-dev`, `frontend-ui-ux`, `skill-creator`, `agent-development`, `shader-dev`, `document-builder`
 - **System**: `session-close`, `shell-safety`, `system-reference`, `opencode-expert`, `vault-ops`
 
-### 5. Agents (18 Specialized Personas)
+### 5. Agents (18 omo-overlay personas + 15 generated pipeline personas)
 
 Different tasks need different AI models. The system routes work to 18 agents,
 each with its own model, tools, and permissions. Of these 18, **9 are user-defined**
@@ -269,6 +269,14 @@ workspace) — and even those are blocked by Layer 0 from touching governance fi
 The plugin-bundled agents stay inert under OpenCode V2 by upstream design, so the
 file-based nine are what the V2 runtime actually resolves; `~/.omo/omo.jsonc`
 remains the routing source for its own consumers (categories, fallback chains).
+Since 2026-10-21 (pipe-port-m1) the same directory also carries 15 generated pipeline
+personas (brief-loader, prd-writer, the momus gate reviewers, the wave spine, the
+orchestrator-review lanes, regression-gate, reference-checker, tdd-executor) emitted by
+`scripts/generate-pipeline-personas.py` from the skill bodies: mode-A seats embed the
+skill body as system prompt (a gate that might not load is not a gate), mode-B seats load
+their skill on demand, and every file carries a live-verified model#variant pin plus a
+task-permission allowlist encoding its manifest delegation edges — regenerate, never
+hand-edit.
 
 9 categories dispatch tasks by domain (deep, quick, visual-engineering, writing,
 etc.) using a 3-tier fallback strategy: subscription primary → lite subscription

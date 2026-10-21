@@ -90,18 +90,29 @@ else
   add_error "~/.omo/omo.jsonc missing"
 fi
 
-# === Check 6: agents/*.md model: pins (scoped Wave-2 rule) ===
-# No agent file carries a model pin EXCEPT agents/sisyphus.md — the
-# fleet-owned primary (2026-10-20 port) whose deliberate frontmatter pin is
-# the file's whole point. Structural validation of that file (parse, keys,
-# posture, live-roster membership) is owned by scripts/validate-agents.py.
-MODEL_LINES=$(grep -c "^model:" "$REPO"/agents/*.md 2>/dev/null | awk -F: '{s+=$2} END {print s+0}' || true)
-SISYPHUS_MODEL_LINES=$(grep -c "^model:" "$REPO"/agents/sisyphus.md 2>/dev/null || true)
-OTHER_MODEL_LINES=$((MODEL_LINES - SISYPHUS_MODEL_LINES))
-if [ "$OTHER_MODEL_LINES" -eq 0 ] && [ "$SISYPHUS_MODEL_LINES" -eq 1 ]; then
-  add_pass "agents/*.md model pins scoped: only sisyphus.md carries the deliberate primary pin"
+# === Check 6: agents/*.md model: pins (scoped rule, pipe-port-m1) ===
+# Model pins are allowed on exactly two surfaces: agents/sisyphus.md (the
+# fleet-owned primary, 2026-10-20 port) and the GENERATED pipeline personas
+# (scripts/generate-pipeline-personas.py, pipe-port-m1) whose pins come from
+# the port map and are drift-gated (regenerate == committed) by that same
+# script through validate-agents.py. Every other agents/*.md stays pin-free
+# (routing-owned). Structural validation of those files is owned by
+# scripts/validate-agents.py.
+GENERATED_AGENTS=$(python3 "$REPO/scripts/generate-pipeline-personas.py" --list 2>/dev/null | tr '\n' ' ' || true)
+OTHER_MODEL_LINES=0
+for f in "$REPO"/agents/*.md; do
+    base=$(basename "$f" .md)
+    if [ "$base" = "sisyphus" ]; then continue; fi
+    case " $GENERATED_AGENTS " in
+        *" $base "*) ;;
+        *) OTHER_MODEL_LINES=$((OTHER_MODEL_LINES + $(grep -c "^model:" "$f" 2>/dev/null || true))) ;;
+    esac
+done
+SISYPHUS_MODEL_LINES=$(grep -c "^model:" "$REPO/agents/sisyphus.md" 2>/dev/null || true)
+if [ "$OTHER_MODEL_LINES" -eq 0 ] && [ "$SISYPHUS_MODEL_LINES" -eq 1 ] && [ -n "$GENERATED_AGENTS" ]; then
+  add_pass "agents/*.md model pins scoped: sisyphus.md + generated pipeline personas only"
 else
-  add_error "agents/*.md model pins wrong shape: sisyphus.md has $SISYPHUS_MODEL_LINES (want 1), others have $OTHER_MODEL_LINES (want 0)"
+  add_error "agents/*.md model pins wrong shape: sisyphus.md has $SISYPHUS_MODEL_LINES (want 1), non-generated others have $OTHER_MODEL_LINES (want 0)"
 fi
 
 # === Check 7: archivist.md scope ===

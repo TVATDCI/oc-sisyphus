@@ -5,6 +5,14 @@
 # Usage:
 #   ./validate-skills.sh [skill-name]
 #   ./validate-skills.sh --all
+#
+# Routing-token leg (pipe-port-m1): every category=/subagent_type=/load_skills=
+# and **Category:** token in skills/ must resolve to a port-map category stanza,
+# an agents/*.md file agent, or a skills/ directory. Owned by
+# scripts/generate-pipeline-personas.py --check-tokens (single source of truth).
+# Self-test recipe: copy skills/ to a scratch dir, flip one category="deep" token
+# to a typo in the scratch copy, and point the generator at it -- the check must
+# FAIL naming file:line (the generator's --self-test automates this proof).
 
 set -euo pipefail
 
@@ -168,6 +176,15 @@ if [[ "${1:-}" == "--all" ]] || [[ -z "${1:-}" ]]; then
                 validate_agent "$agent_file" || true
             fi
         done
+    fi
+
+    echo
+    echo "Validating routing-token resolution (skills/ tokens -> port-map stanza | file agent | skill)..."
+    ROUTING_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    if python3 "$ROUTING_REPO/scripts/generate-pipeline-personas.py" --check-tokens; then
+        :
+    else
+        ((FAIL++)) || true
     fi
 
     echo

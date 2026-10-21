@@ -52,6 +52,17 @@ Times assume a healthy machine; free RAM matters (sandbox probes failed once und
 4. Post-rollback hygiene: mv-aside `cli.json`/`service.json` per the superseded-copy protocol and take the captain's deletion word; never rm live-tree files unilaterally.
 5. The DB backup from B3 is the floor if anything ever touches the store.
 
+### D6. Ported-surface quarantine on rollback (added by the pipeline substrate port)
+
+Before relaunching V1 (step 3 above), neutralize the ported V2 agent surface so revived omo personas cannot shadow it:
+
+1. `mv -f ~/.config/opencode/agents ~/.config/opencode/agents.v2-aside-$(date +%Y%m%d)` — the file-agent dir is inert under V1 but the quarantine makes the generation boundary inspectable and prevents a fast re-flip from half-consuming a partially-edited surface.
+2. Confirm `opencode.json` `default_agent` resolves to an omo dynamic persona for the V1 session (it will — that is the point: V1 must run the OLD routing whole, not a mix).
+3. Any skill files rewritten to V2 invocation contracts during the port are V2-only; if the rollback is expected to last, `git -C ~/.config/opencode checkout <pre-port-sha> -- skills/` restores the V1-era contracts in one step (pre-port sha recorded by the port ship).
+4. On re-flip to V2 after the rollback window: restore the aside dir, re-run the §C9 enforcement proof, and re-run the port's own routing verification (category→persona→pin table) before any session work.
+
+Never hand-delete either surface mid-rollback; quarantine-then-restore keeps both generations recoverable.
+
 ## Omo posture (read before flipping — captain decision)
 
 - omo 5.1.40 (npm latest) loads under V2 but its own startup notice says agents/tools/hooks are NOT active there ("OpenCode 2 support is limited: the plugin loads, but its agents, tools and hooks are not active here"); the upstream path for full omo is the standalone OmO Native product.
