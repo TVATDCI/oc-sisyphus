@@ -919,7 +919,22 @@ def cmd_pin_proof(args) -> int:
                 write_row("pin-proof", row)
                 local_rows.append(row)
                 return
-            parent = srv.api("POST", "/api/session", {"title": f"{sb_name}-parent"})["data"]
+            # Parent pinned to the zai plan model: the spawn instruction is
+            # deterministic and the free-default parent endpoint proved flaky
+            # (stalled turns, 2026-10-21 matrix). Explicit model selection is
+            # the client-composed path (mirror of noninteractive.ts -m).
+            parent = srv.api(
+                "POST",
+                "/api/session",
+                {
+                    "title": f"{sb_name}-parent",
+                    "model": {
+                        "providerID": "zai-coding-plan",
+                        "id": "glm-5.3",
+                        "variant": "low",
+                    },
+                },
+            )["data"]
             spawn = _spawn_subagent(srv, sb, name, prompt, parent["id"])
             row.update(_pin_assertions(name, sb, spawn))
             denies = gate_denials(sb)
