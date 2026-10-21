@@ -90,29 +90,23 @@ else
   add_error "~/.omo/omo.jsonc missing"
 fi
 
-# === Check 6: agents/*.md model: pins (scoped rule, pipe-port-m1) ===
-# Model pins are allowed on exactly two surfaces: agents/sisyphus.md (the
-# fleet-owned primary, 2026-10-20 port) and the GENERATED pipeline personas
-# (scripts/generate-pipeline-personas.py, pipe-port-m1) whose pins come from
-# the port map and are drift-gated (regenerate == committed) by that same
-# script through validate-agents.py. Every other agents/*.md stays pin-free
-# (routing-owned). Structural validation of those files is owned by
-# scripts/validate-agents.py.
-GENERATED_AGENTS=$(python3 "$REPO/scripts/generate-pipeline-personas.py" --list 2>/dev/null | tr '\n' ' ' || true)
-OTHER_MODEL_LINES=0
+# === Check 6: agents/*.md model pins (oc-v2-fixbundle: map-only) ===
+# oc-v2-fixbundle: model pins live ONLY in the opencode.json `agent` map
+# (the sole pin authority — a valid file pin overrides the map under
+# opencode 2.1.0, per the sis lane source read 2026-10-21). NO agents/*.md
+# may carry a model line, in any form; structural validation of those files
+# is owned by scripts/validate-agents.py.
+MODEL_LINE_OFFENDERS=""
 for f in "$REPO"/agents/*.md; do
-    base=$(basename "$f" .md)
-    if [ "$base" = "sisyphus" ]; then continue; fi
-    case " $GENERATED_AGENTS " in
-        *" $base "*) ;;
-        *) OTHER_MODEL_LINES=$((OTHER_MODEL_LINES + $(grep -c "^model:" "$f" 2>/dev/null || true))) ;;
-    esac
+    if grep -q "^model:" "$f" 2>/dev/null; then
+        MODEL_LINE_OFFENDERS="${MODEL_LINE_OFFENDERS}$(basename "$f") "
+    fi
 done
-SISYPHUS_MODEL_LINES=$(grep -c "^model:" "$REPO/agents/sisyphus.md" 2>/dev/null || true)
-if [ "$OTHER_MODEL_LINES" -eq 0 ] && [ "$SISYPHUS_MODEL_LINES" -eq 1 ] && [ -n "$GENERATED_AGENTS" ]; then
-  add_pass "agents/*.md model pins scoped: sisyphus.md + generated pipeline personas only"
+AGENT_MAP_ENTRIES=$(python3 -c "import json;print(len(json.load(open('$REPO/opencode.json')).get('agent', {})))" 2>/dev/null || echo 0)
+if [ -z "$MODEL_LINE_OFFENDERS" ] && [ "$AGENT_MAP_ENTRIES" -ge 24 ]; then
+  add_pass "agents/*.md pin-free; opencode.json agent map carries $AGENT_MAP_ENTRIES pins (sole authority)"
 else
-  add_error "agents/*.md model pins wrong shape: sisyphus.md has $SISYPHUS_MODEL_LINES (want 1), non-generated others have $OTHER_MODEL_LINES (want 0)"
+  add_error "agents/*.md model pins wrong shape: file offenders [$MODEL_LINE_OFFENDERS], agent-map entries $AGENT_MAP_ENTRIES (want files=0, map>=24)"
 fi
 
 # === Check 7: archivist.md scope ===

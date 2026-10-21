@@ -11,7 +11,9 @@
       "./plugins/sisyphus-gates",
       {
         "verdict_key_command": "cat ~/.local/share/sisyphus-gate-key",
-        "sandbox_paths": ["/tmp/"],
+        "sandbox_paths": [
+          "/tmp/"
+        ],
         "sandbox_allowed_commands": [
           "npm install",
           "npm test",
@@ -29,6 +31,98 @@
     ]
   ],
   "default_agent": "sisyphus",
+  "agent": {
+    "brief-loader": {
+      "model": "zai-coding-plan/glm-5.3",
+      "variant": "high"
+    },
+    "prd-writer": {
+      "model": "zai-coding-plan/glm-5.3",
+      "variant": "high"
+    },
+    "momus-prd-reviewer": {
+      "model": "zai-coding-plan/glm-5.3",
+      "variant": "high"
+    },
+    "issue-creator": {
+      "model": "zai-coding-plan/glm-5.3",
+      "variant": "high"
+    },
+    "plan-writer": {
+      "model": "zai-coding-plan/glm-5.3",
+      "variant": "high"
+    },
+    "momus-plan-reviewer": {
+      "model": "zai-coding-plan/glm-5.3",
+      "variant": "high"
+    },
+    "wave-executor": {
+      "model": "zai-coding-plan/glm-5.3",
+      "variant": "high"
+    },
+    "plan-updater": {
+      "model": "zai-coding-plan/glm-5.3",
+      "variant": "high"
+    },
+    "plan-closer": {
+      "model": "zai-coding-plan/glm-5.3",
+      "variant": "high"
+    },
+    "code-review": {
+      "model": "opencode-go/qwen3.8-max",
+      "variant": "xhigh"
+    },
+    "security-auditor": {
+      "model": "opencode-go/qwen3.8-max",
+      "variant": "xhigh"
+    },
+    "ui-auditor": {
+      "model": "opencode-go/qwen3.8-max",
+      "variant": "xhigh"
+    },
+    "regression-gate": {
+      "model": "opencode-go/gpt-5.6-luna",
+      "variant": "low"
+    },
+    "reference-checker": {
+      "model": "opencode-go/gpt-5.6-luna",
+      "variant": "low"
+    },
+    "tdd-executor": {
+      "model": "zai-coding-plan/glm-5.3",
+      "variant": "high"
+    },
+    "archivist": {
+      "model": "zai-coding-plan/glm-5.3-flash"
+    },
+    "athena": {
+      "model": "zai-coding-plan/glm-5.3-flash"
+    },
+    "auditor": {
+      "model": "zai-coding-plan/glm-5.3"
+    },
+    "explorer": {
+      "model": "zai-coding-plan/glm-5.3-flash",
+      "variant": "max"
+    },
+    "fullstack-dev-tester": {
+      "model": "zai-coding-plan/glm-5.3"
+    },
+    "oracle": {
+      "model": "opencode-go/kimi-k3",
+      "variant": "max"
+    },
+    "post-reviewer": {
+      "model": "zai-coding-plan/glm-5.3"
+    },
+    "reviewer": {
+      "model": "zai-coding-plan/glm-5.3"
+    },
+    "sisyphus": {
+      "model": "zai-coding-plan/glm-5.3",
+      "variant": "max"
+    }
+  },
   "mcp": {
     "home": {
       "type": "local",

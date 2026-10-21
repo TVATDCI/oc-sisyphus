@@ -5,9 +5,8 @@ Single owner of the agent-file rules that CI and pre-push both enforce:
 
   1. agents/sisyphus.md (the fleet-owned ultraworker, ported 2026-10-20 from
      the omo runtime agent) parses, carries the required frontmatter keys,
-     pins the deliberate primary model, and keeps the conservative
-     permission posture (edit/bash default ask; the sisyphus-gates plugin
-     stays the real enforcement layer).
+     and keeps the conservative permission posture (edit/bash default ask;
+     the sisyphus-gates plugin stays the real enforcement layer).
   2. opencode.json keeps default_agent = "sisyphus" so the default resolves
      to the file agent.
   3. Generated pipeline personas (scripts/generate-pipeline-personas.py,
@@ -16,10 +15,10 @@ Single owner of the agent-file rules that CI and pre-push both enforce:
      category=/subagent_type=/load_skills=/**Category:** token in skills/
      resolves to a port-map stanza, a file agent, or a skill), and the DAG
      edge-vs-permission assertion (manifest §9 edges == task allows) all run
-     here. Model pins are allowed ONLY on sisyphus.md and the generated set
-     (the port moved routing ownership for the pipeline cast from the dormant
-     omo.jsonc stanzas to these fleet-owned files); every other agents/*.md
-     stays pin-free (the scoped Wave-2 rule).
+     here. Model pins live ONLY in the opencode.json `agent` map (the sole
+     pin authority since oc-v2-fixbundle — a valid file pin would override
+     the map under opencode 2.1.0); every agents/*.md stays pin-free and the
+     map's entries must be bare provider/model plus a separate variant.
   4. --roster (default): the pinned model id exists in the live roster at
      https://models.dev/api.json — the same catalog `opencode models` reads.
      Network failure FAILS (a check that checked nothing must not pass);
@@ -108,13 +107,14 @@ def main() -> int:
         passes.append("sisyphus.md: mode is primary")
 
     model = fm.get("model")
-    if not isinstance(model, str) or not MODEL_ID_RE.match(model):
+    if model is not None:
         errors.append(
-            f"sisyphus.md: model must be a provider-qualified id "
-            f"(provider/model), got {model!r}"
+            "sisyphus.md: carries a model pin — pins live only in the "
+            "opencode.json agent map (a valid file pin overrides the map "
+            "under opencode 2.1.0)"
         )
     else:
-        passes.append(f"sisyphus.md: model pinned as {model}")
+        passes.append("sisyphus.md: no file model pin (map is sole pin authority)")
 
     permission = fm.get("permission")
     if not isinstance(permission, dict):
@@ -146,7 +146,7 @@ def main() -> int:
     else:
         passes.append(f"opencode.json: default_agent is {EXPECTED_DEFAULT_AGENT!r}")
 
-    # --- 3. model: pins scoped to sisyphus.md + the generated pipeline set --
+    # --- 3. NO agents/*.md may carry a model pin (map is sole authority) ---
     import importlib.util
 
     _spec = importlib.util.spec_from_file_location(
@@ -155,27 +155,24 @@ def main() -> int:
     gpp = importlib.util.module_from_spec(_spec)
     _spec.loader.exec_module(gpp)
 
-    generated = set(gpp.persona_names())
     offenders = []
     for path in sorted(AGENTS_DIR.glob("*.md")):
-        if path.name == "sisyphus.md" or path.stem in generated:
-            continue
         try:
             other_fm_text, _ = split_frontmatter(path.read_text(encoding="utf-8"))
             other_fm = yaml.safe_load(other_fm_text)
         except Exception:  # noqa: BLE001 — malformed file: other checks own it
             continue
-        if isinstance(other_fm, dict) and "model" in other_fm:
+        if isinstance(other_fm, dict) and ("model" in other_fm or "variant" in other_fm):
             offenders.append(path.name)
     if offenders:
         errors.append(
-            "agents/*.md outside sisyphus.md + the generated pipeline set "
-            f"carry model: pins (routing-owned): {', '.join(offenders)}"
+            "agents/*.md carrying model/variant pins (the opencode.json agent "
+            f"map is the sole pin authority): {', '.join(offenders)}"
         )
     else:
-        passes.append("no unintended model: pins outside sisyphus.md + generated set")
+        passes.append("no file model pins: opencode.json agent map is sole authority")
 
-    # --- 3b. generated-persona drift gate + pin schema + DAG assertion ------
+    # --- 3b. generated-persona drift gate + map pin schema + DAG assertion --
     drift_errors, generated_count = gpp.check_drift(AGENTS_DIR, REPO_ROOT / "skills")
     for de in drift_errors:
         errors.append(de)
@@ -185,28 +182,25 @@ def main() -> int:
             "the port map"
         )
 
-    pin_re = re.compile(r"^[^/#]+/[^#]+(#[^#]+)?$")
-    bad_pins = []
-    for name in sorted(generated):
-        path = AGENTS_DIR / f"{name}.md"
-        if not path.is_file():
-            continue  # drift leg owns missing files
-        try:
-            fm_text, _ = split_frontmatter(path.read_text(encoding="utf-8"))
-            fm = yaml.safe_load(fm_text)
-        except Exception:  # noqa: BLE001
-            bad_pins.append(f"{name}.md (unparseable)")
-            continue
-        model_value = fm.get("model") if isinstance(fm, dict) else None
-        if not isinstance(model_value, str) or not pin_re.match(model_value):
-            bad_pins.append(f"{name}.md ({model_value!r})")
-    if bad_pins:
+    # Map entries must be bare provider/model (+ separate variant, no '#').
+    base_re = re.compile(r"^[^/#]+/[^#]+$")
+    bad_map_pins = []
+    agent_map = cfg.get("agent") if isinstance(cfg.get("agent"), dict) else {}
+    for name, entry in sorted(agent_map.items()):
+        base = entry.get("model") if isinstance(entry, dict) else None
+        variant = entry.get("variant") if isinstance(entry, dict) else None
+        if not isinstance(base, str) or not base_re.match(base):
+            bad_map_pins.append(f"{name} (model {base!r})")
+        elif variant is not None and ("#" in str(variant) or not str(variant).strip()):
+            bad_map_pins.append(f"{name} (variant {variant!r})")
+    if bad_map_pins:
         errors.append(
-            "generated personas with malformed model#variant pins: "
-            + ", ".join(bad_pins)
+            "opencode.json agent-map entries violating the bare-model+variant "
+            "form (a # suffix inside the V1 map model string drops the whole "
+            f"selection under 2.1.0): {', '.join(bad_map_pins)}"
         )
     else:
-        passes.append("generated persona pins match the provider/model#variant schema")
+        passes.append("agent-map pins match the bare provider/model + variant form")
 
     dag_errors, _dag_checks = gpp.check_dag(AGENTS_DIR, REPO_ROOT / "skills")
     errors.extend(dag_errors)
@@ -218,11 +212,13 @@ def main() -> int:
     if not token_errors:
         passes.append("routing tokens: every skills/ token resolves")
 
-    # --- 4. live roster membership ----------------------------------------
+    # --- 4. live roster membership (sisyphus primary, from the map) --------
+    sisyphus_entry = agent_map.get("sisyphus", {})
+    model = sisyphus_entry.get("model") if isinstance(sisyphus_entry, dict) else None
     if args.offline:
         print("SKIP: roster leg skipped (--offline / AGENTS_VALIDATE_OFFLINE=1)")
     elif not isinstance(model, str) or not MODEL_ID_RE.match(model):
-        errors.append("roster leg not run: model id malformed (see above)")
+        errors.append("roster leg not run: agent-map sisyphus model id malformed")
     else:
         import urllib.error
         import urllib.request
