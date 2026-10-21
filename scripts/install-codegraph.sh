@@ -10,11 +10,11 @@
 # deliberately skipped ~/.omo as rebuildable cache). Result: every opencode start
 # logged "server unavailable key=codegraph status=failed".
 #
-# SOURCE OF TRUTH: the upstream the omo pin already uses — npm
-# @colbymchenry/codegraph (github.com/colbymchenry/codegraph).
-# oh-my-openagent 4.19.4 pins CODEGRAPH_PINNED_VERSION=1.5.0. Bump PIN here when
-# the plugin pin moves (check: node_modules/oh-my-openagent/packages/omo-codex/
-# plugin/components/codegraph/package.json optionalDependencies).
+# SOURCE OF TRUTH: npm @colbymchenry/codegraph (github.com/colbymchenry/codegraph).
+# The PIN=1.5.0 was originally aligned with the oh-my-openagent 4.19.4 pin
+# (CODEGRAPH_PINNED_VERSION); the omo plugin is retired (omo-retire 2026-10-22),
+# so the pin is fleet-owned now — bump it deliberately when upstream releases
+# warrant (verify the MCP handshake smoke below still passes).
 #
 # Install method: mise (user-level, no sudo, survives re-login via
 # `mise activate zsh` in ~/.zshrc; shims dir is on PATH). npm -g fallback for

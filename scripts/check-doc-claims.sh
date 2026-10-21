@@ -41,8 +41,10 @@ failures=0
 # 47-49: Wave 4C/Track 1/Track 2 timeline bullets
 # 55,66: Historical counts in §2 Timeline
 # 80-83: Jun 6 timeline bullet entries
-# 143-151: Workflow phase table (9-phase count enforced by state.js schema)
-EXCLUDE='^(47|48|49|55|66|80|81|82|83|14[3-9]|15[0-1])$'
+# 144-152: mid-timeline Aug-3 block (historical entries; content-shifted +1
+#   from 143-151 when the Oct 22 omo-retire timeline entry landed — the
+#   window is line-position-pinned, re-check on any insert above it)
+EXCLUDE='^(47|48|49|55|66|80|81|82|83|14[4-9]|15[0-2])$'
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
 

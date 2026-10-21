@@ -3,8 +3,9 @@
 # Two jobs:
 #   test   — runs on every push / PR / manual dispatch. Fast feedback.
 #   canary — runs only on nightly cron (3am UTC) and manual dispatch.
-#            Catches upstream `@opencode-ai/plugin` and `oh-my-openagent`
-#            version drift that could break the plugin.
+#            Catches upstream `@opencode-ai/plugin` (sisyphus-gates dep)
+#            version drift. (The oh-my-openagent canaries retired with the
+#            plugin — omo-retire 2026-10-22.)
 #
 # Run locally with `act` if you want to test workflow changes without pushing.
 #
@@ -106,26 +107,23 @@ jobs:
 
       - name: Tier 2.4 — structural integrity (agent drift check)
         run: |
-          # Pin source for CI: the committed repo-root per-desk variant.
-          # The generator live-reads ~/.omo/omo.jsonc on the desk (the
-          # pin-authoring surface); the runner has no home config, so Tier 2.4
-          # points --check at omo.ddd.jsonc. The committed surfaces
-          # (agents/*.md + opencode.json agent map) must reproduce from the
-          # committed source on every push — if an emitted pin diverges
-          # between the live file and the committed variant, this tier fails:
-          # that is the drift wire, not coupling. (Known non-issue: ddd's
-          # agents.momus grok-4.6 vs live grok-4.7 — momus has no repo agent
-          # file, so nothing is emitted from that stanza.)
+          # Pin source: the committed repo-root per-desk variant, via the same
+          # resolution the generator uses (OMO_JSONC_PATH here; on the desks
+          # the hostname default resolves the same file). The committed
+          # surfaces (agents/*.md + opencode.json agent map) must reproduce
+          # from the committed source on every push — if an emitted pin
+          # diverges between desks, this tier fails: that is the drift wire,
+          # not coupling. (Known non-issue: ddd's agents.momus grok-4.6 vs
+          # tnt-side authoring — momus has no repo agent file, so nothing is
+          # emitted from that stanza.)
           export OMO_JSONC_PATH="$PWD/omo.ddd.jsonc"
 
-          # Agent count: config is user-local (~/.omo/omo.jsonc since 4.19.4), skip on CI
-          if [ -f "$HOME/.omo/omo.jsonc" ]; then
-            AGENTS_JSON=$(node scripts/omo-query.js agents)
-            echo "agents in config: $AGENTS_JSON"
-            [ "$AGENTS_JSON" -ge 17 ] || (echo "FAIL: expected ≥17 agents, got $AGENTS_JSON" && exit 1)
-          else
-            echo "INFO: ~/.omo/omo.jsonc not present in CI — skipping agent count check (config is user-local since 4.19.4 migration)"
-          fi
+          # Agent count: read from the committed variant (the pin source is a
+          # tracked repo file since omo-retire 2026-10-22 — no home-config
+          # skip needed).
+          AGENTS_JSON=$(node scripts/omo-query.js agents)
+          echo "agents in $OMO_JSONC_PATH: $AGENTS_JSON"
+          [ "$AGENTS_JSON" -ge 17 ] || (echo "FAIL: expected ≥17 agents, got $AGENTS_JSON" && exit 1)
 
           # model: pins: single owner is scripts/validate-agents.py, called
           # below. Since oc-v2-fixbundle NO agent file carries a model pin —
@@ -160,11 +158,11 @@ jobs:
 
       - name: Tier 2.6 — doc-claims drift check
         run: |
-          if [ -f "$HOME/.omo/omo.jsonc" ]; then
-            bash scripts/check-doc-claims.sh
-          else
-            echo "INFO: ~/.omo/omo.jsonc not present in CI — skipping doc-claims drift check (config is user-local since 4.19.4 migration)"
-          fi
+          # omo-query.js resolves the committed repo variant (OMO_JSONC_PATH
+          # exported above in Tier 2.4 applies per-step, so re-export here):
+          # the source is a tracked repo file, the check runs unconditionally.
+          export OMO_JSONC_PATH="$PWD/omo.ddd.jsonc"
+          bash scripts/check-doc-claims.sh
 
       # ── Artifacts: test reports + logs ──────────────────────────
 
@@ -208,21 +206,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: canary 1 — oh-my-openagent drift
-        run: |
-          PINNED="4.19.4"
-          LATEST=$(npm view oh-my-openagent@latest version 2>/dev/null || echo "FETCH_FAILED")
-          echo "pinned:  oh-my-openagent@$PINNED"
-          echo "latest:  oh-my-openagent@$LATEST"
-          if [ "$LATEST" = "FETCH_FAILED" ]; then
-            echo "::warning::could not fetch latest oh-my-openagent version (offline?)"
-          elif [ "$LATEST" != "$PINNED" ]; then
-            echo "::warning::oh-my-openagent@$LATEST is available (pinned: $PINNED). Review release notes before bumping."
-          else
-            echo "OK: oh-my-openagent is up-to-date with pin"
-          fi
-
-      - name: canary 2 — @opencode-ai/plugin drift
+      - name: canary — @opencode-ai/plugin drift
         run: |
           # Read the pinned version from the plugin's package.json
           PINNED=$(node -e "
@@ -239,26 +223,3 @@ jobs:
           else
             echo "OK: @opencode-ai/plugin is up-to-date with pin"
           fi
-
-      - name: canary 3 — load latest oh-my-openagent in sandbox
-        run: |
-          # Real canary: does the plugin still load if we install the latest upstream?
-          # This is a smoke test, not a full e2e. If the plugin's server() can be
-          # imported alongside the latest upstream, the API contract is intact.
-          TMPDIR=$(mktemp -d)
-          echo "sandbox: $TMPDIR"
-          cd "$TMPDIR"
-          npm init -y >/dev/null 2>&1
-          npm install --silent oh-my-openagent@latest 2>&1 | tail -3
-          if [ -d node_modules/oh-my-openagent ]; then
-            echo "OK: oh-my-openagent@latest installed in sandbox"
-            # We don't import it (we don't depend on it), but we verify it has a
-            # dist/ directory which means the package is well-formed.
-            [ -d node_modules/oh-my-openagent/dist ] || [ -d node_modules/oh-my-openagent/build ] \
-              && echo "OK: package layout is normal" \
-              || (echo "::warning::oh-my-openagent@latest has unexpected layout — inspect manually" && exit 1)
-          else
-            echo "::error::oh-my-openagent@latest failed to install in sandbox"
-            exit 1
-          fi
-          rm -rf "$TMPDIR"

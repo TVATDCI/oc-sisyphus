@@ -27,7 +27,7 @@ import { checkDrift as piCheckDrift } from "/home/vladi/.pi/agent/skills/scaffol
 import { classifyText, countClaimFlags } from "../scripts/lib/scan-core.ts";
 import { parseRuleTable, specSha256 } from "../scripts/lib/spec.ts";
 import { checkDrift } from "../scripts/lib/drift.ts";
-import { extractModelState, OMO_REL } from "../scripts/lib/model-state.ts";
+import { extractModelState, resolveOmoSource } from "../scripts/lib/model-state.ts";
 import { enumerateSkillDirs } from "../scripts/lib/surfaces.ts";
 import type { Surface, SkillTree } from "../scripts/lib/surfaces.ts";
 import type { FlagRecord } from "../scripts/lib/finding.ts";
@@ -37,9 +37,24 @@ const SKILL_DIR = join(SCRIPT_DIR, "..");
 const CONFIG_ROOT = join(SKILL_DIR, "..", "..");
 const PI_SPEC = "/home/vladi/.pi/agent/skills/scaffolding-audit/spec/spec-shared.md";
 const SIS_SPEC = join(SKILL_DIR, "spec", "spec-shared.md");
-const LIVE_OMO = join(CONFIG_ROOT, "..", "..", ".omo", "omo.jsonc");
-const BAK_OMO =
-  join(CONFIG_ROOT, "..", "..", ".omo", "omo.jsonc.bak.20260905-200307");
+// Binding source: the hostname-resolved per-desk REPO VARIANT (omo-retire
+// 2026-10-22). The .bak provenance fixture stays in the move-aside'd ~/.omo
+// and is OPTIONAL — desks without it skip the drift legs (desk-portable,
+// same named-skip discipline as run.ts).
+const OMO_SOURCE = resolveOmoSource(CONFIG_ROOT);
+const LIVE_OMO = OMO_SOURCE.absPath;
+const OMO_REL = OMO_SOURCE.relPath;
+const OMO_DIR = join(CONFIG_ROOT, "..", "..", ".omo");
+const BAK_NAME = "omo.jsonc.bak.20260905-200307";
+const BAK_OMO = join(OMO_DIR, BAK_NAME);
+
+function bakText(): string | undefined {
+  try {
+    return readFileSync(BAK_OMO, "utf8");
+  } catch {
+    return undefined;
+  }
+}
 
 // Fixtures — specimen lines verbatim from the tree (pinned):
 const TIER_168 =
@@ -117,22 +132,28 @@ function compute(): string[] {
   );
 
   const liveText = readFileSync(LIVE_OMO, "utf8");
-  const preEditText = readFileSync(BAK_OMO, "utf8");
-  const currentState = extractModelState(liveText, OMO_REL);
-  const preEditState = extractModelState(preEditText, OMO_REL);
-  const staleManifest = manifestJson(preEditState);
-  const freshManifest = manifestJson(currentState);
+  const preEditText = bakText();
+  if (preEditText === undefined) {
+    lines.push(
+      "drift legs | SKIPPED (no .bak fixture in the move-aside'd ~/.omo on this desk — desk-portable) | SKIPPED | n/a",
+    );
+  } else {
+    const currentState = extractModelState(liveText, OMO_REL);
+    const preEditState = extractModelState(preEditText, OMO_REL);
+    const staleManifest = manifestJson(preEditState);
+    const freshManifest = manifestJson(currentState);
 
-  const piStale = piCheckDrift(staleManifest, currentState);
-  const sisStale = checkDrift(staleManifest, currentState);
-  lines.push(
-    `drift stale manifest | ${piStale.outcome} | ${sisStale.outcome} | ${piStale.outcome === sisStale.outcome && sisStale.output === "routing state drifted since last audit — run scaffolding-audit"}`,
-  );
-  const piFresh = piCheckDrift(freshManifest, currentState);
-  const sisFresh = checkDrift(freshManifest, currentState);
-  lines.push(
-    `drift fresh manifest | ${piFresh.outcome} | ${sisFresh.outcome} | ${piFresh.outcome === sisFresh.outcome && sisFresh.output === ""}`,
-  );
+    const piStale = piCheckDrift(staleManifest, currentState);
+    const sisStale = checkDrift(staleManifest, currentState);
+    lines.push(
+      `drift stale manifest | ${piStale.outcome} | ${sisStale.outcome} | ${piStale.outcome === sisStale.outcome && sisStale.output === "routing state drifted since last audit — run scaffolding-audit"}`,
+    );
+    const piFresh = piCheckDrift(freshManifest, currentState);
+    const sisFresh = checkDrift(freshManifest, currentState);
+    lines.push(
+      `drift fresh manifest | ${piFresh.outcome} | ${sisFresh.outcome} | ${piFresh.outcome === sisFresh.outcome && sisFresh.output === ""}`,
+    );
+  }
   return lines;
 }
 

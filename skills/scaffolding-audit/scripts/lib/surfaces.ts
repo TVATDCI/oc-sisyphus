@@ -18,6 +18,7 @@
 
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { resolveOmoSource } from "./model-state.ts";
 
 export const SKILL_SELF_DIR = "scaffolding-audit";
 
@@ -72,11 +73,14 @@ export function enumerateSkillDirs(configRoot: string): SkillTree {
 }
 
 export function sisSurfaces(configRoot: string): Surface[] {
+  // The model-binding surface: the hostname-resolved per-desk REPO VARIANT at
+  // the config root (omo-retire 2026-10-22 — the retired ~/.omo/omo.jsonc
+  // played this role; resolution mirrors deploy-omo.sh / omo-query.js).
+  const omo = resolveOmoSource(configRoot);
   const surfaces: Surface[] = [
     {
-      path: "~/.omo/omo.jsonc",
-      // config root = ~/.config/opencode → two ups = ~
-      absPath: join(configRoot, "..", "..", ".omo", "omo.jsonc"),
+      path: omo.relPath,
+      absPath: omo.absPath,
       kind: "ts",
     },
   ];

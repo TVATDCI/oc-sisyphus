@@ -43,7 +43,7 @@ import type { ModelState } from "../scripts/lib/model-state.ts";
 import {
   extractModelState,
   parseJsonc,
-  OMO_REL,
+  resolveOmoSource,
 } from "../scripts/lib/model-state.ts";
 import {
   checkDrift,
@@ -61,8 +61,14 @@ import type { Surface, SkillTree } from "../scripts/lib/surfaces.ts";
 const SCRIPT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const SKILL_DIR = join(SCRIPT_DIR, "..");
 const CONFIG_ROOT = join(SKILL_DIR, "..", "..");
+// Binding source: the hostname-resolved per-desk REPO VARIANT at the config
+// root (omo-retire 2026-10-22 — was the retired ~/.omo/omo.jsonc; the .bak
+// provenance fixtures below stay in the move-aside'd ~/.omo and NAMED-SKIP
+// when that dir is gone, per BUILD #14 patch 0007 desk-portability).
+const OMO_SOURCE = resolveOmoSource(CONFIG_ROOT);
+const LIVE_OMO = OMO_SOURCE.absPath;
+const OMO_REL = OMO_SOURCE.relPath;
 const OMO_DIR = join(CONFIG_ROOT, "..", "..", ".omo");
-const LIVE_OMO = join(OMO_DIR, "omo.jsonc");
 // Frozen spot-check fixture (PRD §12 provenance): only this backup may back
 // the hephaestus==glm-5.2 assertion below.
 const PROVENANCE_BAK = "omo.jsonc.bak.20260905-200307";
@@ -360,17 +366,38 @@ check(
 // ─── surface self-enumeration ─────────────────────────────────────────────────
 
 const tree = enumerateSkillDirs(CONFIG_ROOT);
+// Structural recount (omo-retire 2026-10-22): the landing-time snapshot pin
+// (49 real + 2 symlinked) went stale when the B-track unification converted
+// shell-safety + git-commit-message to symlinks (Oct 1) — a hardcoded split
+// contradicts this test's own "never hardcodes it" name. The durable
+// contract is the IDENTITY RULES: symlinks count as symlinked, `_`-prefixed
+// as shared, native dirs as real, nothing dropped. Verified against an
+// independent recount, not against a frozen split.
+const skillEntries = readdirSync(join(CONFIG_ROOT, "skills"), {
+  withFileTypes: true,
+});
+let recountReal = 0;
+let recountSym = 0;
+let recountShared = 0;
+for (const entry of skillEntries) {
+  if (entry.name.startsWith("_")) recountShared++;
+  else if (entry.isSymbolicLink()) recountSym++;
+  else if (entry.isDirectory()) recountReal++;
+}
+
 check(
-  "surfaces: skill tree self-enumerates 49 real + 2 symlinked + 1 shared (real = native only, aligned with gate + CC; the scan never hardcodes it)",
-  tree.realDirs === 49 &&
-    tree.symlinkDirs === 2 &&
-    tree.sharedDirs === 1 &&
+  "surfaces: skill tree self-enumeration matches an independent identity recount (symlinks as symlinked, `_` as shared, native as real; nothing dropped; self-dir present)",
+  tree.realDirs === recountReal &&
+    tree.symlinkDirs === recountSym &&
+    tree.sharedDirs === recountShared &&
+    tree.names.length === recountReal + recountSym &&
+    recountReal + recountSym + recountShared === skillEntries.length &&
     tree.names.includes(SKILL_SELF_DIR),
 );
 const surfaces = sisSurfaces(CONFIG_ROOT);
 check(
   "surfaces: sis surface set = binding config + root docs + skill bodies, self-excluded",
-  surfaces.some((s) => s.path === "~/.omo/omo.jsonc" && s.kind === "ts") &&
+  surfaces.some((s) => s.path === OMO_REL && s.kind === "ts") &&
     surfaces.some((s) => s.path === "COMPLETE-CODEBASE.md" && s.countDoc === true) &&
     surfaces.some((s) => s.path === "AGENTS.md" && s.countDoc === true) &&
     !surfaces.some((s) => s.path === `skills/${SKILL_SELF_DIR}/SKILL.md`) &&

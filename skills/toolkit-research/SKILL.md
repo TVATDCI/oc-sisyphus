@@ -61,11 +61,13 @@ grep_app_searchGitHub({ query: "(?s)function.*authenticate", useRegexp: true, la
 ### Codegraph (semantic code search) — PRIMARY local code search
 
 MCP tools (preferred): `codegraph_explore` etc. — registered in `opencode.json`
-2026-09-05 via the CLI's own install path (`~/.omo/codegraph/bin/codegraph
-install opencode`), not hand-edited. Binary reprovisioned 2026-09-06:
+2026-09-05 via the then-omo plugin's CLI install path (retired 2026-10-22),
+not hand-edited. Binary reprovisioned 2026-09-06:
 user-level via mise (`npm:@colbymchenry/codegraph@1.5.0`, the same upstream
-pin oh-my-openagent uses) — `codegraph` resolves on PATH, no `~/.omo`
-dependency; reproducible via `scripts/install-codegraph.sh` in this repo.
+pin the retired oh-my-openagent plugin carried) — `codegraph` resolves on
+PATH, no `~/.omo` dependency (and the whole `~/.omo` namespace is retired
+since omo-retire 2026-10-22); reproducible via `scripts/install-codegraph.sh`
+in this repo.
 
 ```bash
 # CLI fallback

@@ -1,7 +1,6 @@
 {
   "dependencies": {
-    "@opencode-ai/plugin": "1.16.2",
-    "oh-my-openagent": "4.19.4"
+    "@opencode-ai/plugin": "1.16.2"
   },
   "scripts": {
     "install:hooks": "bash scripts/install-hooks.sh",
@@ -10,7 +9,5 @@
     "test:compat": "node scripts/verify-plugin-compat.js",
     "test:all": "npm test && npm run test:compat && npm run test:self"
   },
-  "trustedDependencies": [
-    "oh-my-openagent"
-  ]
+  "trustedDependencies": []
 }

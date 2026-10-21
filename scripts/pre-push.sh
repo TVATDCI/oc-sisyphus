@@ -18,7 +18,7 @@ PLUGIN_DIR="$REPO_ROOT/plugins/sisyphus-gates"
 echo "==> pre-push: running test suite..."
 
 # 1. Unit tests
-echo "    [1/5] unit tests (648 tests, ~5s)"
+echo "    [1/5] unit tests (677 tests, ~5s)"
 (cd "$PLUGIN_DIR" && npm test --silent)
 
 # 2. Plugin compat check

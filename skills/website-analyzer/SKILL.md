@@ -81,7 +81,7 @@ Analyzes a target website through multi-pass extraction to produce a structured 
 - **Preserve user intent** — 'quick' (2 min) vs 'deep' (10 min) analysis depth affects scope, not quality
 - **MCP server as boundary** — the skill is the wrapper; the MCP server does the heavy lifting
 - **No destructive actions on target** — read-only analysis, never write to or modify the target site
-- **Collect subagent outputs immediately** — upon each `<system-reminder>` notification, call `background_output` in the same turn; max total wait time for all subagents: 10 minutes
+- **Collect subagent outputs as they return** — native `task` dispatch is synchronous: each result arrives as the task's return value; record it immediately; max total budget for all subagents: 10 minutes
 - **All text values must be exact source strings** — never summarized or paraphrased in content-inventory.json
 - **Never block Phase 4 on CSS/Accessibility/Browser subagents** — missing data is marked AMBIGUOUS, not blocking
 
@@ -106,8 +106,7 @@ The 9-step analysis pipeline — see `## Detailed Steps` below for per-step proc
 |------|---------|-------|
 | `webfetch` | Fetch target URL HTML content | Phase 1 |
 | `bash` (curl, grep) | Deterministic DOM scraping, CSS extraction | Phase 1 Pass 1 |
-| `call_omo_agent` | Dispatch parallel subagents for deep analysis | Phase 1 Pass 2 |
-| `background_output` | Collect subagent outputs immediately upon notification | Phase 1.5 |
+| `task` (subagent dispatch) | Dispatch parallel subagents for deep analysis (native V2 dispatch; the retired omo `call_omo_agent`/`background_output` pair is gone — results return synchronously in the task result) | Phase 1 Pass 2 + 1.5 |
 | Playwright MCP | Browser automation for runtime analysis | Phase 2 |
 
 ## Model Selection
@@ -188,8 +187,8 @@ When delegating to subagents, always report: `Executing with [model] via [person
 | paywall/gated content | Analyze visible portion, flag limitations |
 | Heavy animation/video | Capture static state, note dynamic elements as AMBIGUOUS |
 | Dark mode auto-detect | Check `prefers-color-scheme`, test both modes |
-| Subagent never completes (no notification after 5 min) | Mark as FAILED. Use direct tool fallback for that category (Phase 1.6). Do NOT retry the subagent. |
-| Subagent output lost (`"Task not found"`) | Retry `background_output` once after 10s. If still lost, use direct tool fallback (Phase 1.6). |
+| Subagent `task` never returns (dispatch hangs abnormally long) | Mark as FAILED. Use direct tool fallback for that category (Phase 1.6). Do NOT re-dispatch more than once. |
+| Subagent `task` errors or returns empty | Retry the `task` dispatch once after 10s. If still lost, use direct tool fallback (Phase 1.6). |
 | Only partial subagent outputs received | Proceed with available outputs. Fill missing categories via direct tools. Do NOT restart all subagents. |
 | All subagent outputs lost | Fall back entirely to deterministic DOM/CSS extraction (Phase 1 Pass 1 expanded). This is a valid and complete path — the analysis can still proceed. |
 
@@ -588,20 +587,25 @@ MUST NOT DO:
 
 #### Phase 1.5: Collect Subagent Outputs (Critical)
 
-**Rule: Collect outputs IMMEDIATELY upon receiving each `<system-reminder>` notification. Do NOT batch collection at the end.**
+**Rule: Record each subagent's output the moment its `task` dispatch returns. Do NOT batch recording at the end.**
 
-Background task outputs can expire or be garbage-collected between the completion notification and collection. Treat each notification as a time-sensitive window.
+Mechanism note (omo-retire 2026-10-22): this phase originally rode the omo
+plugin's async pair (`call_omo_agent` spawn + `background_output` collection
+on `<system-reminder>` notifications). That machinery is retired; the native
+V2 `task` dispatch is SYNCHRONOUS — the output arrives as the task's return
+value, so the collection window collapses into the dispatch itself. The
+discipline below survives unchanged.
 
-1. Upon each `<system-reminder>` for a completed subagent, call `background_output(task_id="...")` **in the same turn**.
-2. If `background_output` returns `"Task not found"`, retry once after 10 seconds.
+1. Dispatch each subagent via `task` (Pass 2) and record its returned output immediately.
+2. If a `task` returns an error or an empty result, retry that dispatch once after 10 seconds.
 3. Track completion status in a checklist:
    - [ ] Subagent A (Visual Structure)
    - [ ] Subagent B (Design System)
    - [ ] Subagent C (Tech Stack)
    - [ ] Subagent D (Components)
    - [ ] Subagent E (Content)
-4. **Max total wait time for all subagents: 10 minutes.** Do not block Phase 2 longer than this.
-5. If a subagent hasn't sent a completion notification after **5 minutes**, mark it FAILED and proceed.
+4. **Max total budget for all subagents: 10 minutes.** Do not block Phase 2 longer than this.
+5. If a subagent's dispatch fails twice (error/empty), mark it FAILED and proceed (Phase 1.6 direct-tool fallback).
 
 #### Phase 1.6: Gap Filling (If Subagents Failed or Outputs Lost)
 

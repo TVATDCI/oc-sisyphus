@@ -10,9 +10,9 @@ A single skill whose **only job is to run other review skills in parallel and me
 
 ## Operator-Owned — Editable
 
-This skill lives at `~/.config/opencode/skills/orchestrator-review/SKILL.md` (this file). It is **not** the plugin-bundled `review-work` skill under `node_modules/oh-my-openagent/dist/skills/review-work/`. It is a deliberate fork:
+This skill lives at `~/.config/opencode/skills/orchestrator-review/SKILL.md` (this file). It is a deliberate fork of the `review-work` skill that the (now-retired, 2026-10-22) oh-my-openagent plugin bundled under `node_modules/oh-my-openagent/dist/skills/review-work/`:
 
-- **`review-work`** (plugin-bundled, read-only) — 5 generic lanes (goal-verify, QA-execution, code-quality, security, context-mining) tuned for any harness.
+- **`review-work`** (was plugin-bundled, read-only) — 5 generic lanes (goal-verify, QA-execution, code-quality, security, context-mining) tuned for any harness.
 - **`orchestrator-review`** (this skill, operator-owned) — Sisyphus-specific gate lanes wiring the actual review skills already in this repo (`code-review`, `security-auditor`, `ui-auditor`, `regression-gate`) plus goal-verification against the HMAC-gated plan/PRD acceptance criteria.
 
 Edit this file freely. It will not be overwritten by `npm install` / plugin upgrades.
@@ -205,7 +205,7 @@ When Lane 5 is skipped, record `N/A — first wave / no prior-wave tests` in the
 
 **Do NOT deliver the final report until ALL active lanes have a terminal state: PASS, FAIL, WARN, INCONCLUSIVE, or N/A (skipped).**
 
-Treat each lane's verdict as a progress signal, not a timeout counter. Between `background_output` calls, back off — double the timeout up to ~5 minutes — instead of spinning short cycles. While any lane is active, keep the orchestrator visibly alive: lane name, current phase, latest `WORKING:` signal.
+Treat each lane's verdict as a progress signal, not a timeout counter. Lanes run as native subagent `task` dispatches (synchronous — the verdict arrives as the task result; the retired omo `background_output` polling loop is gone). If you genuinely run a background lane, back off between checks — double the timeout up to ~5 minutes — instead of spinning short cycles. While any lane is active, keep the orchestrator visibly alive: lane name, current phase, latest `WORKING:` signal.
 
 A timeout, ack-only reply, or empty child result is **not** a PASS. If a lane remains silent after one reliability follow-up:
 
