@@ -266,13 +266,13 @@ Always use non-interactive flags: `cp -f`, `mv -f`, `rm -f`, `scp -o BatchMode=y
 
 ## Compound bash & Layer-3-first (brain-2q4)
 
-The `sisyphus-gates` metachar defense blocks **any** bash command containing `|`, `&&`, `||`, `;`, `&`, `>`, `>>`, `<`, `2>&1`, `$(…)`, or backticks — even read-only compounds (`git status && git log`). **Intended design**: it pushes file-content reads to Layer 3 and closes `ls && rm -rf /`-style bypasses. Work with it:
+The `sisyphus-gates` metachar defense is **enforced live** on V2 (metachar-p0, 2026-10-22: the plugin aliases the live tool name `shell` onto the decision layer's `bash` keying; proven by `scripts/v2-live-metachar-proof.sh`, which drives real sessions through model → runner → hooks → tool). A compound containing `|`, `&&`, `||`, `;`, `&`, `>`, `>>`, `<`, `2>&1`, `$(…)`, or backticks is **blocked unless every segment is safe-read-only** (Layer 4.5 allow-path, brain-2q4 P2 — `git status && git log` runs by design; `ls && rm -rf …` blocks because the second segment is destructive). Work with it:
 
 - **Layer 3 tools for file content** — `read`, `grep`, `glob`; never gated.
 - **Split compounds into bare single commands** — `git status`, then `git log --oneline -5`, as separate calls (Layer 4 allowlist).
 - **No redirect/pipe games** — run the bare producer and reason about full output.
 
-Reference: `brain-2q4` (adversarial spec-lock in `plugins/sisyphus-gates/test/adversarial/`). Layer 4.5 read-only-compound allow-path planned behind a security re-audit; until then compounds stay blocked.
+Reference: `brain-2q4` (adversarial spec-lock in `plugins/sisyphus-gates/test/adversarial/`). Layer 4.5 read-only-compound allow-path is LIVE (P2, metachar-p0-verified); any compound with a non-safe segment still blocks.
 
 ## On-Demand Reference
 

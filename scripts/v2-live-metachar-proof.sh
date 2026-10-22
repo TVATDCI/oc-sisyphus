@@ -44,7 +44,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SCRATCH="${PIPE_PORT_SCRATCH:-$HOME/.cache/pipe-port-m3}"
 STAGING="$SCRATCH/staging"
 SB="$SCRATCH/runs/metachar-proof"
-KEEP=0
+KEEP="${METACHAR_KEEP:-0}"
 
 BIN="${OPENCODE_BIN:-$HOME/.local/share/mise/installs/opencode/2.1.0/node_modules/.bin/opencode}"
 if [ ! -x "$BIN" ]; then
