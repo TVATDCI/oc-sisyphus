@@ -132,6 +132,7 @@ for _ in $(seq 1 60); do
   [ -n "$PW" ] && break
 done
 [ -n "$PW" ] || { echo "FAIL: server password never appeared"; KEEP=1; exit 1; }
+export OPENCODE_PASSWORD="$PW"
 
 "$BIN" api --server "http://127.0.0.1:$PORT" config.get >/dev/null 2>&1 || {
   echo "FAIL: server not ready"; KEEP=1; exit 1; }
