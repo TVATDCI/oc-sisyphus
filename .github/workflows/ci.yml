@@ -67,7 +67,7 @@ jobs:
 
       - name: Tier 1.4 — JSON syntax (opencode configs)
         run: |
-          for f in opencode.json tui.json package.json \
+          for f in opencode.json package.json \
                    plugins/sisyphus-gates/package.json; do
             if [ -f "$f" ]; then
               node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" \
