@@ -65,7 +65,31 @@ import { resolveMemoryKey } from "./memory-key.js";
 import { loadSandboxConfig } from "./sandbox-policy.js";
 import { server } from "./plugin.js";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+/**
+ * V2 tool-name aliases onto the V1 names the shared decision layer
+ * (gates.js) is keyed on. opencode 2.1.0 renamed the live tools
+ * (tool/plugin/shell.ts exports name "shell"; the subagent tool is
+ * "subagent"), while every bash/task-specific layer in shouldBlockTool
+ * matches `tool === "bash"` / `tool === "task"`. Without this alias the
+ * hooks fire but every command-string defense — catastrophic, sudo,
+ * trust-root bash tiers, sandbox allowlist, safe-read, the compound
+ * metachar screen, fail-closed — silently skips for live sessions
+ * (metachar-p0: proven live by scripts/v2-live-metachar-proof.sh, red
+ * pre-alias, green post-alias). V1 dist path stays keyed on V1 names
+ * exactly as before; the alias lives ONLY in this V2 shim.
+ */
+export const V2_TOOL_ALIASES = {
+  shell: "bash",
+  subagent: "task",
+};
+
+/** Map a live V2 tool name onto the decision layer's V1 vocabulary. */
+export function gateToolName(tool) {
+  return V2_TOOL_ALIASES[tool] ?? tool;
+}
 
 /**
  * Command names the V1 command.execute.before hook gates (gates.js
@@ -94,13 +118,77 @@ function stripJsonComments(text) {
 }
 
 /**
+ * Directories whose opencode.json(c) may carry the sisyphus-gates
+ * options block, in order:
+ *   1. the directory the host reported (ctx.location.directory — the
+ *      config root when the host hands us one)
+ *   2. each ancestor of that directory (bounded — a session server
+ *      reports the PROJECT cwd, not the config root; the config root
+ *      is an ancestor only in single-tree deployments, so also 3)
+ *   3. the config root this module is DEPLOYED under (auto-discovery
+ *      loads <configroot>/plugins/sisyphus-gates.js -> this file at
+ *      <configroot>/plugins/sisyphus-gates/src/v2.js — three levels up)
+ *   4. the XDG/home config roots (belt and braces for exotic layouts)
+ * readOptionsFromConfig parses each candidate with the same logic; the
+ * first candidate carrying a sisyphus-gates entry wins.
+ */
+export function optionsSearchPath(directory) {
+  const seen = new Set();
+  const out = [];
+  const push = (d) => {
+    if (typeof d === "string" && d && !seen.has(d)) {
+      seen.add(d);
+      out.push(d);
+    }
+  };
+
+  // 1 + 2: reported directory and its ancestors (bounded walk)
+  if (typeof directory === "string" && directory) {
+    let current = directory;
+    for (let i = 0; i < 10 && current; i++) {
+      push(current);
+      const parent = dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+  }
+
+  // 3: the config root this module is deployed under
+  try {
+    push(dirname(dirname(dirname(dirname(fileURLToPath(import.meta.url))))));
+  } catch {
+    /* non-file module layout — skip */
+  }
+
+  // 4: XDG/home config roots
+  if (process.env.XDG_CONFIG_HOME) push(join(process.env.XDG_CONFIG_HOME, "opencode"));
+  if (process.env.HOME) push(join(process.env.HOME, ".config", "opencode"));
+
+  return out;
+}
+
+/**
  * Read the sisyphus-gates options block from the config tree's
  * opencode.json / opencode.jsonc. Understands both declaration shapes:
  *   V1 tuple:  ["./plugins/sisyphus-gates", { ...options }]
  *   V2 object: { "package": "./plugins/sisyphus-gates", "options": { ... } }
  * Returns {} when nothing is found (never null — callers spread it).
+ *
+ * metachar-p0: the search now spans the optionsSearchPath candidates.
+ * Auto-discovery delivers no ctx.options AND ctx.location.directory is
+ * the server's project cwd — before this fix the lookup found nothing,
+ * silently disarming verdict signing ("Verdict signing disabled" in the
+ * live serve log) and with it every gate-status-aware layer.
  */
 export function readOptionsFromConfig(directory) {
+  for (const candidateDir of optionsSearchPath(directory)) {
+    const options = readOptionsFromDir(candidateDir);
+    if (options && Object.keys(options).length > 0) return options;
+  }
+  return {};
+}
+
+function readOptionsFromDir(directory) {
   const candidates = [
     join(directory, "opencode.json"),
     join(directory, "opencode.jsonc"),
@@ -262,12 +350,13 @@ export const v2Definition = {
     await ctx.tool.hook("execute.before", async (event) => {
       const sessionID = event.sessionID ?? "";
       const tool = event.tool;
+      const gateTool = gateToolName(tool); // V2 "shell"/"subagent" -> V1 "bash"/"task"
       const state = getState(sessionID);
       const args = normalizeToolArgs(event.input);
 
       // Route ALL tools through shouldBlockTool (not just write/edit/bash),
       // exactly like the V1 hook.
-      const decision = shouldBlockTool(tool, args, state);
+      const decision = shouldBlockTool(gateTool, args, state);
       if (decision.blocked) {
         event.input = {
           ...args,
@@ -278,7 +367,7 @@ export const v2Definition = {
           tool,
           phase: state.phase,
           reason: decision.reason,
-          command: tool === "bash" ? args?.command : undefined,
+          command: gateTool === "bash" ? args?.command : undefined,
         });
         if (decision.blockTool) {
           // Throw is the enforcement mechanism (V1-proven parity; V2 hook
@@ -306,7 +395,7 @@ export const v2Definition = {
       const sessionID = event.sessionID ?? "";
       const state = getState(sessionID);
       syncStateWithDisk(sessionID);
-      advancePhaseIfNeeded(state, event.tool, normalizeToolArgs(event.input), resultToText(event.result));
+      advancePhaseIfNeeded(state, gateToolName(event.tool), normalizeToolArgs(event.input), resultToText(event.result));
     });
 
     await ctx.permission.hook("evaluate", (event) => {
