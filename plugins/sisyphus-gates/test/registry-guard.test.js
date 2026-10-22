@@ -56,14 +56,18 @@ test("configuredAgentsIn: agent-map keys + agents/*.md stems, both config spelli
   mkdirSync(root, { recursive: true });
   writeFileSync(
     join(root, "opencode.json"),
-    JSON.stringify({ agent: { sisyphus: { model: "zai-coding-plan/glm-5.3" }, oracle: { model: "opencode-go/kimi-k3" } } }),
+    JSON.stringify({
+      agent: { sisyphus: { model: "zai-coding-plan/glm-5.3" } },
+      agents: { "native-v2-seat": { model: "p/m" } },
+    }),
     "utf-8"
   );
   mkdirSync(join(root, "agents"), { recursive: true });
   writeFileSync(join(root, "agents", "reviewer.md"), "x", "utf-8");
   writeFileSync(join(root, "agents", "notes.txt"), "x", "utf-8"); // not markdown
   const names = configuredAgentsIn(root);
-  assert.ok(names.has("sisyphus") && names.has("oracle") && names.has("reviewer"));
+  assert.ok(names.has("sisyphus") && names.has("native-v2-seat") && names.has("reviewer"),
+    `both the V1 agent map AND the native V2 agents map must count: ${[...names]}`);
   assert.ok(!names.has("notes"), "non-markdown files must not count");
 
   const jsoncRoot = join(tmpdir(), "reg-guard-jsonc");

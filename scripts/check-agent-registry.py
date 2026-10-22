@@ -96,9 +96,11 @@ def configured_agents(repo_root: Path) -> set[str]:
             cfg = json.loads(strip_jsonc(path.read_text(encoding="utf-8")))
         except ValueError:
             continue
-        agent_map = cfg.get("agent") if isinstance(cfg, dict) else None
-        if isinstance(agent_map, dict):
-            names.update(str(k) for k in agent_map)
+        agent_map = None
+        for key in ("agent", "agents"):
+            candidate = cfg.get(key) if isinstance(cfg, dict) else None
+            if isinstance(candidate, dict):
+                names.update(str(k) for k in candidate)
     for dirname in AGENT_MD_DIRS:
         d = repo_root / dirname
         if not d.is_dir():

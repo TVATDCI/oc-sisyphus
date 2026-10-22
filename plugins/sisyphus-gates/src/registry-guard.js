@@ -79,9 +79,15 @@ export function configuredAgentsIn(directory) {
     } catch {
       continue;
     }
-    const map = parsed?.agent;
-    if (map && typeof map === "object" && !Array.isArray(map)) {
-      for (const key of Object.keys(map)) names.add(key);
+    // Both declaration shapes count: the V1-object `agent` map (what
+    // this repo emits, migrated by the host) AND the native V2 `agents`
+    // map (what hand-written V2 configs carry — the metachar sandbox
+    // declares its canary agent there; live-canary proven 2026-10-22).
+    for (const key of ["agent", "agents"]) {
+      const map = parsed?.[key];
+      if (map && typeof map === "object" && !Array.isArray(map)) {
+        for (const name of Object.keys(map)) names.add(name);
+      }
     }
   }
 
