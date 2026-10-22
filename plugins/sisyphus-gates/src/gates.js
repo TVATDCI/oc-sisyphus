@@ -50,6 +50,7 @@ import {
   isDestructiveCommand,
   isSafeCompoundCommand,
   isSafeReadOnlyCommand,
+  hasShellMetachar,
 } from "./command-policy.js";
 import { containsSudo, isAlwaysBlocked } from "./sudo-policy.js";
 import { getCachedWorkflowConfig } from "./workflow-loader.js";
@@ -272,6 +273,31 @@ export function shouldBlockTool(tool, args, state) {
   // Layer 4.5: Safe compound commands (brain-2q4 P2 — additive allow-path)
   if (tool === "bash" && args?.command && isSafeCompoundCommand(args.command)) {
     return { blocked: false };
+  }
+
+  // Layer 4.6: Compound/metachar screen — phase-INDEPENDENT (metachar-p0-b).
+  // A bash command carrying compound/redirect/substitution metacharacters
+  // that is NOT a Layer 4.5 safe read-only compound is blocked in EVERY
+  // phase. The Layer 6 phase branches below previously disarmed this screen
+  // for discovery/prd-writing (short-circuit allow-all BEFORE any
+  // isDestructiveCommand check) — the captain's fresh-window drill proved it
+  // live (echo ok && rm -rf /tmp/... executed in the discovery steady-state,
+  // evidence fresh-window-drill-2026-10-22.md part 1b; reproduced by
+  // scripts/v2-default-path-proof.sh, red pre-fix). Layer 3.7 sandbox allows
+  // are unaffected (isSandboxCommand already rejects metachar commands), and
+  // the Layer 4.5 allow-path above keeps read-only compounds running.
+  if (
+    tool === "bash" &&
+    args?.command &&
+    hasShellMetachar(args.command) &&
+    !isSafeCompoundCommand(args.command)
+  ) {
+    return {
+      blocked: true,
+      reason:
+        "Compound command with shell metacharacters blocked in all phases (metachar screen, metachar-p0-b)",
+      blockTool: true,
+    };
   }
 
   // Layer 5: Fail-closed blocks write/edit/bash/task with non-safe commands

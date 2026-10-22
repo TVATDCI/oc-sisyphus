@@ -562,7 +562,11 @@ test("metachar-p0: execute.before blocks a flagged compound fired as the LIVE to
     }
     const events = readMetrics(home);
     assert.ok(
-      events.some((e) => e.tool === "shell" && /Destructive/.test(e.reason)),
+      events.some((e) => e.tool === "shell" && /metachar/i.test(e.reason)),
+      // metachar-p0-b: Layer 4.6 made the compound screen phase-independent,
+      // so the block now carries the metachar-screen reason (it previously
+      // arrived here via the execution-phase "Destructive commands blocked"
+      // branch). The block itself and the live tool name are unchanged.
       "block metric recorded under the LIVE tool name"
     );
   });

@@ -266,13 +266,13 @@ Always use non-interactive flags: `cp -f`, `mv -f`, `rm -f`, `scp -o BatchMode=y
 
 ## Compound bash & Layer-3-first (brain-2q4)
 
-The `sisyphus-gates` metachar defense is **enforced live** on V2 (metachar-p0, 2026-10-22: the plugin aliases the live tool name `shell` onto the decision layer's `bash` keying; proven by `scripts/v2-live-metachar-proof.sh`, which drives real sessions through model → runner → hooks → tool). A compound containing `|`, `&&`, `||`, `;`, `&`, `>`, `>>`, `<`, `2>&1`, `$(…)`, or backticks is **blocked unless every segment is safe-read-only** (Layer 4.5 allow-path, brain-2q4 P2 — `git status && git log` runs by design; `ls && rm -rf …` blocks because the second segment is destructive). Work with it:
+The `sisyphus-gates` metachar defense is **enforced live on the DEFAULT path, in EVERY phase** (metachar-p0 2026-10-22 + metachar-p0-b 2026-10-22: the plugin aliases the live tool name `shell` onto the decision layer's `bash` keying — proven by `scripts/v2-live-metachar-proof.sh`; and Layer 4.6 makes the compound screen phase-independent — proven by `scripts/v2-default-path-proof.sh`, codemode ENABLED, state at the discovery steady-state, the exact shape of the captain's fresh-window window; the pre-p0-b red was the discovery/prd-writing Layer 6 short-circuit allowing flagged compounds, NOT codemode hiding shell calls — a real session's shell command always surfaces as a direct `shell` tool call). A compound containing `|`, `&&`, `||`, `;`, `&`, `>`, `>>`, `<`, `2>&1`, `$(…)`, or backticks is **blocked in all phases unless every segment is safe-read-only** (Layer 4.5 allow-path, brain-2q4 P2 — `git status && git log` runs by design; `ls && rm -rf …` blocks because the second segment is destructive). Work with it:
 
 - **Layer 3 tools for file content** — `read`, `grep`, `glob`; never gated.
 - **Split compounds into bare single commands** — `git status`, then `git log --oneline -5`, as separate calls (Layer 4 allowlist).
 - **No redirect/pipe games** — run the bare producer and reason about full output.
 
-Reference: `brain-2q4` (adversarial spec-lock in `plugins/sisyphus-gates/test/adversarial/`). Layer 4.5 read-only-compound allow-path is LIVE (P2, metachar-p0-verified); any compound with a non-safe segment still blocks.
+Reference: `brain-2q4` (adversarial spec-lock in `plugins/sisyphus-gates/test/adversarial/`). Layer 4.5 read-only-compound allow-path is LIVE (P2, metachar-p0-verified); any compound with a non-safe segment blocks in every phase (Layer 4.6, metachar-p0-b-verified on the default path).
 
 ## On-Demand Reference
 
