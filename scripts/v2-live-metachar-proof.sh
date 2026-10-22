@@ -164,7 +164,7 @@ python3 - "$CFG_JSON" "$STUB_PORT" <<'PY'
 import json, sys
 path, stub_port = sys.argv[1], sys.argv[2]
 cfg = json.load(open(path))
-cfg["provider"] = {
+cfg["providers"] = {
     "stub": {
         "name": "Metachar Canary Stub",
         "package": "@opencode/ai/providers/openai-compatible",
@@ -172,7 +172,7 @@ cfg["provider"] = {
         "models": {"canary": {"name": "canary-stub"}},
     }
 }
-cfg["agent"] = {
+cfg["agents"] = {
     "metachar-canary": {
         "model": "stub/canary",
         "description": "metachar-p0 live canary driver (scripted stub model)",
@@ -202,11 +202,13 @@ export OPENCODE_PASSWORD="$PW"
   echo "FAIL: server not ready"; KEEP=1; kill "$SRV_PID" 2>/dev/null; exit 1; }
 
 grep -q "sisyphus-gates" "$SB/serve.out" \
-  && echo "server log: sisyphus-gates plugin load marker present" \
-  || echo "server log: WARNING — no sisyphus-gates marker in serve.out"
+  && echo "server log: sisyphus-gates plugin load marker present (pre-canary)" \
+  || echo "server log: pre-canary check: no sisyphus-gates marker yet (may be lazy)"
 
 # ── the live canary ─────────────────────────────────────────────────────────
 export CANARY_QUEUE_PATH="$SB/queue.json"
+export CANARY_STUB_LOG="$SB/stub-requests.jsonl"
+rm -f "$CANARY_STUB_LOG"
 node "$REPO_ROOT/scripts/v2-live-metachar-canary.mjs" \
   --server "http://127.0.0.1:$PORT" \
   --password "$PW" \
@@ -217,6 +219,14 @@ cat "$SB/canary.out"
 
 kill "$SRV_PID" 2>/dev/null
 wait "$SRV_PID" 2>/dev/null
+
+grep -q "sisyphus-gates" "$SB/serve.out" \
+  && echo "server log: sisyphus-gates plugin marker present" \
+  || echo "server log: WARNING — no sisyphus-gates marker in serve.out"
+[ -s "$CANARY_STUB_LOG" ] && {
+  echo "--- stub request log (last 10) ---"
+  tail -10 "$CANARY_STUB_LOG"
+}
 
 echo "=== verdict inputs ==="
 echo "live canary exit (verdict source): $CANARY_RC (0 required)"

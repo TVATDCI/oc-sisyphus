@@ -43,7 +43,7 @@
  *       2 = usage error
  */
 import { createServer } from "node:http";
-import { existsSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { appendFileSync, existsSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 function failUsage(msg) {
@@ -149,6 +149,14 @@ function textChunk(id, model, text) {
 }
 
 const QUEUE_PATH = process.env.CANARY_QUEUE_PATH || join(process.tmpdir ?? "/tmp", "metachar-canary-queue.json");
+const STUB_LOG_PATH = process.env.CANARY_STUB_LOG || "";
+
+function stubLog(entry) {
+  if (!STUB_LOG_PATH) return;
+  try {
+    appendFileSync(STUB_LOG_PATH, JSON.stringify(entry) + "\n");
+  } catch {}
+}
 
 function startStub(port) {
   return new Promise((resolve, reject) => {
@@ -161,6 +169,16 @@ function startStub(port) {
           body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
         } catch {}
         const resp = stubResponse(body);
+        stubLog({
+          url: req.url,
+          method: req.method,
+          model: body?.model ?? null,
+          tools: lastToolRoster,
+          nMessages: Array.isArray(body?.messages) ? body.messages.length : 0,
+          stream: body?.stream ?? null,
+          respKind: resp.kind,
+          respText: resp.kind !== "tool" ? resp.text : null,
+        });
         const id = `chatcmpl-canary-${Date.now()}`;
         const model = body?.model ?? "canary";
         if (req.url && req.url.includes("/chat/completions")) {
@@ -171,13 +189,15 @@ function startStub(port) {
             res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" });
             res.end(textChunk(id, model, resp.text));
           } else {
-            // kind === "error": surface the diagnostic as a 500 so the
-            // runner records it and the driver reports the real cause.
-            res.writeHead(500, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ error: { message: resp.text } }));
+            // kind === "error": empty tool roster. Answer as TEXT so the turn
+            // completes and the diagnostic is visible in the session message
+            // (a 500 here makes the whole step time out uselessly).
+            res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" });
+            res.end(textChunk(id, model, resp.text));
           }
           return;
         }
+        stubLog({ url: req.url, method: req.method, note: "unhandled path" });
         res.writeHead(404, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: { message: `canary stub: unhandled path ${req.url}` } }));
       });
@@ -215,20 +235,39 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ── step driver ────────────────────────────────────────────────────────────
 
 async function createSession(api, agent) {
-  const out = await api("POST", "/api/session", { title: "metachar-canary", agent });
+  // Explicit model pin: the stub model must serve the session regardless of
+  // agent-model inheritance quirks; the driver asserts no other model served.
+  const out = await api("POST", "/api/session", {
+    title: "metachar-canary",
+    agent,
+    model: { providerID: "stub", id: "canary" },
+  });
   const data = out?.data ?? out;
   if (!data?.id) throw new Error(`session.create returned no id: ${JSON.stringify(out).slice(0, 300)}`);
   return data.id;
 }
 
 function toolPartsOf(message) {
-  const parts = Array.isArray(message?.parts) ? message.parts : [];
-  return parts.filter((p) => p && p.type === "tool");
+  const content = Array.isArray(message?.content) ? message.content : [];
+  return content.filter((c) => c && c.type === "tool");
 }
 
 function matchesCommand(part, command) {
-  const input = part?.input ?? part?.state?.input ?? {};
+  const input = part?.state?.input ?? {};
   return input?.command === command;
+}
+
+function toolText(state) {
+  const parts = Array.isArray(state?.content) ? state.content : [];
+  return parts
+    .map((p) => (p && typeof p === "object" ? p.text ?? "" : String(p)))
+    .join("\n");
+}
+
+function errorText(err) {
+  if (err == null) return "";
+  if (typeof err === "string") return err;
+  return `${err.message ?? ""} ${err.type ?? ""}`.trim();
 }
 
 async function runStep(api, agent, name, command, expect, timeoutMs) {
@@ -238,27 +277,59 @@ async function runStep(api, agent, name, command, expect, timeoutMs) {
 
   const deadline = Date.now() + timeoutMs;
   let verdict = null;
+  let lastMessages = null;
+  const modelsSeen = new Set();
   while (Date.now() < deadline) {
     await sleep(700);
     const out = await api("GET", `/api/session/${sessionID}/message`);
     const messages = out?.data ?? out ?? [];
+    lastMessages = messages;
     for (const m of messages) {
+      if (m?.type === "assistant" && m?.model) {
+        modelsSeen.add(`${m.model.providerID ?? "?"}/${m.model.id ?? "?"}`);
+      }
       for (const p of toolPartsOf(m)) {
         if (!matchesCommand(p, command)) continue;
         const state = p.state ?? {};
         if (state.status === "completed" || state.status === "error") {
           verdict = {
             status: state.status,
-            output: typeof state.output === "string" ? state.output : JSON.stringify(state.output ?? ""),
-            error: state.error ? `${state.error}` : "",
+            output: toolText(state),
+            error: errorText(state.error),
           };
         }
       }
     }
     if (verdict) break;
   }
+
+  // No-silent-fallback guard: the stub model must have served this step.
+  // A different model here means the canary left its deterministic lane
+  // (exactly the free-model-compliance failure mode the family forbids).
+  const modelList = Array.from(modelsSeen);
+  const stubServed = modelList.some((x) => x.startsWith("stub/"));
+  if (modelList.length > 0 && !stubServed) {
+    return {
+      name,
+      ok: false,
+      detail: `SILENT MODEL FALLBACK — served by ${modelList.join(", ")} instead of stub/canary; step is not deterministic`,
+    };
+  }
+
   if (!verdict) {
-    return { name, ok: false, detail: `timeout: tool call for ${JSON.stringify(command)} never reached a terminal state (roster seen by stub: ${lastToolRoster.join(", ") || "none"})` };
+    const diag = [];
+    for (const m of lastMessages ?? []) {
+      const role = m?.type ?? "?";
+      const parts = (Array.isArray(m?.content) ? m.content : [])
+        .map((c) => `${c?.type ?? "?"}${c?.type === "tool" && c?.state ? ":" + c.state.status : ""}${c?.type === "text" && c?.text ? ":" + String(c.text).slice(0, 50) : ""}`);
+      const model = m?.model ? `(${m.model.providerID}/${m.model.id})` : "";
+      diag.push(`[${role}${model}] ${parts.join(" | ")}`);
+    }
+    return {
+      name,
+      ok: false,
+      detail: `timeout: tool call for ${JSON.stringify(command)} never reached a terminal state (models seen: ${modelList.join(", ") || "none"}; roster seen by stub: ${lastToolRoster.join(", ") || "none"}); messages: ${diag.join(" // ").slice(0, 700) || "none"}`,
+    };
   }
   const blocked = verdict.status === "error" && /Gate blocked/i.test(verdict.error + " " + verdict.output);
   const ran = verdict.status === "completed";

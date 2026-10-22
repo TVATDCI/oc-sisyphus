@@ -520,6 +520,148 @@ test("resolveOptions: empty ctx.options falls back to config entirely", async ()
   });
 });
 
+// ─── V2 tool-name aliases (metachar-p0: live V2 names -> decision layer) ────
+
+test("gateToolName maps live V2 tool names onto the decision layer's V1 vocabulary", async () => {
+  await withTempHome(async () => {
+    const { gateToolName } = await import("../src/v2.js");
+    assert.equal(gateToolName("shell"), "bash", "2.1.0 shell tool -> V1 bash keying");
+    assert.equal(gateToolName("subagent"), "task", "2.1.0 subagent tool -> V1 task keying");
+    assert.equal(gateToolName("bash"), "bash", "V1 name passes through");
+    assert.equal(gateToolName("write"), "write", "unchanged names pass through");
+  });
+});
+
+test("metachar-p0: execute.before blocks a flagged compound fired as the LIVE tool name 'shell' under approved execution state", async () => {
+  await withTempHome(async (home) => {
+    writeSignedVerdicts(home, "PASS", "PASS");
+    writeStateFile(home, {
+      phase: "execution",
+      approval_status: "approved",
+      evidence_logged: true,
+      last_checkpoint: "plan-approved",
+    });
+    const mock = await bootV2({ options: SIGNING_OPTIONS });
+    for (const command of [
+      "echo ok && rm -rf /tmp/metachar-test-never",
+      "echo ok; rm -rf /tmp/metachar-test-never",
+    ]) {
+      const event = {
+        tool: "shell", // the name the live 2.1.0 host fires (tool/plugin/shell.ts)
+        sessionID: "v2test-shell-1",
+        input: { command },
+      };
+      await assert.rejects(
+        () => mock.reg.tool["execute.before"](event),
+        (err) => {
+          assert.match(err.message, /⛔ Gate blocked/);
+          return true;
+        },
+        `must throw for ${JSON.stringify(command)}`
+      );
+    }
+    const events = readMetrics(home);
+    assert.ok(
+      events.some((e) => e.tool === "shell" && /Destructive/.test(e.reason)),
+      "block metric recorded under the LIVE tool name"
+    );
+  });
+});
+
+test("metachar-p0: execute.before still allows the P2 safe-compound allow-path for the live 'shell' name", async () => {
+  await withTempHome(async (home) => {
+    writeSignedVerdicts(home, "PASS", "PASS");
+    writeStateFile(home, {
+      phase: "execution",
+      approval_status: "approved",
+    });
+    const mock = await bootV2({ options: SIGNING_OPTIONS });
+    for (const command of [
+      "git status", // benign single (Layer 4)
+      "git status && git log --oneline -1", // all-segments-read-only compound (Layer 4.5)
+    ]) {
+      const event = {
+        tool: "shell",
+        sessionID: "v2test-shell-2",
+        input: { command },
+      };
+      await mock.reg.tool["execute.before"](event); // must not throw
+      assert.equal(event.input._sisyphus_gate_blocked, undefined);
+    }
+  });
+});
+
+test("metachar-p0: execute.before fail-closes non-safe shell commands when no state exists (live 'shell' name)", async () => {
+  await withTempHome(async (home) => {
+    removeStateFile(home);
+    const mock = await bootV2();
+    const event = {
+      tool: "shell",
+      sessionID: "v2test-shell-3",
+      input: { command: "npm install left-pad" }, // not safe-read-only -> Layer 5
+    };
+    await assert.rejects(
+      () => mock.reg.tool["execute.before"](event),
+      (err) => {
+        assert.match(err.message, /⛔ Gate blocked/);
+        return true;
+      }
+    );
+  });
+});
+
+test("metachar-p0: execute.before fail-closes the live 'subagent' tool name (task parity)", async () => {
+  await withTempHome(async (home) => {
+    removeStateFile(home);
+    const mock = await bootV2();
+    const event = {
+      tool: "subagent", // the name the live 2.1.0 host fires
+      sessionID: "v2test-subagent-1",
+      input: { prompt: "do anything", description: "x" },
+    };
+    await assert.rejects(
+      () => mock.reg.tool["execute.before"](event),
+      (err) => {
+        assert.match(err.message, /⛔ Gate blocked/);
+        return true;
+      },
+      "fail-closed must also catch the renamed subagent escape hatch"
+    );
+  });
+});
+
+// ─── options search path (metachar-p0: verdict signing was silently disarmed) ──
+
+test("readOptionsFromConfig finds the config root from a nested project directory via the ancestor walk", async () => {
+  await withTempHome(async (home) => {
+    // config root carries the plugin tuple; the host reports a deep
+    // PROJECT directory (what ctx.location.directory actually is for a
+    // session server started in a project cwd).
+    const cfgRoot = join(home, "cfgroot");
+    const project = join(cfgRoot, "projects", "repo", "deep");
+    mkdirSync(project, { recursive: true });
+    writeFileSync(join(cfgRoot, "opencode.json"), JSON.stringify({
+      plugin: [["./plugins/sisyphus-gates", { verdict_key_command: "cat ancestor-key" }]],
+    }));
+    const opts = readOptionsFromConfig(project);
+    assert.equal(opts.verdict_key_command, "cat ancestor-key",
+      "ancestor walk must reach the config root above the project directory");
+  });
+});
+
+test("readOptionsFromConfig finds the deployed config root via module location when the project tree has no config", async () => {
+  await withTempHome(async (home) => {
+    // A project tree with NO opencode.json anywhere (config root lives
+    // elsewhere, like the deployed layout) — the module-location fallback
+    // must find THIS repo's config tree (it is its own config root).
+    const project = join(home, "elsewhere", "project");
+    mkdirSync(project, { recursive: true });
+    const opts = readOptionsFromConfig(project);
+    assert.ok(typeof opts.verdict_key_command === "string",
+      "module-location fallback must find the config root this module deploys under");
+  });
+});
+
 // resultToText tolerance across observed V2 result shapes
 test("resultToText handles string, content-string, and content-parts shapes", async () => {
   await withTempHome(async () => {
