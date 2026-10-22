@@ -29,6 +29,9 @@
 #        S3 echo ok;  rm -rf ...    -> must BLOCK (the ; form)
 #        S4 git status && git log   -> must RUN   (P2 safe-compound allow-path)
 #        S5 no /tmp canary artifact
+#        S6 unregistered agent label-> must BLOCK (P1-b registry guard,
+#                                     fm/backlog-impl: the silent-default
+#                                     trap refused at the first tool call)
 #
 # Usage:   scripts/v2-live-metachar-proof.sh
 # Env:     PIPE_PORT_SCRATCH=<dir>  scratch root (default ~/.cache/pipe-port-m3)

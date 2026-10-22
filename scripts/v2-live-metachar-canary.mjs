@@ -30,6 +30,10 @@
  *       all-segments-read-only compounds by design; documents the
  *       live behavior of the allow-path, NOT a defense failure)
  *   S5 artifact        /tmp/metachar-canary-never must not exist
+ *   S6 unregistered-agent  session agent label never configured ->
+ *      expect BLOCKED at the first tool call (P1-b, fm/backlog-impl:
+ *      the sisyphus-gates registry guard refuses the silent-default
+ *      trap; S1 doubles as its configured-name control)
  *
  * BLOCKED is asserted from the tool part state: status "error" with the
  * gate's own verdict text ("Gate blocked"). RAN is asserted from status
@@ -374,6 +378,13 @@ async function main() {
       ok: !artifact,
       detail: artifact ? `${RM_TARGET} EXISTS (rm executed)` : `${RM_TARGET} absent`,
     });
+    // S6 (P1-b, fm/backlog-impl): a session under an UNREGISTERED agent
+    // label must be refused at its first tool call — the silent-default
+    // trap closed by the sisyphus-gates registry guard. S1 already proves
+    // the CONFIGURED canary agent passes the same guard (it ran).
+    results.push(
+      await runStep(api, "unregistered-canary-agent", "S6-unregistered-agent", `echo ${MARKER}`, "BLOCKED", opts.timeoutMs)
+    );
   } finally {
     stub.close();
     try {

@@ -63,6 +63,11 @@ import { recordEvent } from "./metrics.js";
 import { loadMcpPrefixes } from "./mcp-classifier.js";
 import { resolveMemoryKey } from "./memory-key.js";
 import { loadSandboxConfig } from "./sandbox-policy.js";
+import {
+  allowedAgents,
+  unregisteredAgentReason,
+  registryDivergence,
+} from "./registry-guard.js";
 import { server } from "./plugin.js";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -237,6 +242,68 @@ export function resolveOptions(ctx) {
 }
 
 /**
+ * Registry-guard caches (P1-b): allowed-name sets keyed by the session
+ * directory's search path (a few file reads; never rebuilt per call for
+ * the same directory), and the one-shot startup validation flag.
+ */
+const allowedAgentCache = new Map();
+
+function allowedAgentsFor(directory, overrideRoots = null) {
+  const key = JSON.stringify([directory ?? "", overrideRoots]);
+  if (!allowedAgentCache.has(key)) {
+    const dirs = Array.isArray(overrideRoots)
+      ? overrideRoots
+      : optionsSearchPath(typeof directory === "string" && directory ? directory : undefined);
+    allowedAgentCache.set(key, allowedAgents(dirs));
+  }
+  return allowedAgentCache.get(key);
+}
+
+let startupValidationDone = false;
+
+/** Test seam: reset the registry-guard caches between boots. */
+export function resetRegistryGuardCaches() {
+  allowedAgentCache.clear();
+  startupValidationDone = false;
+}
+
+/**
+ * One-time startup registry validation: the in-process registry
+ * (ctx.agent.list() — NOT the blind HTTP surface) vs the configured
+ * set for this location. Divergence logs loudly once; registration
+ * surfaces being dark is the upstream defect, spawns still resolve at
+ * runtime. Warn-and-continue: a validation log line must never take
+ * the gates down.
+ */
+async function runStartupRegistryValidation(ctx, directory, overrideRoots = null) {
+  if (startupValidationDone) return;
+  startupValidationDone = true;
+  try {
+    const list = await ctx?.agent?.list?.();
+    if (!Array.isArray(list)) return;
+    const registryIds = list.map((a) => a?.id).filter((id) => typeof id === "string");
+    const configured = allowedAgentsFor(directory, overrideRoots);
+    const builtins = allowedAgents([]);
+    const { missing } = registryDivergence(
+      [...configured].filter((name) => !builtins.has(name)),
+      registryIds
+    );
+    if (missing.length > 0) {
+      console.error(
+        `[sisyphus-gates] AGENT-REGISTRY DIVERGENCE: ${missing.length} configured agent(s) ` +
+          `absent from the live registry: ${missing.slice(0, 12).join(", ")}` +
+          `${missing.length > 12 ? ", …" : ""} — the registry/picker surface defect ` +
+          `(pipe-port-m3 R1; ` +
+          `list surface dark). Runtime spawns still resolve; the silent-default ` +
+          `guard (tool execute.before) is ARMED.`
+      );
+    }
+  } catch {
+    /* ctx.agent unavailable on this host shape — the blocking guard still runs */
+  }
+}
+
+/**
  * Normalize a V2 tool input for the shared decision layer. V2 renamed
  * the write/edit path field to `filePath`; trust-root matching already
  * tolerates all spellings, but the phase machine's file_write matcher
@@ -325,6 +392,16 @@ export const v2Definition = {
       );
     }
 
+    // Registry-guard search roots (P1-b): default = the options search
+    // path (module-deployed config root, session ancestors, home/XDG
+    // roots); the registry_guard_roots option narrows/extends it (tests
+    // use it to isolate a temp tree).
+    const guardRoots =
+      Array.isArray(options.registry_guard_roots) &&
+      options.registry_guard_roots.every((d) => typeof d === "string" && d)
+        ? options.registry_guard_roots
+        : null;
+
     try {
       const sandboxCfg = loadSandboxConfig(options);
       setSandboxConfig(sandboxCfg);
@@ -353,6 +430,29 @@ export const v2Definition = {
       const gateTool = gateToolName(tool); // V2 "shell"/"subagent" -> V1 "bash"/"task"
       const state = getState(sessionID);
       const args = normalizeToolArgs(event.input);
+
+      // Startup registry validation (once per process, best-effort).
+      await runStartupRegistryValidation(ctx, ctx?.location?.directory, guardRoots);
+
+      // Silent-default guard (P1-b): refuse tool work under an agent
+      // label (or subagent spawn type) that is neither built-in nor
+      // configured — V2 would otherwise proceed on a default model with
+      // the label stamped. Runs before the write gates: identity first.
+      const allowed = allowedAgentsFor(ctx?.location?.directory, guardRoots);
+      const labelReason =
+        unregisteredAgentReason(event.agent, allowed) ??
+        (gateTool === "task"
+          ? unregisteredAgentReason(args?.subagent_type, allowed)
+          : null);
+      if (labelReason) {
+        recordEvent({
+          sessionID,
+          tool,
+          phase: state.phase,
+          reason: labelReason,
+        });
+        throw new Error(`⛔ Gate blocked: ${labelReason}`);
+      }
 
       // Route ALL tools through shouldBlockTool (not just write/edit/bash),
       // exactly like the V1 hook.
