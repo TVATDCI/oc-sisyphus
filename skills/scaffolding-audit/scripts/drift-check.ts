@@ -2,12 +2,16 @@
  * Drift-check CLI (sis) — the OPEN-2 session-begin slot consumer.
  *
  * Read-only bounded read (INV-2): opens EXACTLY two files — the state
- * manifest and ~/.omo/omo.jsonc (the model-binding source of truth) — and
- * nothing else. Never writes (run under `deno run --allow-read` — the grant
- * proves it; scope the grant to exactly the two paths for a mechanical
- * bounded-read proof). Output contract (shared spec §4): stale or missing →
- * the single reminder flag on stdout, exit 0; fresh → silence, exit 0;
- * unreadable manifest → explicit error on stderr, exit 1, no rebuild.
+ * manifest and the RESOLVED per-desk REPO omo variant (omo-retire
+ * 2026-10-22: hostname-resolved at the config root, OMO_JSONC_PATH env
+ * override; the model-binding source of truth — never the retired
+ * ~/.omo/omo.jsonc) — and nothing else. Never writes (run under
+ * `deno run --allow-read` — the grant proves it; scope the grant to exactly
+ * the two paths for a mechanical bounded-read proof). Output contract
+ * (shared spec §4): stale or missing → the single reminder flag on stdout,
+ * exit 0; fresh → silence, exit 0; unreadable manifest → explicit error on
+ * stderr, exit 1, no rebuild; unresolvable/absent binding source → explicit
+ * error on stderr, exit 1 (fail-closed, no silent skip).
  */
 
 import { readFileSync } from "node:fs";
@@ -15,21 +19,15 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import process from "node:process";
 import { checkDrift } from "./lib/drift.ts";
-import { extractModelState, OMO_REL } from "./lib/model-state.ts";
+import { extractModelState, resolveOmoSource } from "./lib/model-state.ts";
 
 const SCRIPT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const SKILL_DIR = join(SCRIPT_DIR, "..");
 const DEFAULT_MANIFEST = join(SKILL_DIR, "state", "manifest.json");
-// SKILL_DIR = ~/.config/opencode/skills/scaffolding-audit → four ups = ~
-const DEFAULT_OMO = join(
-  SKILL_DIR,
-  "..",
-  "..",
-  "..",
-  "..",
-  ".omo",
-  "omo.jsonc",
-);
+// The binding source resolves at the config root (two ups from the skill dir
+// = the repo/config root holding omo.<desk>.jsonc).
+const DEFAULT_OMO = resolveOmoSource(join(SKILL_DIR, "..", "..")).absPath;
+const OMO_REL = resolveOmoSource(join(SKILL_DIR, "..", "..")).relPath;
 
 function main(): void {
   const argv = process.argv.slice(2);
@@ -56,7 +54,18 @@ function main(): void {
     else throw err;
   }
 
-  const omoText = readFileSync(omoPath, "utf8");
+  let omoText: string;
+  try {
+    omoText = readFileSync(omoPath, "utf8");
+  } catch (err) {
+    console.error(
+      `Error: resolved omo binding source unreadable: ${omoPath} — ` +
+        (err instanceof Error ? err.message : String(err)) +
+        ` (fail-closed: the drift check derives state from the per-desk repo ` +
+        `variant; set OMO_JSONC_PATH to point at it explicitly)`,
+    );
+    process.exit(1);
+  }
   const currentState = extractModelState(omoText, OMO_REL);
 
   let result;

@@ -68,26 +68,31 @@ else
   add_error "AGENTS.md missing"
 fi
 
-# === Check 5: ~/.omo/omo.jsonc consistency ===
-OMO="$HOME/.omo/omo.jsonc"
+# === Check 5: per-desk repo omo variant consistency ===
+# omo-retire (2026-10-22): the source is the hostname-resolved repo variant
+# (omo.ddd.jsonc / omo.tnt.jsonc, resolved via omo-query.js — mirror of
+# deploy-omo.sh), NOT the retired ~/.omo/omo.jsonc. Fail-closed: a missing
+# resolved source is an error, never a silent skip.
 OMO_QUERY="$REPO/scripts/omo-query.js"
-if [ -f "$OMO" ]; then
+OMO="$(node "$OMO_QUERY" path 2>/dev/null || true)"
+if [ -n "$OMO" ] && [ -f "$OMO" ]; then
+  OMO_NAME="$(basename "$OMO")"
   AGENT_COUNT=$(node "$OMO_QUERY" agents 2>/dev/null || echo "0")
   CAT_COUNT=$(node "$OMO_QUERY" categories 2>/dev/null || echo "0")
 
   if [ "$AGENT_COUNT" -eq 18 ]; then
-    add_pass "~/.omo/omo.jsonc has 18 agents"
+    add_pass "$OMO_NAME has 18 agents"
   else
-    add_error "~/.omo/omo.jsonc has $AGENT_COUNT agents (expected 18)"
+    add_error "$OMO_NAME has $AGENT_COUNT agents (expected 18)"
   fi
 
   if [ "$CAT_COUNT" -eq 9 ]; then
-    add_pass "~/.omo/omo.jsonc has 9 categories"
+    add_pass "$OMO_NAME has 9 categories"
   else
-    add_error "~/.omo/omo.jsonc has $CAT_COUNT categories (expected 9)"
+    add_error "$OMO_NAME has $CAT_COUNT categories (expected 9)"
   fi
 else
-  add_error "~/.omo/omo.jsonc missing"
+  add_error "resolved omo variant not found (omo-query.js path; expected the per-desk repo variant omo.<desk>.jsonc)"
 fi
 
 # === Check 6: agents/*.md model pins (oc-v2-fixbundle: map-only) ===
@@ -192,7 +197,7 @@ else
   add_warning "Could not parse agents/ count claim"
 fi
 
-# === Check 9: routing claims match ~/.omo/omo.jsonc ===
+# === Check 9: routing claims match the resolved per-desk repo omo variant ===
 if [ -f "$OMO" ]; then
   OMO_ROUTING=$(node "$OMO_QUERY" categories-routing 2>/dev/null || echo "{}")
   ROUTING_MISMATCHES=$(OMO_ROUTING="$OMO_ROUTING" DOC="$DOC" node - <<'NODE'
@@ -200,7 +205,7 @@ const fs = require('fs');
 const doc = fs.readFileSync(process.env.DOC, 'utf8');
 const omaCats = JSON.parse(process.env.OMO_ROUTING || '{}');
 
-const line = doc.split('\n').find(l => l.includes('Categories (omo.jsonc overlay'));
+const line = doc.split('\n').find(l => l.includes('Categories (omo.<desk>.jsonc overlay'));
 if (!line) {
   console.log('Could not find Categories line in COMPLETE-CODEBASE.md');
   process.exit(0);
@@ -220,7 +225,7 @@ const mismatches = [];
 for (const [name, docModel] of docMap) {
   const jsonModel = jsonMap.get(name);
   if (!jsonModel) {
-    mismatches.push(`${name}: documented but missing in ~/.omo/omo.jsonc`);
+    mismatches.push(`${name}: documented but missing in the resolved omo variant`);
   } else if (jsonModel !== docModel) {
     mismatches.push(`${name}: doc claims ${docModel}, config has ${jsonModel}`);
   }
@@ -237,11 +242,11 @@ NODE
       add_error "Category routing mismatch: $line"
     done <<< "$ROUTING_MISMATCHES"
   else
-    add_pass "Category routing claims match ~/.omo/omo.jsonc"
+    add_pass "Category routing claims match the resolved omo variant"
   fi
 fi
 
-# === Check 9b: Named-Agents runtime line matches ~/.omo/omo.jsonc ===
+# === Check 9b: Named-Agents runtime line matches the resolved omo variant ===
 # Kills the hand-synced-drift class: the '18 Named Agents (runtime)' line is a
 # current-state claim and must match the live agents block, same as categories.
 if [ -f "$OMO" ]; then
@@ -252,7 +257,7 @@ const raw = fs.readFileSync(process.env.OMO, 'utf8');
 
 // brace-match the first "agents" block; extract name -> first "model" per agent
 const ai = raw.indexOf('"agents"');
-if (ai < 0) { console.log('no agents block in ~/.omo/omo.jsonc'); process.exit(0); }
+if (ai < 0) { console.log('no agents block in the resolved omo variant'); process.exit(0); }
 let j = raw.indexOf('{', ai), depth = 0, k = j;
 for (;; k++) {
   const c = raw[k];
@@ -281,7 +286,7 @@ for (const chunk of body.split(/, (?=[a-z][a-z0-9-]* \()/)) {
 const out = [];
 for (const [name, model] of docAgents) {
   const lm = live.get(name);
-  if (!lm) out.push(`${name}: documented but missing in ~/.omo/omo.jsonc`);
+  if (!lm) out.push(`${name}: documented but missing in the resolved omo variant`);
   else if (lm !== model) out.push(`${name}: doc claims ${model}, config has ${lm}`);
 }
 for (const [name] of live) if (!docAgents.has(name)) out.push(`${name}: in config but missing from doc`);
@@ -294,7 +299,7 @@ NODE
       add_error "Named-Agents mismatch: $line"
     done <<< "$AGENT_MISMATCHES"
     else
-      add_pass "Named-Agents runtime line matches ~/.omo/omo.jsonc"
+      add_pass "Named-Agents runtime line matches the resolved omo variant"
     fi
 fi
 
@@ -362,7 +367,7 @@ NODE
       add_error "Provider-mix tally mismatch: $line"
     done <<< "$TALLY_MISMATCHES"
     else
-      add_pass "Provider-mix tallies match ~/.omo/omo.jsonc"
+      add_pass "Provider-mix tallies match the resolved omo variant"
     fi
 fi
 

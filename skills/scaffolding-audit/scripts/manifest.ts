@@ -27,7 +27,7 @@ import { parseRuleTable } from "./lib/spec.ts";
 import { runScan, renderReport } from "./lib/scan-core.ts";
 import type { ManifestAnchor } from "./lib/scan-core.ts";
 import { sisSurfaces, enumerateSkillDirs } from "./lib/surfaces.ts";
-import { extractModelState, OMO_REL } from "./lib/model-state.ts";
+import { extractModelState, resolveOmoSource } from "./lib/model-state.ts";
 
 const SCRIPT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const SKILL_DIR = join(SCRIPT_DIR, "..");
@@ -46,7 +46,9 @@ const SPEC_TWIN = join(
 );
 const STATE_DIR = join(SKILL_DIR, "state");
 const MANIFEST_PATH = join(STATE_DIR, "manifest.json");
-const OMO_ABS = join(CONFIG_ROOT, "..", "..", ".omo", "omo.jsonc");
+// Binding source: the hostname-resolved per-desk REPO VARIANT at the config
+// root (omo-retire 2026-10-22; was the retired ~/.omo/omo.jsonc).
+const OMO_SOURCE = resolveOmoSource(CONFIG_ROOT);
 
 function usage(): never {
   console.error(
@@ -144,8 +146,8 @@ function main(): void {
   process.stdout.write(renderReport(result));
   if (!result.hashIdentical) process.exit(3);
 
-  const omoText = readFileSync(OMO_ABS, "utf8");
-  const nextModelState = extractModelState(omoText, OMO_REL);
+  const omoText = readFileSync(OMO_SOURCE.absPath, "utf8");
+  const nextModelState = extractModelState(omoText, OMO_SOURCE.relPath);
   const nextFindingHashes = result.flags.map((f) => f.hash);
 
   // BUILD #14 idempotence guard: no-op when extracted state unchanged.

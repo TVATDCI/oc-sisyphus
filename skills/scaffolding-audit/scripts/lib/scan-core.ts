@@ -202,16 +202,17 @@ function doctrineDiffSection(
   if (commit === undefined || commit === "") {
     return "Manifest carries an empty last-audit-commit anchor — re-record the manifest.";
   }
-  // Repo-relative surfaces only; the live binding config (~-prefixed) is
-  // outside the config repo and is anchored by the model-state source digest
-  // (drift check), not by a git commit.
+  // Repo-relative surfaces only; the binding config is the per-desk REPO
+  // variant (tracked, so it is diffable) but its ROUTING truth is anchored
+  // by the model-state source digest (drift check), not by a git commit
+  // alone.
   const paths = surfaces.map((s) => s.path).filter((p) => !p.startsWith("~"));
   const stat = git(configRoot, [
     "diff", "--stat", `${commit}..HEAD`, "--", ...paths,
   ]);
   const lines: string[] = [];
   lines.push(
-    "~/.omo/omo.jsonc (live, untracked): anchored by the model-state source digest — see the drift check.",
+    "omo.<desk>.jsonc (per-desk repo variant, hostname-resolved): anchored by the model-state source digest — see the drift check.",
   );
   if (stat === undefined) {
     lines.push(`git anchor unavailable — last-audit-commit ${commit} not diffable here.`);
@@ -349,13 +350,8 @@ export function renderReport(result: ScanResult): string {
   out.push("");
   out.push("## omo doctor leg (validation — D4)");
   out.push("");
-  out.push("Script leg does not run the doctor (determinism: no spawn here). Run");
-  out.push(
-    "`omo doctor` (non-interactive fallback: node ~/.cache/opencode/packages/oh-my-openagent@<ver>/node_modules/oh-my-openagent/bin/oh-my-opencode.js doctor)",
-  );
-  out.push(
-    "and embed its output verbatim here; if unavailable, record a noted-missing",
-  );
-  out.push("leg — the text audit above still stands.");
+  out.push("The oh-my-openagent plugin is retired (omo-retire 2026-10-22), so the");
+  out.push("doctor binary no longer exists — record this leg as noted-missing");
+  out.push("(the vendored spec's provision); the text audit above still stands.");
   return out.join("\n") + "\n";
 }

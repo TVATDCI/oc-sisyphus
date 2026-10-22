@@ -43,6 +43,11 @@ routine, same vendored spec, sis surfaces. Posture first, always:
   trailing commas are handled by the string-aware parser in
   `scripts/lib/model-state.ts` (repo precedent: `scripts/omo-query.js`);
   never a naive JSON parse.
+- **Binding source is the per-desk repo variant (omo-retire, 2026-10-22).**
+  The scanner reads the hostname-resolved REPO VARIANT at the config root
+  (`omo.ddd.jsonc` / `omo.tnt.jsonc`; OMO_JSONC_PATH env override where env
+  is granted). The live `~/.omo/omo.jsonc` is retired with the plugin —
+  never read, never written, never a fallback.
 - **Vocabulary authority is the vendored spec** at `spec/spec-shared.md`
   (shared with the pi landing, hash-pinned per OPEN-1). Never re-define or
   re-word the five classes locally. Every audit starts with the audit-time
@@ -50,7 +55,9 @@ routine, same vendored spec, sis surfaces. Posture first, always:
 
 ## Audited surfaces (self-enumerated)
 
-1. `~/.omo/omo.jsonc` — agents + categories: primary assignments and
+1. The per-desk repo omo variant (`omo.ddd.jsonc` on dropdeaddev /
+   `omo.tnt.jsonc` on tnt, hostname-resolved; `OMO_JSONC_PATH` env where
+   granted) — agents + categories: primary assignments and
    `fallback_models` chains (the model-binding source of truth).
 2. Repo-root routing/count docs — root `*.md` self-enumerated at run time
    (incl. `COMPLETE-CODEBASE.md`, `AGENTS.md` routing text, `README.md`).
@@ -65,9 +72,12 @@ routine, same vendored spec, sis surfaces. Posture first, always:
    stop (divergence, AC-13).
 2. **Drift check** (cheap leg, manifest-diff only — INV-2):
    `deno run --allow-read scripts/drift-check.ts` — opens ONLY the state
-   manifest + `~/.omo/omo.jsonc`; prints the single reminder flag
+   manifest + the resolved per-desk repo omo variant; prints the single
+   reminder flag
    `routing state drifted since last audit — run scaffolding-audit` when
-   stale or never-audited; silent when fresh; never writes.
+   stale or never-audited; silent when fresh; never writes. An unresolvable
+   or absent binding source is an explicit stderr error, exit 1
+   (fail-closed, no silent skip).
 3. **Scan** (invoked leg):
    `deno run --allow-read --allow-run=git scripts/scan.ts --scope=full`
    (diff-scope needs a manifest anchor: `--scope=diff`). Emits the flag
@@ -75,11 +85,13 @@ routine, same vendored spec, sis surfaces. Posture first, always:
    model calls, no wall-clock fields in the report. Includes the sis
    structural layer: skill-count claims in routing/count docs are verified
    against the self-enumerated tree (`c4-skill-count-claim`, class 4).
-4. **omo doctor leg (validation, D4).** Run `omo doctor` (non-interactive
-   fallback: `node ~/.cache/opencode/packages/oh-my-openagent@<ver>/node_modules/oh-my-openagent/bin/oh-my-opencode.js doctor`,
-   form pinned at `scripts/deploy-omo.sh:21`) and embed its output VERBATIM
-   in the report. If unavailable, record a noted-missing leg — the text
-   audit still completes (no hard failure).
+4. **omo doctor leg (validation, D4).** RETIRED with the plugin
+   (omo-retire, 2026-10-22): the `omo doctor` binary no longer exists.
+   Record this leg as noted-missing (the vendored spec's provision) — the
+   text audit still completes (no hard failure). Historical context for
+   older recorded reports: the doctor's migration nudge was a trap (see
+   the watch list below) — embedded output in pre-retirement reports
+   should be read with that note.
 5. **Report.** Every flag: `file:line` + class (1–5) + verbatim quote +
    suggested action (always begins `PROPOSE ONLY — operator arbitrates:`) +
    finding hash. First live reports go to the operator — arbitration is the
@@ -117,14 +129,19 @@ work. Pinned facts — re-verify statuses before acting on them:
   #7209 open) → silent default-model routing. Migration gate:
   **5.0 stable + #7209 merged + #6567 resolved** (timing memo in the
   build14 lane).
-- **Version pin.** Desk runs oh-my-openagent **4.19.4 exact** —
+- **Version pin (historical — retired with the plugin).** Until
+  omo-retire (2026-10-22) the desk ran oh-my-openagent **4.19.4 exact** —
   `package.json` dependency, `opencode.json` plugin spec, and the plugin
-  cache all pin it (never `@latest`; `auto_update:false`). The lockfile
-  root spec carried a stale `^4.19.4` caret (BUILD #14 patch 0003
-  reconciles). Upgrades are explicit operator actions only.
-- **Deploy-direction hazard.** The live `~/.omo/omo.jsonc` drifted ahead
-  of the repo variants; running `scripts/deploy-omo.sh` before refreshing
-  the variant from live would regress the chains (BUILD #14 findings F1).
+  cache all pinned it (never `@latest`; `auto_update:false`). The
+  lockfile root spec carried a stale `^4.19.4` caret (BUILD #14 patch
+  0003 reconciles). No plugin pin exists anymore; upgrades are moot.
+- **Deploy-direction hazard (historical — pre-retirement).** Before
+  omo-retire, the live `~/.omo/omo.jsonc` drifted ahead of the repo
+  variants (e.g. the momus grok-4.6→4.7 live-side edit that never reached
+  the variant); running `scripts/deploy-omo.sh` before refreshing the
+  variant from live would regress the chains (BUILD #14 findings F1).
+  Since omo-retire the variant IS the source of truth — the hazard class
+  is closed by removing the second location.
 
 ## Vendoring (OPEN-1)
 

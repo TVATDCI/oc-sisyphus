@@ -1,12 +1,12 @@
 {
-  "recorded-at": "2026-09-29T16:08:27.876Z",
+  "recorded-at": "2026-10-21T23:39:39.805Z",
   "surface-scope": "sis",
   "last-audit-commit": {
-    "~/.config/opencode": "c0192a40613c241e22ef8b6b0369afd11ae2320b"
+    "~/.config/opencode": "ad95179443b7cce6e8c607e49e92762b53f75fc7"
   },
   "model-state": {
     "source": {
-      "path": "~/.omo/omo.jsonc",
+      "path": "omo.ddd.jsonc",
       "sha256": "564d151712fec760247bbb1d9fdd126b1462d6788ba89299bf9213d2891e9276"
     },
     "bindings": {

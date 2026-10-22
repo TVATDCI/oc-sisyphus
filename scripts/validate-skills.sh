@@ -105,8 +105,9 @@ validate_skill() {
     # Anti-pattern guard: hardcoded model identifier after the seat line
     # (Category/Persona/Seat). Runtime model comes from the persona's pinned
     # seat in agents/<name>.md (generated pipeline cast;
-    # ~/.omo/omo.jsonc is dormant legacy). Hardcoding model names in skill
-    # bodies drifts on every model refresh.
+    # the per-desk repo omo variants are the pin-authoring overlay — the
+    # retired ~/.omo/omo.jsonc held that role until omo-retire 2026-10-22).
+    # Hardcoding model names in skill bodies drifts on every model refresh.
     # Pattern matches: **Persona:** `X` → `Y`  or  **Persona:** X → Y
     # (also the retired **Category:** and the **Seat:** form)
     if grep -qE '^\*\*(Category|Persona|Seat):\*\*.*→' "$skill_dir/SKILL.md"; then

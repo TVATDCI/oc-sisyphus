@@ -253,23 +253,28 @@ manuals triggered by domain match:
 - **Development**: `fullstack-dev`, `frontend-ui-ux`, `skill-creator`, `agent-development`, `shader-dev`, `document-builder`
 - **System**: `session-close`, `shell-safety`, `system-reference`, `opencode-expert`, `vault-ops`
 
-### 5. Agents (18 omo-overlay personas + 15 generated pipeline personas)
+### 5. Agents (9 file-based + 15 generated pipeline personas; 18-stanza omo-variant overlay)
 
-Different tasks need different AI models. The system routes work to 18 agents,
-each with its own model, tools, and permissions. Of these 18, **9 are user-defined**
-(`~/.config/opencode/agents/*.md`: **sisyphus — the default primary agent, fleet-owned
+Different tasks need different AI models. The system routes work to the agents
+it resolves, each with its own model, tools, and permissions. The runtime
+resolves **9 file-based user-defined agents** (`~/.config/opencode/agents/*.md`:
+**sisyphus — the default primary agent, fleet-owned
 since 2026-10-20 as an in-house port of the omo runtime agent**, plus oracle,
 archivist, athena, auditor, explorer, reviewer, post-reviewer, fullstack-dev-tester)
-and **9 are plugin-bundled** inside
-the oh-my-openagent plugin install (hephaestus, librarian, explore,
-multimodal-looker, prometheus, metis, momus, atlas, sisyphus-junior). Most agents
+and **15 generated pipeline personas**. Nine further agents (hephaestus,
+librarian, explore, multimodal-looker, prometheus, metis, momus, atlas,
+sisyphus-junior) WERE bundled in the oh-my-openagent plugin — the plugin is
+retired (omo-retire, 2026-10-22) and those nine were already inert under
+OpenCode V2 by upstream design, so nothing ships them anymore. Most agents
 are read-only. Only 2 have write access — archivist (scoped to vault paths) and
 fullstack-dev-tester (broad `edit: *`, needed to build apps anywhere in a project
 workspace) — and even those are blocked by Layer 0 from touching governance files.
-The plugin-bundled agents stay inert under OpenCode V2 by upstream design, so the
-file-based nine are what the V2 runtime actually resolves; `~/.omo/omo.jsonc`
-remains the routing source for its own consumers (categories, fallback chains).
-Since 2026-10-21 (pipe-port-m1) the same directory also carries 15 generated pipeline
+The model pins live in the `opencode.json` `agent` map (the sole pin authority),
+emitted by `scripts/generate-pipeline-personas.py` from the per-desk REPO
+variant (`omo.ddd.jsonc` on dropdeaddev / `omo.tnt.jsonc` on tnt,
+hostname-resolved exactly like `scripts/deploy-omo.sh`; the retired live
+`~/.omo/omo.jsonc` played that role until 2026-10-22).
+Since 2026-10-21 (pipe-port-m1) the agents directory carries the 15 generated pipeline
 personas (brief-loader, prd-writer, the momus gate reviewers, the wave spine, the
 orchestrator-review lanes, regression-gate, reference-checker, tdd-executor) emitted by
 `scripts/generate-pipeline-personas.py` from the skill bodies: mode-A seats embed the
@@ -280,8 +285,10 @@ hand-edit.
 
 9 categories dispatch tasks by domain (deep, quick, visual-engineering, writing,
 etc.) using a 3-tier fallback strategy: subscription primary → lite subscription
-→ pre-pay-as-you-go. Edit `~/.omo/omo.jsonc` (`[opencode]` section) to wire your own
-provider/model combinations.
+→ pre-pay-as-you-go. Edit the per-desk repo variant (`omo.ddd.jsonc` /
+`omo.tnt.jsonc`, `[opencode]` section) to wire your own provider/model
+combinations, then regenerate the persona files — the drift gate fails until
+the regenerated output is committed.
 
 ## Signing verdicts (operator guide)
 
@@ -422,7 +429,7 @@ That's the gap most patterns leave open.
 - [COMPLETE-CODEBASE.md](./COMPLETE-CODEBASE.md) — full system map, timeline, routing
 - [SYSTEM-NARRATIVE.md](./SYSTEM-NARRATIVE.md) — era-structured developmental history + design rationale
 - [THREAT-MODEL.md](./plugins/sisyphus-gates/THREAT-MODEL.md) — attack surface analysis
-- `~/.omo/omo.jsonc` — agent + category routing (4.19.4+ unified config, `[opencode]` section)
+- `omo.ddd.jsonc` / `omo.tnt.jsonc` (repo root) — agent + category routing overlay and pin-authoring source (per-desk variants, hostname-resolved; `[opencode]` section)
 - [opencode.json](./opencode.json) — entry-point config
 - Per-skill `SKILL.md` files in `skills/*/` — read any of them for a concrete example of the skill format
 
@@ -441,11 +448,13 @@ bash scripts/pre-push.sh      # full pre-push suite
   tracked in-house port of the omo runtime agent (ultraworker identity, gates
   workflow discipline, fleet comms); its model pin (`zai-coding-plan/glm-5.3#max`)
   lives in the `opencode.json` `agent` map — the sole pin authority since
-  oc-v2-fixbundle, emitted live from `~/.omo/omo.jsonc` (which stays read-only
-  for its routing consumers; omo's own agents remain inert under V2 by
-  upstream design), with `default_agent: "sisyphus"` resolving to it under V2.
-- **674/674 unit tests + 22/22 self-test scenarios passing**
-- `oh-my-openagent` pinned to `4.19.4`
+  oc-v2-fixbundle, emitted live from the per-desk repo omo variant
+  (`omo.ddd.jsonc` / `omo.tnt.jsonc`, hostname-resolved; the retired live
+  `~/.omo/omo.jsonc` held that role until the omo plugin was retired
+  2026-10-22), with `default_agent: "sisyphus"` resolving to it under V2.
+- **677/677 unit tests + 22/22 self-test scenarios passing**
+- `oh-my-openagent` plugin RETIRED (omo-retire, 2026-10-22) — no plugin pin;
+  the repo's own `sisyphus-gates` plugin and core-load agents are the runtime
 - `sisyphus-gates` local plugin — current: `v0.4.1` (Layer 3.7 sandbox allowlist
   Jun 27; Layer 6.5 session-close gate Jun 30; Layer 1 catastrophic-defense
   hardening Jul 23; Layer 4.5 compound-allow Jul 23; Finding A bd subcommand

@@ -8,15 +8,21 @@ extracted by the pipe-port-m0 manifest
 (/home/vladi/firstmate/data/pipe-port-m0/report.md) and renders every
 generated persona file from it. Edit the map here, never the emitted files.
 
-oc-v2-fixbundle (2026-10-21, PR-8 decisions 1+2): ~/.omo/omo.jsonc is the
-PIN-AUTHORING surface. This generator LIVE-READS it (never a snapshot -
-manifest lesson WARNING-5) and derives every model pin from it. The source
-is configurable for non-desk environments (CI has no ~/.omo): the
---omo-source flag or OMO_JSONC_PATH env override the default, and the
-generator fail-closes when the CONFIGURED source is absent - never a silent
-fallback. CI points it at the committed repo-root per-desk variant
-(omo.ddd.jsonc), so the committed surfaces must reproduce from a committed
-source on every push:
+oc-v2-fixbundle (2026-10-21, PR-8 decisions 1+2), re-pointed by omo-retire
+(2026-10-22): the PIN-AUTHORING surface is the per-desk REPO VARIANT at the
+repo root (omo.ddd.jsonc / omo.tnt.jsonc). This generator LIVE-READS the
+resolved variant (never a snapshot - manifest lesson WARNING-5) and derives
+every model pin from it. The source is resolved exactly like
+scripts/deploy-omo.sh: hostname tnt -> omo.tnt.jsonc, hostname
+dropdeaddev -> omo.ddd.jsonc. Resolution order: the --omo-source flag or
+OMO_JSONC_PATH env override the default, and the generator fail-closes when
+the RESOLVED source is absent (or the hostname has no variant case) - never
+a silent fallback, never the retired live ~/.omo path (the plugin and its
+central config are retired; the desk-side ~/.omo file is move-aside'd by
+firstmate). The hostname default means every desk resolves its own tracked
+variant with no flags, while CI points OMO_JSONC_PATH at the committed
+repo-root variant (omo.ddd.jsonc), so the committed surfaces must reproduce
+from a committed source on every push:
   - the opencode.json `agent` map (the V1-object config form PR-8 D3 proved
     pins under opencode 2.1.0) is EMITTED as the runtime pin authority:
     bare `provider/model` + separate `variant` field per agent entry -
@@ -56,7 +62,7 @@ from the primary's session.
 Checks (wired into validate-agents.py / validate-skills.sh / pre-push):
   --check           drift gate: regenerated output must equal committed files
                     (agents/*.md, their model lines, and the opencode.json
-                    `agent` map) against the LIVE ~/.omo/omo.jsonc
+                    `agent` map) against the RESOLVED per-desk repo variant
   --check-tokens    every routing token in skills/ resolves to a category
                     stanza (port map) or a file agent (agents/*.md) or a skill
   --check-dag       DAG edge-vs-permission assertion (§9 edges == task allows)
@@ -84,6 +90,7 @@ import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -95,10 +102,21 @@ AGENTS_DIR = REPO_ROOT / "agents"
 OPENCODE_JSON = REPO_ROOT / "opencode.json"
 
 
+# Hostname -> per-desk repo variant (mirror of scripts/deploy-omo.sh's case
+# table; omo-query.js carries the same mapping for the guard readers). Add a
+# case here AND in deploy-omo.sh when a new desk joins.
+OMO_VARIANTS = {
+    "tnt": "omo.tnt.jsonc",
+    "dropdeaddev": "omo.ddd.jsonc",
+}
+
+
 def resolve_omo_path() -> tuple[Path, str]:
     """The configured pin source: --omo-source flag > OMO_JSONC_PATH env >
-    the live ~/.omo/omo.jsonc. Returns (path, how_configured) — the caller
-    fail-closes when the CONFIGURED source is absent; no silent fallback.
+    the hostname-resolved per-desk REPO VARIANT at the repo root (mirror of
+    deploy-omo.sh). Returns (path, how_configured) — the caller fail-closes
+    when the RESOLVED source is absent and this fail-closes on an unknown
+    hostname; no silent fallback, never the retired live ~/.omo path.
     """
     for i, arg in enumerate(sys.argv[1:], start=1):
         if arg == "--omo-source" and i + 1 < len(sys.argv):
@@ -108,7 +126,15 @@ def resolve_omo_path() -> tuple[Path, str]:
     env = os.environ.get("OMO_JSONC_PATH")
     if env:
         return Path(env).expanduser(), "OMO_JSONC_PATH env"
-    return Path.home() / ".omo" / "omo.jsonc", "default (live ~/.omo/omo.jsonc)"
+    host = socket.gethostname().strip().lower()
+    variant = OMO_VARIANTS.get(host)
+    if variant is None:
+        raise SystemExit(
+            f"FAIL: unknown hostname '{host}' — no per-desk omo variant case "
+            "(mirror scripts/deploy-omo.sh's table in OMO_VARIANTS, or pass "
+            "--omo-source / set OMO_JSONC_PATH explicitly)."
+        )
+    return REPO_ROOT / variant, f"repo variant (host {host})"
 
 
 OMO_PATH, OMO_SOURCE_CONFIG = resolve_omo_path()
@@ -117,11 +143,13 @@ GENERATOR = "scripts/generate-pipeline-personas.py"
 
 
 # ---------------------------------------------------------------------------
-# Live pin source — ~/.omo/omo.jsonc (oc-v2-fixbundle, PR-8 decision 1).
+# Live pin source — the per-desk REPO VARIANT (omo-retire, 2026-10-22; was
+# ~/.omo/omo.jsonc under oc-v2-fixbundle, PR-8 decision 1).
 # The file is READ LIVE at every invocation (never snapshotted into the repo —
-# manifest lesson WARNING-5). After the captain edits omo.jsonc, --check fails
-# until the generator is re-run and the output committed: that drift IS the
-# wire from the authoring surface to the emitted pins.
+# manifest lesson WARNING-5). After the captain edits the resolved repo
+# variant, --check fails until the generator is re-run and the output
+# committed: that drift IS the wire from the authoring surface to the emitted
+# pins.
 # ---------------------------------------------------------------------------
 
 
@@ -164,12 +192,12 @@ def read_omo() -> dict:
     """Parse the configured pin source and return its `[opencode]` block."""
     if not OMO_PATH.is_file():
         raise SystemExit(
-            f"FAIL: pin source {OMO_PATH} not found (configured via "
+            f"FAIL: pin source {OMO_PATH} not found (resolved via "
             f"{OMO_SOURCE_CONFIG}) — the generator derives every pin from "
-            "the configured omo source and will not fall back silently. On "
-            "CI, point --omo-source / OMO_JSONC_PATH at a committed source "
-            "(the repo-root omo.<desk>.jsonc variants are the intended "
-            "fixture)."
+            "the resolved omo source and will not fall back silently. "
+            "Pass --omo-source / set OMO_JSONC_PATH to point at a committed "
+            "source (the repo-root omo.<desk>.jsonc variants are the "
+            "intended fixture)."
         )
     raw = OMO_PATH.read_text(encoding="utf-8")
     clean = re.sub(r",(?=\s*[}\]])", "", _strip_jsonc_comments(raw))
@@ -238,9 +266,9 @@ EXTERNAL_SKILLS = {"playwright"}
 # modes), §9 (delegation DAG). NOT re-derived here.
 #
 # oc-v2-fixbundle: the model/variant/tuning fields are DERIVED LIVE from
-# ~/.omo/omo.jsonc (the pin-authoring surface). The dict below fixes only
-# which categories the pipeline personas route through; a category missing
-# from the live omo.jsonc fails the generator closed.
+# the resolved per-desk repo variant (the pin-authoring surface). The dict
+# below fixes only which categories the pipeline personas route through; a
+# category missing from the resolved omo source fails the generator closed.
 #
 # Provider-id fidelity note (PR-documented): the manifest tables abbreviate
 # the coding-plan provider as "zai/..." — the live roster and the live
@@ -262,7 +290,7 @@ PIPELINE_CATEGORIES = {
 _missing = sorted(PIPELINE_CATEGORIES - set(OMO_CATEGORIES))
 if _missing:
     raise SystemExit(
-        f"FAIL: live {OMO_PATH} is missing pipeline categories: {_missing}"
+        f"FAIL: resolved source {OMO_PATH} is missing pipeline categories: {_missing}"
     )
 
 CATEGORIES = {name: _pin_fields(OMO_CATEGORIES[name]) for name in sorted(PIPELINE_CATEGORIES)}
@@ -759,7 +787,8 @@ def render_persona(p: dict, skills_dir: Path) -> str:
         "---",
         f"# Generated by {GENERATOR} (pipe-port-m1) - DO NOT EDIT by hand.",
         f"# Port map source: {MANIFEST}, sections 1/4/9 - mode {mode_word}.",
-        f"# Pin (model+variant) derives live from ~/.omo/omo.jsonc category",
+        f"# Pin (model+variant) derives live from the per-desk repo omo",
+        f"# variant (omo.<desk>.jsonc) category",
         f"# {p['category']} (variant aliases applied) and is applied by the",
         f"# emitted opencode.json agent map - the SOLE pin authority. This file",
         f"# deliberately carries NO model line: a valid model pin here would",
@@ -1438,7 +1467,9 @@ def self_test() -> int:
     if proc.returncode != 0 or "brief-loader" not in proc.stdout:
         failures.append(f"OMO_JSONC_PATH override failed: {(proc.stdout + proc.stderr).strip()[:200]}")
 
-    # c. absent CONFIGURED source refuses (no silent fallback to the live file).
+    # c. absent CONFIGURED source refuses (no silent fallback to any other
+    # source - the hostname default resolves the same repo variant, so the
+    # refusal path is proven with an explicit bogus override).
     proc = subprocess.run(gen + ["--omo-source", "/nonexistent/omo-fixture.jsonc", "--list"],
                           capture_output=True, text=True, timeout=120)
     out = proc.stdout + proc.stderr
@@ -1466,10 +1497,12 @@ def main() -> int:
         metavar="PATH",
         default=None,
         help=(
-            "pin source override (default: live ~/.omo/omo.jsonc; env "
-            "OMO_JSONC_PATH). CI uses the committed repo-root variant "
-            "(omo.ddd.jsonc). Applied at import time - the flag is accepted "
-            "here for --help visibility. Fail-closed when absent."
+            "pin source override (default: the hostname-resolved per-desk "
+            "repo variant omo.<desk>.jsonc, mirroring deploy-omo.sh; env "
+            "OMO_JSONC_PATH also overrides). CI uses the committed repo-root "
+            "variant (omo.ddd.jsonc). Applied at import time - the flag is "
+            "accepted here for --help visibility. Fail-closed when the "
+            "resolved source is absent."
         ),
     )
     mutex = parser.add_mutually_exclusive_group()

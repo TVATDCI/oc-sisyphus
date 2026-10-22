@@ -11,7 +11,7 @@ Times assume a healthy machine; free RAM matters (sandbox probes failed once und
 - `scripts/v2-enforcement-proof.sh [version]` — the hard-gate prover for either generation, deterministic since fm/canary-harden: the canary drives the gate's own enforcement path (`scripts/v2-proof-canary.mjs`) instead of a free model, with the free-model e2e kept as an opt-in informational signal (`V2_PROOF_E2E=1`).
 - `opencode.json` carries `permission.external_directory: {"*": "ask"}` (V1 object form; V2 normalizes it to the prescribed ask rule).
 - `.gitignore` covers `/cli.json` and `/service.json`.
-- omo stays pinned at 4.19.4 in `opencode.json` and `package.json`; no variant changes are staged (omo 5.1.40 parses our 4.19.4-shaped variants but does not activate agents under V2 — see the omo posture section).
+- omo is retired (omo-retire, 2026-10-22): no plugin pin anywhere; the per-desk repo variants (`omo.ddd.jsonc` / `omo.tnt.jsonc`) remain the tracked pin-authoring overlay for the generator and guards; no variant changes are staged (omo 5.1.40 parses the 4.19.4-shaped variants but does not activate agents under V2 — see the omo posture section).
 
 ## A. Preconditions (before the captain window)
 
