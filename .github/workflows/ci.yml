@@ -55,6 +55,9 @@ jobs:
         working-directory: plugins/sisyphus-gates
         run: npm ci && npm test
 
+      - name: Tier 1.1b — model-fallback plugin unit tests
+        run: node --test plugins/model-fallback/test/
+
       - name: Tier 1.2 — plugin self-test
         working-directory: plugins/sisyphus-gates
         run: npm run self-test

@@ -237,6 +237,102 @@ def resolve_variant(model: str, reasoning) -> str | None:
     return VARIANT_ALIASES.get((model, variant), variant)
 
 
+# Ladder rung renames (P2-b, documented deviations like VARIANT_ALIASES):
+# omo-authored fallback models that are DEAD on the live roster, remapped
+# to the live successor seat so the emitted chain never carries a broken
+# rung (verified against the live roster + catalog efforts; the
+# --check-variants leg re-proves every emitted rung on demand).
+RUNG_RENAMES = {
+    # grok-4.6 retired upstream; grok-4.7 carries the same seat (efforts
+    # [low, medium, high, xhigh] include the authored "high").
+    ("opencode-go/grok-4.6", "high"): ("opencode-go/grok-4.7", "high"),
+    ("opencode-go/grok-4.6", "max"): ("opencode-go/grok-4.7", "xhigh"),
+    ("opencode-go/grok-4.6", None): ("opencode-go/grok-4.7", None),
+}
+
+# Authored rung variants the live catalog cannot serve (2026-10-22
+# --check-variants evidence): remapped to the nearest runnable top effort
+# where one exists.
+RUNG_VARIANT_ALIASES = {
+    ("opencode-go/qwen3.8-max", "high"): "xhigh",
+}
+
+# Authored rung variants with NO runnable equivalent on that model: drop
+# the variant (the rung serves the model default) — a rung carrying an
+# un-runnable variant would fail VariantUnavailable at switch time and
+# break the chain.
+RUNG_VARIANT_DROPS = {
+    ("opencode-go/kimi-k2.7-code", "high"),
+    ("opencode-go/kimi-k2.7-code", "medium"),
+    ("opencode/glm-5.3", "medium"),
+}
+
+# Rung models DEAD on the live roster (2026-10-22): dropped from the
+# emission so chains never carry a rung the resolver cannot serve.
+RUNG_MODEL_DROPS = {
+    "opencode-go/deepseek-v4-flash-vision-exp",
+    "opencode/ling-3.0-flash-fin-free",
+}
+
+
+def _rung_pin(entry: dict) -> str | None:
+    """One omo fallback entry -> an emitted rung pin ("p/m" or "p/m#v")."""
+    model = entry.get("model")
+    if not isinstance(model, str) or "/" not in model:
+        return None
+    if model in RUNG_MODEL_DROPS:
+        return None
+    variant = resolve_variant(model, entry.get("reasoning"))
+    model, variant = RUNG_RENAMES.get((model, variant), (model, variant))
+    if variant is not None:
+        variant = RUNG_VARIANT_ALIASES.get((model, variant), variant)
+        if (model, variant) in RUNG_VARIANT_DROPS:
+            variant = None
+    return f"{model}#{variant}" if variant else model
+
+
+def render_model_fallback() -> dict[str, list[str]]:
+    """The `model_fallback` ladder map (P2-b): primary base -> ordered rungs.
+
+    Derived live from the resolved variant's fallback_models stanzas (the
+    omo-era inert records made live through the V2-native model-fallback
+    plugin): every stanza sharing a primary contributes its rungs (deduped,
+    first-seen wins), then the union is ordered by the captain's ladder
+    classes — opencode-go (paid-cheap) first, other providers next,
+    opencode PAYG (`opencode/…`) LAST — so no seat's authored ordering can
+    strand a pay-as-you-go rung mid-chain. The key is the BARE primary
+    (runtime matches providerID/id only)."""
+    out: dict[str, list[str]] = {}
+    stanzas = list(OMO_AGENTS.values()) + list(OMO_CATEGORIES.values())
+    for stanza in stanzas:
+        primary = stanza.get("model")
+        entries = stanza.get("fallback_models")
+        if not isinstance(primary, str) or "/" not in primary:
+            continue
+        if not isinstance(entries, list):
+            continue
+        rungs = out.setdefault(primary, [])
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            pin = _rung_pin(entry)
+            if pin and pin not in rungs:
+                rungs.append(pin)
+
+    def ladder_class(rung: str) -> int:
+        if rung.startswith("opencode-go/"):
+            return 0
+        if rung.startswith("opencode/"):
+            return 2
+        return 1
+
+    return {
+        primary: sorted(rungs, key=ladder_class)
+        for primary, rungs in out.items()
+        if rungs
+    }
+
+
 def _pin_fields(stanza: dict) -> dict:
     model = stanza.get("model")
     if not model or "/" not in model:
@@ -1037,26 +1133,36 @@ def sync_preexisting_native_permissions(agents_dir: Path) -> list[str]:
 
 
 def write_opencode_agent_map(repo_root: Path = REPO_ROOT) -> bool:
-    """Set the `agent` map in opencode.json to the omo-derived emission.
+    """Set the `agent` map + `model_fallback` ladder map in opencode.json.
 
     Every other key in the file is preserved byte-for-value; `agent` is
-    placed right after `default_agent` (or appended) for a deterministic,
-    diff-stable layout.
+    placed right after `default_agent` (or appended) and `model_fallback`
+    right after `agent`, for a deterministic, diff-stable layout.
     """
     path = repo_root / "opencode.json"
     cfg = json.loads(path.read_text(encoding="utf-8"))
     rendered = render_agent_config()
-    if cfg.get("agent") == rendered:
+    ladders = render_model_fallback()
+    if cfg.get("agent") == rendered and cfg.get("model_fallback") == ladders:
         return False
+    # Drop the stale ladder map up front: re-copying the pre-existing key
+    # after inserting the fresh one would clobber the new emission.
+    cfg.pop("model_fallback", None)
     new_cfg: dict = {}
-    inserted = False
+    inserted_agent = False
+    inserted_ladder = False
     for key, value in cfg.items():
         new_cfg[key] = value
-        if key == "default_agent":
+        if key == "default_agent" and not inserted_agent:
             new_cfg["agent"] = rendered
-            inserted = True
-    if not inserted:
+            inserted_agent = True
+        if key == "agent" and not inserted_ladder:
+            new_cfg["model_fallback"] = ladders
+            inserted_ladder = True
+    if not inserted_agent:
         new_cfg["agent"] = rendered
+    if not inserted_ladder:
+        new_cfg["model_fallback"] = ladders
     path.write_text(json.dumps(new_cfg, indent=2) + "\n", encoding="utf-8")
     return True
 
@@ -1246,10 +1352,16 @@ def check_drift(
     except FileNotFoundError:
         errors.append("drift: opencode.json missing")
         cfg = None
-    if cfg is not None and cfg.get("agent") != render_agent_config():
-        errors.append(
-            "drift: opencode.json `agent` map differs from the omo-derived emission"
-        )
+    if cfg is not None:
+        if cfg.get("agent") != render_agent_config():
+            errors.append(
+                "drift: opencode.json `agent` map differs from the omo-derived emission"
+            )
+        if cfg.get("model_fallback") != render_model_fallback():
+            errors.append(
+                "drift: opencode.json `model_fallback` ladder map differs from the "
+                "omo-derived emission (the P2-b fallback chain source)"
+            )
     return errors, len(rendered)
 
 
@@ -1447,14 +1559,19 @@ def check_variants(
     pins: dict[str, str] | None = None,
     roster: set[str] | None = None,
     efforts: dict[str, list[str]] | None = None,
+    ladders: dict[str, list[str]] | None = None,
 ) -> int:
     """Every emitted model#variant must resolve on the live catalog.
 
     The #max-class error (PR-8 R4: qwen3.8-max has no #max effort) is caught
-    here — never shipped. `roster`/`efforts` injection is for the self-test.
+    here — never shipped — and since P2-b every emitted model_fallback rung
+    is held to the same bar (a dead rung breaks the chain). `roster`/
+    `efforts`/`ladders` injection is for the self-test.
     """
     if pins is None:
         pins = agent_pin_map()
+    if ladders is None and roster is None and efforts is None:
+        ladders = render_model_fallback()
     if roster is None:
         roster = _live_roster()
         if roster is None:
@@ -1483,6 +1600,32 @@ def check_variants(
         failures += 0 if ok else 1
         print(
             f"{name:<22} {pin:<38} {'yes' if base in roster else 'NO':<7} "
+            f"{variant or '-':<7} {'PASS' if ok else 'FAIL: ' + '; '.join(notes)}"
+        )
+    # P2-b: every emitted ladder rung must also resolve (a dead rung breaks
+    # the chain exactly like a dead pin breaks a seat).
+    ladder_pins: dict[str, str] = {}
+    for head, rungs in (ladders or {}).items():
+        for i, rung in enumerate(rungs):
+            ladder_pins[f"ladder:{head}[{i}]"] = rung
+    for name, pin in ladder_pins.items():
+        base, _, variant = pin.partition("#")
+        ok = True
+        notes = []
+        if base not in roster:
+            ok = False
+            notes.append("not on live roster")
+        if variant:
+            model_efforts = efforts.get(base)
+            if model_efforts is None:
+                ok = False
+                notes.append("no effort options in catalog")
+            elif variant not in model_efforts:
+                ok = False
+                notes.append(f"variant not in {model_efforts}")
+        failures += 0 if ok else 1
+        print(
+            f"{name:<38} {pin:<38} {'yes' if base in roster else 'NO':<7} "
             f"{variant or '-':<7} {'PASS' if ok else 'FAIL: ' + '; '.join(notes)}"
         )
     print("check-variants: PASS" if failures == 0 else f"check-variants: FAIL ({failures} invalid)")
@@ -1707,12 +1850,23 @@ def self_test() -> int:
         if not any("opencode.json `agent` map" in e for e in err):
             failures.append(f"opencode.json agent-map drift not caught: {err[:3]}")
 
+        # Drifted model_fallback ladder map must be caught (P2-b).
+        oc = json.loads((root / "opencode.json").read_text(encoding="utf-8"))
+        oc["model_fallback"] = {"stub/fail": ["stub/ok"]}
+        (root / "opencode.json").write_text(json.dumps(oc, indent=2) + "\n")
+        err, _ = check_drift(agents_copy, skills_copy, repo_root=root)
+        if not any("model_fallback" in e for e in err):
+            failures.append(f"opencode.json model_fallback drift not caught: {err[:3]}")
+        # restore for the clean-copy invariant of later legs
+        oc["model_fallback"] = render_model_fallback()
+        (root / "opencode.json").write_text(json.dumps(oc, indent=2) + "\n")
+
     # The #max-class variant error (R4) must be caught, never shipped:
     # qwen3.8-max has no #max effort on the (seeded) live catalog.
     seeded_roster = {
         "zai-coding-plan/glm-5.3", "zai-coding-plan/glm-5.3-flash",
         "opencode-go/qwen3.8-max", "opencode-go/gpt-5.6-luna",
-        "opencode-go/kimi-k3",
+        "opencode-go/kimi-k3", "opencode-go/glm-5.3",
     }
     seeded_efforts = {
         "zai-coding-plan/glm-5.3": ["low", "high", "max"],
@@ -1720,6 +1874,7 @@ def self_test() -> int:
         "opencode-go/qwen3.8-max": ["low", "medium", "xhigh"],
         "opencode-go/gpt-5.6-luna": ["none", "low", "medium", "high", "xhigh", "max"],
         "opencode-go/kimi-k3": ["max"],
+        "opencode-go/glm-5.3": ["low", "high", "max"],
     }
     if check_variants(
         pins={"ultrabrain-lane": "opencode-go/qwen3.8-max#max"},
@@ -1731,6 +1886,18 @@ def self_test() -> int:
         roster=seeded_roster, efforts=seeded_efforts,
     ) != 0:
         failures.append("variant check rejected a valid #xhigh pin")
+
+    # P2-b ladder legs: a dead rung must be caught; a valid rung passes.
+    if check_variants(
+        pins={}, roster=seeded_roster, efforts=seeded_efforts,
+        ladders={"zai-coding-plan/glm-5.3": ["opencode-go/grok-4.6#high"]},
+    ) == 0:
+        failures.append("rung check passed a dead ladder rung (grok-4.6 class)")
+    if check_variants(
+        pins={}, roster=seeded_roster, efforts=seeded_efforts,
+        ladders={"zai-coding-plan/glm-5.3": ["opencode-go/glm-5.3#max"]},
+    ) != 0:
+        failures.append("rung check rejected a valid ladder rung")
 
     # Pin->execution parity (P1-a): the two divergence classes must be
     # caught, and a clean row set must pass. Seeded against the REAL
@@ -1785,7 +1952,7 @@ def self_test() -> int:
             print(f"FAIL: {f}")
         print("self-test: FAIL")
         return 1
-    print("self-test: PASS (clean pass + broken token + drift + DAG + file-pin hazard + schema catch + json map + variant catch + parity catch + source-override/refusal legs all proven)")
+    print("self-test: PASS (clean pass + broken token + drift + DAG + file-pin hazard + schema catch + json map + variant catch + ladder catch + parity catch + source-override/refusal legs all proven)")
     return 0
 
 
