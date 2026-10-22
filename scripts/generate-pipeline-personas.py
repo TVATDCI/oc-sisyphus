@@ -307,116 +307,106 @@ CATEGORIES = {name: _pin_fields(OMO_CATEGORIES[name]) for name in sorted(PIPELIN
 # Permission profiles (conservative; sisyphus-gates stays the real enforcement
 # layer, these are defense-in-depth per-seat postures matching the existing
 # agents/*.md house style).
+#
+# P2-a (fm/backlog-impl, captain ruling 2026-10-22: follow V2): the profiles
+# are V2-NATIVE rules — {action, resource, effect} objects in an ORDERED
+# array (last-match-wins, author order is policy) using V2 action names
+# (shell, not bash; subagent, not task; edit, not write/patch). Tuning
+# (temperature/top_p) rides the native `request.body` form so generated
+# files decode on the NATIVE path — a file mixing V1 keys (temperature)
+# with the native `permissions` array decodes through the legacy migrator,
+# which knows `permission:` (singular map) only and silently drops the
+# native array (source: config/plugin/agent.ts decode() + v1 migrate).
 PROFILES = {
     "readonly": [
-        ("read", {"*": "allow"}),
-        ("edit", "deny"),
-        ("bash", "deny"),
-        ("websearch", "allow"),
-        ("webfetch", "allow"),
+        {"action": "read", "resource": "*", "effect": "allow"},
+        {"action": "edit", "resource": "*", "effect": "deny"},
+        {"action": "shell", "resource": "*", "effect": "deny"},
+        {"action": "websearch", "resource": "*", "effect": "allow"},
+        {"action": "webfetch", "resource": "*", "effect": "allow"},
     ],
     "gate-runner": [
-        ("read", {"*": "allow"}),
-        ("edit", "deny"),
-        (
-            "bash",
-            {
-                "*": "ask",
-                "npm test*": "allow",
-                "npm run *": "allow",
-                "node *": "allow",
-                "python3 *": "allow",
-                "bash *": "allow",
-                "git status*": "allow",
-                "git log*": "allow",
-                "git diff*": "allow",
-                "ls *": "allow",
-                "grep *": "allow",
-                "find *": "allow",
-                "cat *": "allow",
-                "wc *": "allow",
-                "rm *": "deny",
-                "sudo *": "deny",
-            },
-        ),
-        ("websearch", "allow"),
-        ("webfetch", "allow"),
+        {"action": "read", "resource": "*", "effect": "allow"},
+        {"action": "edit", "resource": "*", "effect": "deny"},
+        {"action": "shell", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "npm test*", "effect": "allow"},
+        {"action": "shell", "resource": "npm run *", "effect": "allow"},
+        {"action": "shell", "resource": "node *", "effect": "allow"},
+        {"action": "shell", "resource": "python3 *", "effect": "allow"},
+        {"action": "shell", "resource": "bash *", "effect": "allow"},
+        {"action": "shell", "resource": "git status*", "effect": "allow"},
+        {"action": "shell", "resource": "git log*", "effect": "allow"},
+        {"action": "shell", "resource": "git diff*", "effect": "allow"},
+        {"action": "shell", "resource": "ls *", "effect": "allow"},
+        {"action": "shell", "resource": "grep *", "effect": "allow"},
+        {"action": "shell", "resource": "find *", "effect": "allow"},
+        {"action": "shell", "resource": "cat *", "effect": "allow"},
+        {"action": "shell", "resource": "wc *", "effect": "allow"},
+        {"action": "shell", "resource": "rm *", "effect": "deny"},
+        {"action": "shell", "resource": "sudo *", "effect": "deny"},
+        {"action": "websearch", "resource": "*", "effect": "allow"},
+        {"action": "webfetch", "resource": "*", "effect": "allow"},
     ],
     "writer": [
-        ("read", {"*": "allow"}),
-        ("edit", {"*": "ask"}),
-        (
-            "bash",
-            {
-                "*": "ask",
-                "ls *": "allow",
-                "grep *": "allow",
-                "find *": "allow",
-                "cat *": "allow",
-                "wc *": "allow",
-                "git status*": "allow",
-                "git log*": "allow",
-                "git diff*": "allow",
-                "rm *": "deny",
-                "sudo *": "deny",
-            },
-        ),
-        ("websearch", "allow"),
-        ("webfetch", "allow"),
+        {"action": "read", "resource": "*", "effect": "allow"},
+        {"action": "edit", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "ls *", "effect": "allow"},
+        {"action": "shell", "resource": "grep *", "effect": "allow"},
+        {"action": "shell", "resource": "find *", "effect": "allow"},
+        {"action": "shell", "resource": "cat *", "effect": "allow"},
+        {"action": "shell", "resource": "wc *", "effect": "allow"},
+        {"action": "shell", "resource": "git status*", "effect": "allow"},
+        {"action": "shell", "resource": "git log*", "effect": "allow"},
+        {"action": "shell", "resource": "git diff*", "effect": "allow"},
+        {"action": "shell", "resource": "rm *", "effect": "deny"},
+        {"action": "shell", "resource": "sudo *", "effect": "deny"},
+        {"action": "websearch", "resource": "*", "effect": "allow"},
+        {"action": "webfetch", "resource": "*", "effect": "allow"},
     ],
     # writer + bd: issue filing is the seat's whole job; bd's append-only
     # subcommands are phase-agnostic and the destructive ones stay gated by
     # the sisyphus-gates plugin.
     "writer-bd": [
-        ("read", {"*": "allow"}),
-        ("edit", {"*": "ask"}),
-        (
-            "bash",
-            {
-                "*": "ask",
-                "bd *": "allow",
-                "ls *": "allow",
-                "grep *": "allow",
-                "find *": "allow",
-                "cat *": "allow",
-                "wc *": "allow",
-                "git status*": "allow",
-                "git log*": "allow",
-                "git diff*": "allow",
-                "rm *": "deny",
-                "sudo *": "deny",
-            },
-        ),
-        ("websearch", "allow"),
-        ("webfetch", "allow"),
+        {"action": "read", "resource": "*", "effect": "allow"},
+        {"action": "edit", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "bd *", "effect": "allow"},
+        {"action": "shell", "resource": "ls *", "effect": "allow"},
+        {"action": "shell", "resource": "grep *", "effect": "allow"},
+        {"action": "shell", "resource": "find *", "effect": "allow"},
+        {"action": "shell", "resource": "cat *", "effect": "allow"},
+        {"action": "shell", "resource": "wc *", "effect": "allow"},
+        {"action": "shell", "resource": "git status*", "effect": "allow"},
+        {"action": "shell", "resource": "git log*", "effect": "allow"},
+        {"action": "shell", "resource": "git diff*", "effect": "allow"},
+        {"action": "shell", "resource": "rm *", "effect": "deny"},
+        {"action": "shell", "resource": "sudo *", "effect": "deny"},
+        {"action": "websearch", "resource": "*", "effect": "allow"},
+        {"action": "webfetch", "resource": "*", "effect": "allow"},
     ],
     "executor": [
-        ("read", {"*": "allow"}),
-        ("edit", {"*": "ask"}),
-        (
-            "bash",
-            {
-                "*": "ask",
-                "npm test*": "allow",
-                "npm run *": "allow",
-                "node *": "allow",
-                "python3 *": "allow",
-                "bash *": "allow",
-                "tsc --noEmit": "allow",
-                "git status*": "allow",
-                "git log*": "allow",
-                "git diff*": "allow",
-                "ls *": "allow",
-                "grep *": "allow",
-                "find *": "allow",
-                "cat *": "allow",
-                "wc *": "allow",
-                "rm *": "ask",
-                "sudo *": "deny",
-            },
-        ),
-        ("websearch", "allow"),
-        ("webfetch", "allow"),
+        {"action": "read", "resource": "*", "effect": "allow"},
+        {"action": "edit", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "npm test*", "effect": "allow"},
+        {"action": "shell", "resource": "npm run *", "effect": "allow"},
+        {"action": "shell", "resource": "node *", "effect": "allow"},
+        {"action": "shell", "resource": "python3 *", "effect": "allow"},
+        {"action": "shell", "resource": "bash *", "effect": "allow"},
+        {"action": "shell", "resource": "tsc --noEmit", "effect": "allow"},
+        {"action": "shell", "resource": "git status*", "effect": "allow"},
+        {"action": "shell", "resource": "git log*", "effect": "allow"},
+        {"action": "shell", "resource": "git diff*", "effect": "allow"},
+        {"action": "shell", "resource": "ls *", "effect": "allow"},
+        {"action": "shell", "resource": "grep *", "effect": "allow"},
+        {"action": "shell", "resource": "find *", "effect": "allow"},
+        {"action": "shell", "resource": "cat *", "effect": "allow"},
+        {"action": "shell", "resource": "wc *", "effect": "allow"},
+        {"action": "shell", "resource": "rm *", "effect": "ask"},
+        {"action": "shell", "resource": "sudo *", "effect": "deny"},
+        {"action": "websearch", "resource": "*", "effect": "allow"},
+        {"action": "webfetch", "resource": "*", "effect": "allow"},
     ],
 }
 
@@ -758,18 +748,19 @@ def yaml_quote(value: str) -> str:
 
 
 def render_permission(profile: str, allows: list[str]) -> list[str]:
-    lines = ["permission:"]
-    for tool, rule in PROFILES[profile]:
-        if isinstance(rule, str):
-            lines.append(f"  {tool}: {rule}")
-        else:
-            lines.append(f"  {tool}:")
-            for pattern, action in rule.items():
-                lines.append(f'    {yaml_quote(pattern)}: {action}')
-    lines.append("  task:")
-    lines.append('    "*": deny')
+    """V2-native permissions rules array (P2-a): {action, resource, effect}
+    objects, ordered (last-match-wins). The subagent DAG rules append after
+    the profile: deny-all first, then one allow per callee, so callees win.
+    """
+    rules = list(PROFILES[profile])
+    rules.append({"action": "subagent", "resource": "*", "effect": "deny"})
     for callee in allows:
-        lines.append(f'    {yaml_quote(callee)}: allow')
+        rules.append({"action": "subagent", "resource": callee, "effect": "allow"})
+    lines = ["permissions:"]
+    for rule in rules:
+        lines.append(f"  - action: {rule['action']}")
+        lines.append(f"    resource: {yaml_quote(rule['resource'])}")
+        lines.append(f"    effect: {rule['effect']}")
     return lines
 
 
@@ -803,13 +794,21 @@ def render_persona(p: dict, skills_dir: Path) -> str:
         f"# deliberately carries NO model line: a valid model pin here would",
         f"# override the map (files apply after JSON and win fields they define",
         f"# under opencode 2.1.0; sis lane answer 2026-10-21).",
+        f"# Permissions are V2-NATIVE (P2-a, captain ruling 2026-10-22): an",
+        f"# ordered action/resource/effect rules array; tuning rides",
+        f"# request.body so the file decodes on the NATIVE path (a V1 key like",
+        f"# bare temperature would reroute the file through the legacy",
+        f"# migrator and silently drop the native permissions array).",
         f"description: {yaml_quote(p['description'])}",
         "mode: subagent",
     ]
-    if cat["temperature"] is not None:
-        fm.append(f"temperature: {cat['temperature']}")
-    if cat.get("top_p") is not None:
-        fm.append(f"top_p: {cat['top_p']}")
+    if cat["temperature"] is not None or cat.get("top_p") is not None:
+        fm.append("request:")
+        fm.append("  body:")
+        if cat["temperature"] is not None:
+            fm.append(f"    temperature: {cat['temperature']}")
+        if cat.get("top_p") is not None:
+            fm.append(f"    top_p: {cat['top_p']}")
     fm.extend(render_permission(p["profile"], allows))
     fm.append("---")
 
@@ -860,6 +859,7 @@ def write_agents(agents_dir: Path, skills_dir: Path) -> list[str]:
         target.write_text(text, encoding="utf-8")
         written.append(target.name)
     written.extend(sync_preexisting_model_lines(agents_dir))
+    written.extend(sync_preexisting_native_permissions(agents_dir))
     return written
 
 
@@ -887,6 +887,147 @@ def sync_preexisting_model_lines(agents_dir: Path) -> list[str]:
             continue
         path.write_text("\n".join(kept + lines[close:]), encoding="utf-8")
         changed.append(f"{name}.md")
+    return changed
+
+
+# P2-a: V1 permission-map keys -> V2 action names (the same renames the
+# upstream migrator applies, normalizeAction in v1/config/migrate.ts).
+ACTION_RENAMES = {"bash": "shell", "task": "subagent", "write": "edit", "patch": "edit"}
+
+
+def _port_permission_block(fm_lines: list[str]) -> tuple[list[str], list[str]]:
+    """Split a frontmatter's V1 `permission:` block into (remaining, rules).
+
+    Parses the hand-authored dialect actually present in agents/*.md:
+      permission:
+        read:
+          "*": allow
+        edit: deny
+        bash:
+          "*": ask
+          "grep *": allow
+    Rules preserve written order (last-match-wins is the policy in BOTH
+    dialects). Returns the lines with the block removed and the V2-native
+    rule tuples.
+    """
+    rules: list[tuple[str, str, str]] = []
+    out: list[str] = []
+    i = 0
+    in_block = False
+    tool_re = re.compile(r'^  ([\w"*.-]+):(.*)$')
+    pattern_re = re.compile(r'^    (["\'][^"\']*["\']|\S+):\s*(\w+)\s*$')
+    while i < len(fm_lines):
+        line = fm_lines[i]
+        if not in_block:
+            if re.match(r'^permission:\s*$', line):
+                in_block = True
+                i += 1
+                continue
+            out.append(line)
+            i += 1
+            continue
+        # inside the permission block: tool / pattern lines, until the next
+        # top-level key (indent 0) or end of frontmatter.
+        if line.strip() and not line.startswith(" "):
+            in_block = False
+            out.append(line)
+            i += 1
+            continue
+        tm = tool_re.match(line)
+        if tm:
+            tool = tm.group(1).strip('"\'')
+            action = ACTION_RENAMES.get(tool, tool)
+            rest = tm.group(2).strip()
+            if rest:
+                effect = rest.strip('"\'')
+                rules.append((action, "*", effect))
+            i += 1
+            continue
+        pm = pattern_re.match(line)
+        if pm:
+            resource = pm.group(1).strip('"\'')
+            rules.append((action, resource, pm.group(2)))
+            i += 1
+            continue
+        i += 1  # blank/other line inside block: drop with the block
+    return out, rules
+
+
+def _render_native_rules(rules: list[tuple[str, str, str]]) -> list[str]:
+    lines = ["permissions:"]
+    for action, resource, effect in rules:
+        lines.append(f"  - action: {action}")
+        lines.append(f"    resource: {yaml_quote(resource)}")
+        lines.append(f"    effect: {effect}")
+    return lines
+
+
+def sync_preexisting_native_permissions(agents_dir: Path) -> list[str]:
+    """P2-a port of the hand-authored files: V1 `permission:` maps (plus bare
+    temperature/top_p keys) become V2-native `permissions:` arrays and
+    `request.body` tuning, so every pre-existing file decodes on the NATIVE
+    path (V1 keys in the same frontmatter would reroute the file through
+    the legacy migrator, which drops native arrays). Mechanical, idempotent;
+    every other byte preserved.
+    """
+    changed = []
+    for name in sorted(PREEXISTING_AGENTS):
+        path = agents_dir / f"{name}.md"
+        text = path.read_text(encoding="utf-8")
+        lines = text.split("\n")
+        close = next(
+            (i for i, l in enumerate(lines[1:], start=1) if l.strip() == "---"), None
+        )
+        if close is None:
+            raise ValueError(f"{path}: no YAML frontmatter")
+        fm = lines[:close]
+        rest = lines[close:]
+        fm, rules = _port_permission_block(fm)
+        # bare V1 tuning keys -> native request.body
+        temperature = next((l.split(":", 1)[1].strip() for l in fm if l.startswith("temperature:")), None)
+        top_p = next((l.split(":", 1)[1].strip() for l in fm if l.startswith("top_p:")), None)
+        fm = [l for l in fm if not l.startswith(("temperature:", "top_p:"))]
+        # `load_skills:` is not a native key: left in place it reroutes the
+        # file onto the legacy decode path (which then drops the native
+        # permissions array — worse than inert). The load instruction moves
+        # into the body (the mode-B pattern the generated on-demand seats
+        # use); the named skills are real repo skills.
+        load_names: list[str] = []
+        kept: list[str] = []
+        in_ls = False
+        for l in fm:
+            if re.match(r"^load_skills:\s*$", l):
+                in_ls = True
+                continue
+            if in_ls:
+                lm = re.match(r"^\s+-\s+(\S+)\s*$", l)
+                if lm:
+                    load_names.append(lm.group(1))
+                    continue
+                in_ls = False
+            kept.append(l)
+        fm = kept
+        if rules:
+            fm.extend(_render_native_rules(rules))
+        if temperature is not None or top_p is not None:
+            fm.append("request:")
+            fm.append("  body:")
+            if temperature is not None:
+                fm.append(f"    temperature: {temperature}")
+            if top_p is not None:
+                fm.append(f"    top_p: {top_p}")
+        new_lines = fm + rest
+        if load_names:
+            body_line = "On every task, first load " + " and ".join(
+                f"skills/{name}/SKILL.md" for name in load_names
+            ) + " and follow it as your binding contract - never act from memory of it."
+            # rest[0] is the closing ---; the instruction becomes the first
+            # body line (mode-B pattern).
+            new_lines = fm + [rest[0], "", body_line, ""] + rest[1:]
+        new_text = "\n".join(new_lines)
+        if new_text != text:
+            path.write_text(new_text, encoding="utf-8")
+            changed.append(f"{name}.md")
     return changed
 
 
@@ -934,33 +1075,45 @@ def write_opencode_agent_map(repo_root: Path = REPO_ROOT) -> bool:
 # against the structural contract both decoders accept.
 # ---------------------------------------------------------------------------
 
-PERMITTED_FM_KEYS = {"description", "mode", "temperature", "top_p", "permission"}
+PERMITTED_FM_KEYS = {"description", "mode", "request", "permissions"}
 MODES = {"primary", "subagent", "all"}
 ACTIONS = {"allow", "deny", "ask"}
 
 
-def _check_permission_value(tool: str, value, where: str, errors: list[str]) -> None:
-    if isinstance(value, str):
-        if value not in ACTIONS:
-            errors.append(f"{where}: permission.{tool} action {value!r} not in {sorted(ACTIONS)}")
-        return
-    if not isinstance(value, dict):
-        errors.append(
-            f"{where}: permission.{tool} must be an action string or a pattern map "
-            f"(bare array/other shapes are silently dropped by the 2.1.0 loader)"
-        )
-        return
-    for pattern, action in value.items():
-        if not isinstance(pattern, str) or not pattern:
-            errors.append(f"{where}: permission.{tool} pattern {pattern!r} is not a non-empty string")
-        if action not in ACTIONS:
-            errors.append(
-                f"{where}: permission.{tool}[{pattern!r}] action {action!r} not in {sorted(ACTIONS)}"
-            )
+def _parse_rules_array(block: list[str]) -> list[tuple[str, str, str]] | None:
+    """Parse the rendered `permissions:` array form; None when not array-shaped."""
+    rules: list[tuple[str, str, str]] = []
+    action = resource = effect = None
+    entries = 0
+    for line in block:
+        em = re.match(r"^  - action: (\S+)$", line)
+        if em:
+            if action is not None and (resource is None or effect is None):
+                return None
+            if action is not None:
+                rules.append((action, resource, effect))
+            action, resource, effect = em.group(1), None, None
+            entries += 1
+            continue
+        rm = re.match(r'^    resource: ("(?:[^"\\]|\\.)*"|\S+)$', line)
+        if rm:
+            resource = rm.group(1)
+            continue
+        fm_ = re.match(r"^    effect: (\w+)$", line)
+        if fm_:
+            effect = fm_.group(1)
+            continue
+        return None
+    if action is not None:
+        if resource is None or effect is None:
+            return None
+        rules.append((action, resource, effect))
+    return rules if entries else None
 
 
 def check_agent_md_schema(path: Path) -> list[str]:
-    """Structural schema check of one generated agent file's frontmatter."""
+    """Structural schema check of one agent file's frontmatter (P2-a: the
+    V2-native contract — description, mode, request, permissions array)."""
     errors: list[str] = []
     where = path.name
     lines = path.read_text(encoding="utf-8").split("\n")
@@ -976,6 +1129,13 @@ def check_agent_md_schema(path: Path) -> list[str]:
             errors.append(
                 f"{where}: frontmatter carries {l.split(':')[0]!r} — model pins live ONLY "
                 "in the opencode.json agent map (a valid file pin overrides the map)"
+            )
+        if re.match(r"^(permission|temperature|top_p):", l):
+            errors.append(
+                f"{where}: frontmatter carries the V1 key {l.split(':')[0]!r} — P2-a "
+                "port: use the native `permissions:` rules array (and request.body for "
+                "tuning); a V1 key reroutes the file through the legacy migrator, which "
+                "silently drops native arrays"
             )
     keys = []
     for l in fm:
@@ -994,61 +1154,43 @@ def check_agent_md_schema(path: Path) -> list[str]:
     elif mode.group(1) not in MODES:
         errors.append(f"{where}: mode {mode.group(1)!r} not in {sorted(MODES)}")
     for num in ("temperature", "top_p"):
-        m = re.search(rf"^{num}: (\S+)", text, re.M)
+        m = re.search(rf"^    {num}: (\S+)$", text, re.M)
         if m and not re.fullmatch(r"-?\d+(?:\.\d+)?", m.group(1)):
-            errors.append(f"{where}: {num} {m.group(1)!r} is not a number")
-    perm_idx = next((i for i, l in enumerate(fm) if re.match(r"^permission:", l)), None)
+            errors.append(f"{where}: request.body.{num} {m.group(1)!r} is not a number")
+    perm_idx = next((i for i, l in enumerate(fm) if re.match(r"^permissions:", l)), None)
     if perm_idx is None:
-        errors.append(f"{where}: missing permission block")
+        errors.append(f"{where}: missing permissions block")
     else:
-        inline = re.match(r"^permission:\s*(.*)$", fm[perm_idx]).group(1).strip()
+        inline = re.match(r"^permissions:\s*(.*)$", fm[perm_idx]).group(1).strip()
         if inline:
-            if inline.startswith("["):
-                errors.append(
-                    f"{where}: permission {inline!r} is a bare array — must be an action "
-                    "string or a pattern map (silently dropped by the 2.1.0 loader)"
-                )
-            elif inline not in ACTIONS:
-                errors.append(f"{where}: permission {inline!r} not in {sorted(ACTIONS)}")
+            errors.append(
+                f"{where}: permissions {inline[:40]!r} is inline — the native form is an "
+                "array of {action, resource, effect} rules"
+            )
         else:
             block: list[str] = []
             for l in fm[perm_idx + 1 :]:
                 if re.match(r"^[a-z_]+:", l):
                     break
                 block.append(l)
-            if not block:
-                errors.append(f"{where}: empty permission block")
+            rules = _parse_rules_array(block)
+            if rules is None:
+                if block:
+                    errors.append(
+                        f"{where}: permissions block is not the native rules-array shape "
+                        "(silently dropped by the loader on decode failure)"
+                    )
+                else:
+                    errors.append(f"{where}: empty permissions block")
             else:
-                tool = None
-                value_lines: list[str] = []
-                for l in block:
-                    tm = re.match(r"^  ([a-z_]+):(.*)$", l)
-                    if tm:
-                        if tool is not None:
-                            _check_permission_value(tool, _parse_perm_value(value_lines), where, errors)
-                        tool = tm.group(1)
-                        value_lines = [tm.group(2)] if tm.group(2).strip() else []
-                    else:
-                        value_lines.append(l.strip())
-                if tool is not None:
-                    _check_permission_value(tool, _parse_perm_value(value_lines), where, errors)
+                for action, resource, effect in rules:
+                    if not re.fullmatch(r"\*|[a-z_]+", action):
+                        errors.append(f"{where}: permissions action {action!r} is not an action name")
+                    if not resource.strip('"'):
+                        errors.append(f"{where}: permissions resource {resource!r} is empty")
+                    if effect not in ACTIONS:
+                        errors.append(f"{where}: permissions effect {effect!r} not in {sorted(ACTIONS)}")
     return errors
-
-
-def _parse_perm_value(value_lines: list[str]):
-    """Rebuild a permission value from rendered lines: string or pattern map."""
-    first = value_lines[0].strip() if value_lines else ""
-    if len(value_lines) <= 1 and first and not first.startswith('"'):
-        return first  # bare action string
-    out = {}
-    for l in value_lines:
-        pm = re.match(r'^"([^"]*)": (\w+)$', l.strip())
-        if pm:
-            out[pm.group(1)] = pm.group(2)
-        elif re.match(r"^'[^']*': \w+$", l.strip()):
-            pm2 = re.match(r"^'([^']*)': (\w+)$", l.strip())
-            out[pm2.group(1)] = pm2.group(2)
-    return out
 
 
 def check_drift(
@@ -1090,8 +1232,11 @@ def check_drift(
                 )
                 break
     # oc-v2-fixbundle: schema gate — the 2.1.0 loader silently drops files
-    # that fail decode; every generated file must be schema-valid.
+    # that fail decode; P2-a: every file (generated AND pre-existing, all
+    # native since the port) must be schema-valid.
     for name in rendered:
+        errors.extend(check_agent_md_schema(agents_dir / f"{name}.md"))
+    for name in sorted(PREEXISTING_AGENTS):
         errors.extend(check_agent_md_schema(agents_dir / f"{name}.md"))
     # oc-v2-fixbundle: the opencode.json `agent` map is the emitted pin
     # authority — it must equal the live-derived emission.
@@ -1154,6 +1299,14 @@ def check_tokens(skills_dir: Path, agents_dir: Path) -> tuple[list[str], int]:
 # ---------------------------------------------------------------------------
 
 
+def _subagent_rules_of(text: str) -> list[tuple[str, str, str]] | None:
+    """The permissions rules array of an agent file (P2-a native form)."""
+    m = re.search(r"^permissions:\n((?:  - .*\n(?:    .*\n)*)+)", text, re.MULTILINE)
+    if not m:
+        return None
+    return _parse_rules_array(m.group(1).splitlines()) or []
+
+
 def check_dag(agents_dir: Path, skills_dir: Path) -> tuple[list[str], int]:
     errors: list[str] = []
     generated = set(persona_names())
@@ -1185,18 +1338,15 @@ def check_dag(agents_dir: Path, skills_dir: Path) -> tuple[list[str], int]:
         if not path.is_file():
             continue  # drift check owns missing files
         text = path.read_text(encoding="utf-8")
-        m = re.search(r"^  task:\n((?:    .*\n?)+)", text, re.MULTILINE)
-        if not m:
-            errors.append(f"DAG: {name}.md has no task permission block")
+        rules = _subagent_rules_of(text)
+        if rules is None:
+            errors.append(f"DAG: {name}.md has no native permissions rules array")
             continue
-        allows: list[str] = []
-        for entry in m.group(1).splitlines():
-            em = re.match(r'    "([^"]+)": (allow|deny|ask)', entry)
-            if em and em.group(2) == "allow" and em.group(1) != "*":
-                allows.append(em.group(1))
+        allows = [resource.strip('"') for action, resource, effect in rules
+                  if action == "subagent" and effect == "allow" and resource.strip('"') != "*"]
         if allows != expected:
             errors.append(
-                f"DAG: {name}.md task allows {allows} != manifest §9 edges {expected}"
+                f"DAG: {name}.md subagent allows {allows} != manifest §9 edges {expected}"
             )
 
     # No persona edge points at a name that is neither generated nor pre-existing.
@@ -1498,13 +1648,14 @@ def self_test() -> int:
         if not any("brief-loader" in e for e in err):
             failures.append(f"drift not caught: {err[:3]}")
 
-        # Deliberate DAG violation (extra task allow) must be caught.
+        # Deliberate DAG violation (extra subagent allow) must be caught.
         dag_victim = agents_copy / "tdd-executor.md"
         if dag_victim.is_file():
             dag_victim.write_text(
                 dag_victim.read_text(encoding="utf-8").replace(
-                    '  task:\n    "*": deny\n',
-                    '  task:\n    "*": deny\n    "brief-loader": allow\n',
+                    '  - action: subagent\n    resource: "*"\n    effect: deny\n',
+                    '  - action: subagent\n    resource: "*"\n    effect: deny\n'
+                    '  - action: subagent\n    resource: "brief-loader"\n    effect: allow\n',
                     1,
                 )
             )
@@ -1525,17 +1676,28 @@ def self_test() -> int:
         if not any("sisyphus.md carries model pin" in e for e in err):
             failures.append(f"file model-pin override hazard not caught: {err[:3]}")
 
-        # Schema violation (bare-array permission — the exact shape the 2.1.0
-        # loader silently drops) must be caught.
+        # Schema violations must be caught: a V1 dialect key (the legacy
+        # migrator path that silently drops native arrays) and a non-array
+        # permissions value (the loader's silent-drop class).
         schema_victim = agents_copy / "reference-checker.md"
         schema_victim.write_text(
             schema_victim.read_text(encoding="utf-8").replace(
-                "permission:\n", "permission: [read, grep]\n", 1
+                "permissions:\n", "permissions: {read: allow}\n", 1
             )
         )
         err = check_agent_md_schema(schema_victim)
-        if not any("bare array" in e for e in err):
-            failures.append(f"schema violation (bare array) not caught: {err[:3]}")
+        if not any("not the native rules-array shape" in e or "inline" in e for e in err):
+            failures.append(f"schema violation (non-array permissions) not caught: {err[:3]}")
+
+        v1_victim = agents_copy / "archivist.md"
+        v1_victim.write_text(
+            v1_victim.read_text(encoding="utf-8").replace(
+                "permissions:\n", "temperature: 0.1\npermissions:\n", 1
+            )
+        )
+        err = check_agent_md_schema(v1_victim)
+        if not any("V1 key" in e for e in err):
+            failures.append(f"schema violation (V1 key beside native array) not caught: {err[:3]}")
 
         # Drifted opencode.json agent map must be caught.
         oc = json.loads((root / "opencode.json").read_text(encoding="utf-8"))

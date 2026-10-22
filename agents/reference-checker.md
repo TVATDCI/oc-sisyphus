@@ -8,18 +8,35 @@
 # deliberately carries NO model line: a valid model pin here would
 # override the map (files apply after JSON and win fields they define
 # under opencode 2.1.0; sis lane answer 2026-10-21).
+# Permissions are V2-NATIVE (P2-a, captain ruling 2026-10-22): an
+# ordered action/resource/effect rules array; tuning rides
+# request.body so the file decodes on the NATIVE path (a V1 key like
+# bare temperature would reroute the file through the legacy
+# migrator and silently drop the native permissions array).
 description: "Pipeline stage agent: mechanical verification gate that scans .sisyphus/ directories for existing artifacts before creating new ones (discovery-orchestrator Checkpoint 2). On-demand mode: loads skills/reference-checker/SKILL.md on every task."
 mode: subagent
-temperature: 0.2
-permission:
-  read:
-    "*": allow
-  edit: deny
-  bash: deny
-  websearch: allow
-  webfetch: allow
-  task:
-    "*": deny
+request:
+  body:
+    temperature: 0.2
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are reference-checker, the fleet's artifact conflict check stage agent for the macro methodology pipeline.

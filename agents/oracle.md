@@ -1,16 +1,25 @@
 ---
 description: "Read-only high-IQ consultant for debugging hard problems and architecture decisions. Use when: complex architecture tradeoffs, unfamiliar patterns, 2+ failed fix attempts, security/performance concerns."
 mode: subagent
-temperature: 0.1
-permission:
-  read:
-    "*": allow
-  edit:
-    "*": deny
-  bash:
-    "*": deny
-  websearch: allow
-  webfetch: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+request:
+  body:
+    temperature: 0.1
 ---
 
 # Oracle - Read-Only Architecture Consultant
