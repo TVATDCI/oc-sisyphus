@@ -72,6 +72,14 @@ Checks (wired into validate-agents.py / validate-skills.sh / pre-push):
                     the live catalog (roster via `opencode models` + reasoning
                     efforts from the models-dev catalog KV); the #max-class
                     error (R4) is caught here (environment-dependent, manual)
+  --check-variant-parity
+                    pin->execution parity leg (P1-a, 2026-10-22): every recent
+                    session row that ran an emitted agent must carry that
+                    agent's pinned model+variant (rows read read-only from the
+                    opencode session store - the sweep's evidence method).
+                    Catches both the variant-drift class and the
+                    pin-not-applied class (rows that ran the agent label on
+                    default resolution). Environment-dependent, manual.
   --self-test       proves the gates catch a deliberately-broken token, a
                     deliberately-drifted file, a drifted opencode.json map, a
                     drifted pre-existing model line, and an invalid variant
@@ -94,6 +102,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -1331,6 +1340,119 @@ def check_variants(
 
 
 # ---------------------------------------------------------------------------
+# Check 6: pin->execution variant parity from live session rows (P1-a,
+# 2026-10-22). The sweep's evidence method: a pin is only TRUE if the session
+# row that ran the agent carries the pinned model+variant. Probe-proven that
+# day: zai-coding-plan/glm-5.3#max SERVES as max end-to-end on the explicit
+# model path (row ses_e9c48021bffe..., variant "max"), while a row created
+# with agent=<name> but no explicit model carries NO committed model and
+# serves default resolution - the "aspirational report line" class. Both
+# truths are exactly what this leg reports; it fails loudly on any row whose
+# served model+variant != the emitted pin for its agent label.
+# ---------------------------------------------------------------------------
+
+SESSION_DB = Path.home() / ".local" / "share" / "opencode" / "opencode.db"
+PARITY_DEFAULT_DAYS = 14
+
+
+def _session_rows(db_path: Path = SESSION_DB, days: int = PARITY_DEFAULT_DAYS):
+    """Recent session rows ({id, agent, model, created}) from the session store."""
+    import sqlite3
+
+    if not db_path.is_file():
+        print(f"FAIL: session store {db_path} not found")
+        return None
+    cutoff_ms = (time.time() - days * 86400) * 1000
+    try:
+        con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        try:
+            raw = con.execute(
+                "select id, agent, model, time_created from session_v2 "
+                "where time_created >= ? order by time_created desc",
+                (cutoff_ms,),
+            ).fetchall()
+        finally:
+            con.close()
+    except sqlite3.Error as e:
+        print(f"FAIL: session store unreadable: {e}")
+        return None
+    rows = []
+    for sid, agent, model_json, created in raw:
+        try:
+            model = json.loads(model_json) if model_json else None
+        except ValueError:
+            model = None
+        rows.append({"id": sid, "agent": agent, "model": model, "created": created})
+    return rows
+
+
+def _parity_row_verdict(pin: dict, row: dict) -> str | None:
+    """None when the row served exactly the pin; else the divergence class."""
+    model = row.get("model")
+    if not isinstance(model, dict) or not model.get("id"):
+        return "no model committed (default-resolution class - pin not applied)"
+    served_base = f"{model.get('providerID')}/{model.get('id')}"
+    pin_base = pin["model"]
+    if served_base != pin_base:
+        return f"served {served_base}"
+    served_variant = model.get("variant") or "default"
+    pin_variant = pin.get("variant") or "default"
+    if served_variant != pin_variant:
+        return f"variant {served_variant} != pin {pin_variant}"
+    return None
+
+
+def check_variant_parity(rows=None, pins=None, verbose=True) -> int:
+    """Every recent row that ran an emitted agent must carry that agent's pin.
+
+    Divergence classes (both fail loudly - an aspirational report line is
+    exactly what this leg exists to kill):
+      pin-not-applied  the row ran the agent label but committed no model
+                       (default-resolution class) or a different base model
+      variant-drift    the row served the pinned base under a different
+                       variant than the emitted pin
+    `rows`/`pins` injection is for the self-test.
+    """
+    if pins is None:
+        pins = render_agent_config()
+    if rows is None:
+        rows = _session_rows()
+        if rows is None:
+            return 1
+    by_agent: dict[str, list[dict]] = {}
+    for row in rows:
+        name = row.get("agent")
+        if name in pins:
+            by_agent.setdefault(name, []).append(row)
+    if not by_agent:
+        print("check-variant-parity: no recent rows carry an emitted agent label")
+        return 0
+    failures = 0
+    if verbose:
+        print(f"{'agent':<22} {'rows':>4}  {'pin':<38} verdict")
+    for name in sorted(by_agent):
+        pin = pins[name]
+        pin_disp = pin["model"] + (f"#{pin['variant']}" if pin.get("variant") else "")
+        bad = []
+        for row in by_agent[name]:
+            verdict = _parity_row_verdict(pin, row)
+            if verdict is not None:
+                bad.append((row["id"], verdict))
+        failures += len(bad)
+        if verbose:
+            status = "PARITY" if not bad else f"DIVERGENT ({len(bad)}/{len(by_agent[name])})"
+            print(f"{name:<22} {len(by_agent[name]):>4}  {pin_disp:<38} {status}")
+            for sid, why in bad:
+                print(f"    {sid}: {why}")
+    print(
+        "check-variant-parity: PASS"
+        if failures == 0
+        else f"check-variant-parity: FAIL ({failures} divergent row(s) - served model != pin; report lines must quote the row, not the pin)"
+    )
+    return 1 if failures else 0
+
+
+# ---------------------------------------------------------------------------
 # Self-test: prove the gates catch what they must catch
 # ---------------------------------------------------------------------------
 
@@ -1448,6 +1570,26 @@ def self_test() -> int:
     ) != 0:
         failures.append("variant check rejected a valid #xhigh pin")
 
+    # Pin->execution parity (P1-a): the two divergence classes must be
+    # caught, and a clean row set must pass. Seeded against the REAL
+    # emission so the verdicts reflect live pins.
+    live_pins = render_agent_config()
+    parity_clean = [
+        {"id": "ses_seed_ok1", "agent": "oracle",
+         "model": {"id": "kimi-k3", "providerID": "opencode-go", "variant": "max"}, "created": 1},
+        {"id": "ses_seed_ok2", "agent": "archivist",
+         "model": {"id": "glm-5.3-flash", "providerID": "zai-coding-plan"}, "created": 2},
+    ]
+    if check_variant_parity(rows=parity_clean, pins=live_pins, verbose=False) != 0:
+        failures.append("parity check failed a clean row set")
+    parity_bad = parity_clean + [
+        {"id": "ses_seed_nomodel", "agent": "sisyphus", "model": None, "created": 3},
+        {"id": "ses_seed_drift", "agent": "sisyphus",
+         "model": {"id": "glm-5.3", "providerID": "zai-coding-plan", "variant": "high"}, "created": 4},
+    ]
+    if check_variant_parity(rows=parity_bad, pins=live_pins, verbose=False) == 0:
+        failures.append("parity check passed divergent rows (no-model + variant-drift classes)")
+
     # Source-override legs (subprocess: the override applies at import).
     gen = [sys.executable, str(REPO_ROOT / "scripts" / "generate-pipeline-personas.py")]
     fixture = str(REPO_ROOT / "omo.ddd.jsonc")
@@ -1481,7 +1623,7 @@ def self_test() -> int:
             print(f"FAIL: {f}")
         print("self-test: FAIL")
         return 1
-    print("self-test: PASS (clean pass + broken token + drift + DAG + file-pin hazard + schema catch + json map + variant catch + source-override/refusal legs all proven)")
+    print("self-test: PASS (clean pass + broken token + drift + DAG + file-pin hazard + schema catch + json map + variant catch + parity catch + source-override/refusal legs all proven)")
     return 0
 
 
@@ -1516,6 +1658,15 @@ def main() -> int:
         action="store_true",
         help="variant validity against the live catalog (R4 catch)",
     )
+    mutex.add_argument(
+        "--check-variant-parity",
+        action="store_true",
+        help=(
+            "pin->execution parity from live session rows (the sweep's "
+            "evidence method); fails on variant drift and on rows that ran "
+            "an agent label without the pin applying"
+        ),
+    )
     mutex.add_argument("--self-test", action="store_true", help="gate self-test")
     mutex.add_argument("--list", action="store_true", help="print generated file names")
     args = parser.parse_args()
@@ -1528,6 +1679,8 @@ def main() -> int:
         return check_pins()
     if args.check_variants:
         return check_variants()
+    if args.check_variant_parity:
+        return check_variant_parity()
     if args.self_test:
         return self_test()
     if args.check:
