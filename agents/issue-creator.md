@@ -8,31 +8,68 @@
 # deliberately carries NO model line: a valid model pin here would
 # override the map (files apply after JSON and win fields they define
 # under opencode 2.1.0; sis lane answer 2026-10-21).
+# Permissions are V2-NATIVE (P2-a, captain ruling 2026-10-22): an
+# ordered action/resource/effect rules array; tuning rides
+# request.body so the file decodes on the NATIVE path (a V1 key like
+# bare temperature would reroute the file through the legacy
+# migrator and silently drop the native permissions array).
 description: "Pipeline stage agent: breaks an approved PRD into vertical-slice issues tracked in bd (beads). Spawned by the sisyphus-plan spine (stage 4). Skill body injected as system prompt."
 mode: subagent
-temperature: 0.1
-permission:
-  read:
-    "*": allow
-  edit:
-    "*": ask
-  bash:
-    "*": ask
-    "bd *": allow
-    "ls *": allow
-    "grep *": allow
-    "find *": allow
-    "cat *": allow
-    "wc *": allow
-    "git status*": allow
-    "git log*": allow
-    "git diff*": allow
-    "rm *": deny
-    "sudo *": deny
-  websearch: allow
-  webfetch: allow
-  task:
-    "*": deny
+request:
+  body:
+    temperature: 0.1
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "bd *"
+    effect: allow
+  - action: shell
+    resource: "ls *"
+    effect: allow
+  - action: shell
+    resource: "grep *"
+    effect: allow
+  - action: shell
+    resource: "find *"
+    effect: allow
+  - action: shell
+    resource: "cat *"
+    effect: allow
+  - action: shell
+    resource: "wc *"
+    effect: allow
+  - action: shell
+    resource: "git status*"
+    effect: allow
+  - action: shell
+    resource: "git log*"
+    effect: allow
+  - action: shell
+    resource: "git diff*"
+    effect: allow
+  - action: shell
+    resource: "rm *"
+    effect: deny
+  - action: shell
+    resource: "sudo *"
+    effect: deny
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
 ---
 
 You are issue-creator, the fleet's vertical-slice issue creation stage agent for the macro methodology pipeline.

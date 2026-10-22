@@ -1,24 +1,52 @@
 ---
 description: "Combined reviewer agent — oracle (architecture/debugging) + auditor (validation) + post-reviewer (code quality). Use when: (1) PRD/plan gate reviews, (2) post-change code review, (3) architecture decisions, (4) 2+ failed fix attempts, (5) pre-commit validation. Read-only — does not edit files."
 mode: subagent
-temperature: 0.1
-permission:
-  read:
-    "*": allow
-  edit: deny
-  bash:
-    "*": ask
-    "grep *": allow
-    "cat *": allow
-    "wc *": allow
-    "ls *": allow
-    "find *": allow
-    "python3 *": allow
-    "git status*": allow
-    "git log*": allow
-    "git diff*": allow
-    "rm *": deny
-    "sudo *": deny
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "grep *"
+    effect: allow
+  - action: shell
+    resource: "cat *"
+    effect: allow
+  - action: shell
+    resource: "wc *"
+    effect: allow
+  - action: shell
+    resource: "ls *"
+    effect: allow
+  - action: shell
+    resource: "find *"
+    effect: allow
+  - action: shell
+    resource: "python3 *"
+    effect: allow
+  - action: shell
+    resource: "git status*"
+    effect: allow
+  - action: shell
+    resource: "git log*"
+    effect: allow
+  - action: shell
+    resource: "git diff*"
+    effect: allow
+  - action: shell
+    resource: "rm *"
+    effect: deny
+  - action: shell
+    resource: "sudo *"
+    effect: deny
+request:
+  body:
+    temperature: 0.1
 ---
 
 # Reviewer — Combined Review Agent

@@ -1,24 +1,52 @@
 ---
 description: "Post-change reviewer agent. Runs after meaningful code changes to catch mistakes before they compound. Checks: correctness, security, performance, maintainability, test coverage. Read-only — does not edit files. Reports findings with severity and fix suggestions."
 mode: subagent
-temperature: 0.1
-permission:
-  read:
-    "*": allow
-  edit: deny
-  bash:
-    "*": ask
-    "grep *": allow
-    "cat *": allow
-    "wc *": allow
-    "ls *": allow
-    "find *": allow
-    "python3 *": allow
-    "git status*": allow
-    "git log*": allow
-    "git diff*": allow
-    "rm *": deny
-    "sudo *": deny
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "grep *"
+    effect: allow
+  - action: shell
+    resource: "cat *"
+    effect: allow
+  - action: shell
+    resource: "wc *"
+    effect: allow
+  - action: shell
+    resource: "ls *"
+    effect: allow
+  - action: shell
+    resource: "find *"
+    effect: allow
+  - action: shell
+    resource: "python3 *"
+    effect: allow
+  - action: shell
+    resource: "git status*"
+    effect: allow
+  - action: shell
+    resource: "git log*"
+    effect: allow
+  - action: shell
+    resource: "git diff*"
+    effect: allow
+  - action: shell
+    resource: "rm *"
+    effect: deny
+  - action: shell
+    resource: "sudo *"
+    effect: deny
+request:
+  body:
+    temperature: 0.1
 ---
 
 # Post-Change Reviewer

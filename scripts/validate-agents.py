@@ -5,8 +5,9 @@ Single owner of the agent-file rules that CI and pre-push both enforce:
 
   1. agents/sisyphus.md (the fleet-owned ultraworker, ported 2026-10-20 from
      the omo runtime agent) parses, carries the required frontmatter keys,
-     and keeps the conservative permission posture (edit/bash default ask;
-     the sisyphus-gates plugin stays the real enforcement layer).
+     and keeps the conservative permission posture (edit/shell default ask,
+     V2-native rules array per P2-a; the sisyphus-gates plugin stays the real
+     enforcement layer).
   2. opencode.json keeps default_agent = "sisyphus" so the default resolves
      to the file agent.
   3. Generated pipeline personas (scripts/generate-pipeline-personas.py,
@@ -116,20 +117,31 @@ def main() -> int:
     else:
         passes.append("sisyphus.md: no file model pin (map is sole pin authority)")
 
-    permission = fm.get("permission")
-    if not isinstance(permission, dict):
-        errors.append("sisyphus.md: permission block missing")
+    permission = fm.get("permissions")
+    if not isinstance(permission, list) or not permission:
+        errors.append("sisyphus.md: native permissions rules array missing")
     else:
-        for tool, expected in (("read", "allow"), ("edit", "ask"), ("bash", "ask")):
-            entry = permission.get(tool)
-            value = entry.get("*") if isinstance(entry, dict) else entry
+        expected_posture = {
+            ("read", "*"): "allow",
+            ("edit", "*"): "ask",
+            ("shell", "*"): "ask",
+        }
+        for (action, resource), expected in expected_posture.items():
+            value = next(
+                (r.get("effect") for r in permission
+                 if isinstance(r, dict) and r.get("action") == action and r.get("resource") == "*"),
+                None,
+            )
             if value != expected:
                 errors.append(
-                    f"sisyphus.md: permission.{tool} default must be "
+                    f"sisyphus.md: permissions[{action} *] default must be "
                     f"{expected!r}, got {value!r}"
                 )
+        v1_keys = [k for k in fm if k in ("permission", "temperature", "top_p")]
+        if v1_keys:
+            errors.append(f"sisyphus.md: V1 frontmatter keys present {v1_keys} - P2-a native port required")
         if not errors or all("permission" not in e for e in errors):
-            passes.append("sisyphus.md: conservative permission posture (edit/bash ask)")
+            passes.append("sisyphus.md: conservative permission posture (edit/shell ask, native rules array)")
 
     # --- 2. default_agent -------------------------------------------------
     try:

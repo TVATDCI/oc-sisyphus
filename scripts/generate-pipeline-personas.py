@@ -72,6 +72,14 @@ Checks (wired into validate-agents.py / validate-skills.sh / pre-push):
                     the live catalog (roster via `opencode models` + reasoning
                     efforts from the models-dev catalog KV); the #max-class
                     error (R4) is caught here (environment-dependent, manual)
+  --check-variant-parity
+                    pin->execution parity leg (P1-a, 2026-10-22): every recent
+                    session row that ran an emitted agent must carry that
+                    agent's pinned model+variant (rows read read-only from the
+                    opencode session store - the sweep's evidence method).
+                    Catches both the variant-drift class and the
+                    pin-not-applied class (rows that ran the agent label on
+                    default resolution). Environment-dependent, manual.
   --self-test       proves the gates catch a deliberately-broken token, a
                     deliberately-drifted file, a drifted opencode.json map, a
                     drifted pre-existing model line, and an invalid variant
@@ -94,6 +102,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -228,6 +237,102 @@ def resolve_variant(model: str, reasoning) -> str | None:
     return VARIANT_ALIASES.get((model, variant), variant)
 
 
+# Ladder rung renames (P2-b, documented deviations like VARIANT_ALIASES):
+# omo-authored fallback models that are DEAD on the live roster, remapped
+# to the live successor seat so the emitted chain never carries a broken
+# rung (verified against the live roster + catalog efforts; the
+# --check-variants leg re-proves every emitted rung on demand).
+RUNG_RENAMES = {
+    # grok-4.6 retired upstream; grok-4.7 carries the same seat (efforts
+    # [low, medium, high, xhigh] include the authored "high").
+    ("opencode-go/grok-4.6", "high"): ("opencode-go/grok-4.7", "high"),
+    ("opencode-go/grok-4.6", "max"): ("opencode-go/grok-4.7", "xhigh"),
+    ("opencode-go/grok-4.6", None): ("opencode-go/grok-4.7", None),
+}
+
+# Authored rung variants the live catalog cannot serve (2026-10-22
+# --check-variants evidence): remapped to the nearest runnable top effort
+# where one exists.
+RUNG_VARIANT_ALIASES = {
+    ("opencode-go/qwen3.8-max", "high"): "xhigh",
+}
+
+# Authored rung variants with NO runnable equivalent on that model: drop
+# the variant (the rung serves the model default) — a rung carrying an
+# un-runnable variant would fail VariantUnavailable at switch time and
+# break the chain.
+RUNG_VARIANT_DROPS = {
+    ("opencode-go/kimi-k2.7-code", "high"),
+    ("opencode-go/kimi-k2.7-code", "medium"),
+    ("opencode/glm-5.3", "medium"),
+}
+
+# Rung models DEAD on the live roster (2026-10-22): dropped from the
+# emission so chains never carry a rung the resolver cannot serve.
+RUNG_MODEL_DROPS = {
+    "opencode-go/deepseek-v4-flash-vision-exp",
+    "opencode/ling-3.0-flash-fin-free",
+}
+
+
+def _rung_pin(entry: dict) -> str | None:
+    """One omo fallback entry -> an emitted rung pin ("p/m" or "p/m#v")."""
+    model = entry.get("model")
+    if not isinstance(model, str) or "/" not in model:
+        return None
+    if model in RUNG_MODEL_DROPS:
+        return None
+    variant = resolve_variant(model, entry.get("reasoning"))
+    model, variant = RUNG_RENAMES.get((model, variant), (model, variant))
+    if variant is not None:
+        variant = RUNG_VARIANT_ALIASES.get((model, variant), variant)
+        if (model, variant) in RUNG_VARIANT_DROPS:
+            variant = None
+    return f"{model}#{variant}" if variant else model
+
+
+def render_model_fallback() -> dict[str, list[str]]:
+    """The `model_fallback` ladder map (P2-b): primary base -> ordered rungs.
+
+    Derived live from the resolved variant's fallback_models stanzas (the
+    omo-era inert records made live through the V2-native model-fallback
+    plugin): every stanza sharing a primary contributes its rungs (deduped,
+    first-seen wins), then the union is ordered by the captain's ladder
+    classes — opencode-go (paid-cheap) first, other providers next,
+    opencode PAYG (`opencode/…`) LAST — so no seat's authored ordering can
+    strand a pay-as-you-go rung mid-chain. The key is the BARE primary
+    (runtime matches providerID/id only)."""
+    out: dict[str, list[str]] = {}
+    stanzas = list(OMO_AGENTS.values()) + list(OMO_CATEGORIES.values())
+    for stanza in stanzas:
+        primary = stanza.get("model")
+        entries = stanza.get("fallback_models")
+        if not isinstance(primary, str) or "/" not in primary:
+            continue
+        if not isinstance(entries, list):
+            continue
+        rungs = out.setdefault(primary, [])
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            pin = _rung_pin(entry)
+            if pin and pin not in rungs:
+                rungs.append(pin)
+
+    def ladder_class(rung: str) -> int:
+        if rung.startswith("opencode-go/"):
+            return 0
+        if rung.startswith("opencode/"):
+            return 2
+        return 1
+
+    return {
+        primary: sorted(rungs, key=ladder_class)
+        for primary, rungs in out.items()
+        if rungs
+    }
+
+
 def _pin_fields(stanza: dict) -> dict:
     model = stanza.get("model")
     if not model or "/" not in model:
@@ -298,116 +403,106 @@ CATEGORIES = {name: _pin_fields(OMO_CATEGORIES[name]) for name in sorted(PIPELIN
 # Permission profiles (conservative; sisyphus-gates stays the real enforcement
 # layer, these are defense-in-depth per-seat postures matching the existing
 # agents/*.md house style).
+#
+# P2-a (fm/backlog-impl, captain ruling 2026-10-22: follow V2): the profiles
+# are V2-NATIVE rules — {action, resource, effect} objects in an ORDERED
+# array (last-match-wins, author order is policy) using V2 action names
+# (shell, not bash; subagent, not task; edit, not write/patch). Tuning
+# (temperature/top_p) rides the native `request.body` form so generated
+# files decode on the NATIVE path — a file mixing V1 keys (temperature)
+# with the native `permissions` array decodes through the legacy migrator,
+# which knows `permission:` (singular map) only and silently drops the
+# native array (source: config/plugin/agent.ts decode() + v1 migrate).
 PROFILES = {
     "readonly": [
-        ("read", {"*": "allow"}),
-        ("edit", "deny"),
-        ("bash", "deny"),
-        ("websearch", "allow"),
-        ("webfetch", "allow"),
+        {"action": "read", "resource": "*", "effect": "allow"},
+        {"action": "edit", "resource": "*", "effect": "deny"},
+        {"action": "shell", "resource": "*", "effect": "deny"},
+        {"action": "websearch", "resource": "*", "effect": "allow"},
+        {"action": "webfetch", "resource": "*", "effect": "allow"},
     ],
     "gate-runner": [
-        ("read", {"*": "allow"}),
-        ("edit", "deny"),
-        (
-            "bash",
-            {
-                "*": "ask",
-                "npm test*": "allow",
-                "npm run *": "allow",
-                "node *": "allow",
-                "python3 *": "allow",
-                "bash *": "allow",
-                "git status*": "allow",
-                "git log*": "allow",
-                "git diff*": "allow",
-                "ls *": "allow",
-                "grep *": "allow",
-                "find *": "allow",
-                "cat *": "allow",
-                "wc *": "allow",
-                "rm *": "deny",
-                "sudo *": "deny",
-            },
-        ),
-        ("websearch", "allow"),
-        ("webfetch", "allow"),
+        {"action": "read", "resource": "*", "effect": "allow"},
+        {"action": "edit", "resource": "*", "effect": "deny"},
+        {"action": "shell", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "npm test*", "effect": "allow"},
+        {"action": "shell", "resource": "npm run *", "effect": "allow"},
+        {"action": "shell", "resource": "node *", "effect": "allow"},
+        {"action": "shell", "resource": "python3 *", "effect": "allow"},
+        {"action": "shell", "resource": "bash *", "effect": "allow"},
+        {"action": "shell", "resource": "git status*", "effect": "allow"},
+        {"action": "shell", "resource": "git log*", "effect": "allow"},
+        {"action": "shell", "resource": "git diff*", "effect": "allow"},
+        {"action": "shell", "resource": "ls *", "effect": "allow"},
+        {"action": "shell", "resource": "grep *", "effect": "allow"},
+        {"action": "shell", "resource": "find *", "effect": "allow"},
+        {"action": "shell", "resource": "cat *", "effect": "allow"},
+        {"action": "shell", "resource": "wc *", "effect": "allow"},
+        {"action": "shell", "resource": "rm *", "effect": "deny"},
+        {"action": "shell", "resource": "sudo *", "effect": "deny"},
+        {"action": "websearch", "resource": "*", "effect": "allow"},
+        {"action": "webfetch", "resource": "*", "effect": "allow"},
     ],
     "writer": [
-        ("read", {"*": "allow"}),
-        ("edit", {"*": "ask"}),
-        (
-            "bash",
-            {
-                "*": "ask",
-                "ls *": "allow",
-                "grep *": "allow",
-                "find *": "allow",
-                "cat *": "allow",
-                "wc *": "allow",
-                "git status*": "allow",
-                "git log*": "allow",
-                "git diff*": "allow",
-                "rm *": "deny",
-                "sudo *": "deny",
-            },
-        ),
-        ("websearch", "allow"),
-        ("webfetch", "allow"),
+        {"action": "read", "resource": "*", "effect": "allow"},
+        {"action": "edit", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "ls *", "effect": "allow"},
+        {"action": "shell", "resource": "grep *", "effect": "allow"},
+        {"action": "shell", "resource": "find *", "effect": "allow"},
+        {"action": "shell", "resource": "cat *", "effect": "allow"},
+        {"action": "shell", "resource": "wc *", "effect": "allow"},
+        {"action": "shell", "resource": "git status*", "effect": "allow"},
+        {"action": "shell", "resource": "git log*", "effect": "allow"},
+        {"action": "shell", "resource": "git diff*", "effect": "allow"},
+        {"action": "shell", "resource": "rm *", "effect": "deny"},
+        {"action": "shell", "resource": "sudo *", "effect": "deny"},
+        {"action": "websearch", "resource": "*", "effect": "allow"},
+        {"action": "webfetch", "resource": "*", "effect": "allow"},
     ],
     # writer + bd: issue filing is the seat's whole job; bd's append-only
     # subcommands are phase-agnostic and the destructive ones stay gated by
     # the sisyphus-gates plugin.
     "writer-bd": [
-        ("read", {"*": "allow"}),
-        ("edit", {"*": "ask"}),
-        (
-            "bash",
-            {
-                "*": "ask",
-                "bd *": "allow",
-                "ls *": "allow",
-                "grep *": "allow",
-                "find *": "allow",
-                "cat *": "allow",
-                "wc *": "allow",
-                "git status*": "allow",
-                "git log*": "allow",
-                "git diff*": "allow",
-                "rm *": "deny",
-                "sudo *": "deny",
-            },
-        ),
-        ("websearch", "allow"),
-        ("webfetch", "allow"),
+        {"action": "read", "resource": "*", "effect": "allow"},
+        {"action": "edit", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "bd *", "effect": "allow"},
+        {"action": "shell", "resource": "ls *", "effect": "allow"},
+        {"action": "shell", "resource": "grep *", "effect": "allow"},
+        {"action": "shell", "resource": "find *", "effect": "allow"},
+        {"action": "shell", "resource": "cat *", "effect": "allow"},
+        {"action": "shell", "resource": "wc *", "effect": "allow"},
+        {"action": "shell", "resource": "git status*", "effect": "allow"},
+        {"action": "shell", "resource": "git log*", "effect": "allow"},
+        {"action": "shell", "resource": "git diff*", "effect": "allow"},
+        {"action": "shell", "resource": "rm *", "effect": "deny"},
+        {"action": "shell", "resource": "sudo *", "effect": "deny"},
+        {"action": "websearch", "resource": "*", "effect": "allow"},
+        {"action": "webfetch", "resource": "*", "effect": "allow"},
     ],
     "executor": [
-        ("read", {"*": "allow"}),
-        ("edit", {"*": "ask"}),
-        (
-            "bash",
-            {
-                "*": "ask",
-                "npm test*": "allow",
-                "npm run *": "allow",
-                "node *": "allow",
-                "python3 *": "allow",
-                "bash *": "allow",
-                "tsc --noEmit": "allow",
-                "git status*": "allow",
-                "git log*": "allow",
-                "git diff*": "allow",
-                "ls *": "allow",
-                "grep *": "allow",
-                "find *": "allow",
-                "cat *": "allow",
-                "wc *": "allow",
-                "rm *": "ask",
-                "sudo *": "deny",
-            },
-        ),
-        ("websearch", "allow"),
-        ("webfetch", "allow"),
+        {"action": "read", "resource": "*", "effect": "allow"},
+        {"action": "edit", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "*", "effect": "ask"},
+        {"action": "shell", "resource": "npm test*", "effect": "allow"},
+        {"action": "shell", "resource": "npm run *", "effect": "allow"},
+        {"action": "shell", "resource": "node *", "effect": "allow"},
+        {"action": "shell", "resource": "python3 *", "effect": "allow"},
+        {"action": "shell", "resource": "bash *", "effect": "allow"},
+        {"action": "shell", "resource": "tsc --noEmit", "effect": "allow"},
+        {"action": "shell", "resource": "git status*", "effect": "allow"},
+        {"action": "shell", "resource": "git log*", "effect": "allow"},
+        {"action": "shell", "resource": "git diff*", "effect": "allow"},
+        {"action": "shell", "resource": "ls *", "effect": "allow"},
+        {"action": "shell", "resource": "grep *", "effect": "allow"},
+        {"action": "shell", "resource": "find *", "effect": "allow"},
+        {"action": "shell", "resource": "cat *", "effect": "allow"},
+        {"action": "shell", "resource": "wc *", "effect": "allow"},
+        {"action": "shell", "resource": "rm *", "effect": "ask"},
+        {"action": "shell", "resource": "sudo *", "effect": "deny"},
+        {"action": "websearch", "resource": "*", "effect": "allow"},
+        {"action": "webfetch", "resource": "*", "effect": "allow"},
     ],
 }
 
@@ -749,18 +844,19 @@ def yaml_quote(value: str) -> str:
 
 
 def render_permission(profile: str, allows: list[str]) -> list[str]:
-    lines = ["permission:"]
-    for tool, rule in PROFILES[profile]:
-        if isinstance(rule, str):
-            lines.append(f"  {tool}: {rule}")
-        else:
-            lines.append(f"  {tool}:")
-            for pattern, action in rule.items():
-                lines.append(f'    {yaml_quote(pattern)}: {action}')
-    lines.append("  task:")
-    lines.append('    "*": deny')
+    """V2-native permissions rules array (P2-a): {action, resource, effect}
+    objects, ordered (last-match-wins). The subagent DAG rules append after
+    the profile: deny-all first, then one allow per callee, so callees win.
+    """
+    rules = list(PROFILES[profile])
+    rules.append({"action": "subagent", "resource": "*", "effect": "deny"})
     for callee in allows:
-        lines.append(f'    {yaml_quote(callee)}: allow')
+        rules.append({"action": "subagent", "resource": callee, "effect": "allow"})
+    lines = ["permissions:"]
+    for rule in rules:
+        lines.append(f"  - action: {rule['action']}")
+        lines.append(f"    resource: {yaml_quote(rule['resource'])}")
+        lines.append(f"    effect: {rule['effect']}")
     return lines
 
 
@@ -794,13 +890,21 @@ def render_persona(p: dict, skills_dir: Path) -> str:
         f"# deliberately carries NO model line: a valid model pin here would",
         f"# override the map (files apply after JSON and win fields they define",
         f"# under opencode 2.1.0; sis lane answer 2026-10-21).",
+        f"# Permissions are V2-NATIVE (P2-a, captain ruling 2026-10-22): an",
+        f"# ordered action/resource/effect rules array; tuning rides",
+        f"# request.body so the file decodes on the NATIVE path (a V1 key like",
+        f"# bare temperature would reroute the file through the legacy",
+        f"# migrator and silently drop the native permissions array).",
         f"description: {yaml_quote(p['description'])}",
         "mode: subagent",
     ]
-    if cat["temperature"] is not None:
-        fm.append(f"temperature: {cat['temperature']}")
-    if cat.get("top_p") is not None:
-        fm.append(f"top_p: {cat['top_p']}")
+    if cat["temperature"] is not None or cat.get("top_p") is not None:
+        fm.append("request:")
+        fm.append("  body:")
+        if cat["temperature"] is not None:
+            fm.append(f"    temperature: {cat['temperature']}")
+        if cat.get("top_p") is not None:
+            fm.append(f"    top_p: {cat['top_p']}")
     fm.extend(render_permission(p["profile"], allows))
     fm.append("---")
 
@@ -851,6 +955,7 @@ def write_agents(agents_dir: Path, skills_dir: Path) -> list[str]:
         target.write_text(text, encoding="utf-8")
         written.append(target.name)
     written.extend(sync_preexisting_model_lines(agents_dir))
+    written.extend(sync_preexisting_native_permissions(agents_dir))
     return written
 
 
@@ -881,32 +986,183 @@ def sync_preexisting_model_lines(agents_dir: Path) -> list[str]:
     return changed
 
 
+# P2-a: V1 permission-map keys -> V2 action names (the same renames the
+# upstream migrator applies, normalizeAction in v1/config/migrate.ts).
+ACTION_RENAMES = {"bash": "shell", "task": "subagent", "write": "edit", "patch": "edit"}
+
+
+def _port_permission_block(fm_lines: list[str]) -> tuple[list[str], list[str]]:
+    """Split a frontmatter's V1 `permission:` block into (remaining, rules).
+
+    Parses the hand-authored dialect actually present in agents/*.md:
+      permission:
+        read:
+          "*": allow
+        edit: deny
+        bash:
+          "*": ask
+          "grep *": allow
+    Rules preserve written order (last-match-wins is the policy in BOTH
+    dialects). Returns the lines with the block removed and the V2-native
+    rule tuples.
+    """
+    rules: list[tuple[str, str, str]] = []
+    out: list[str] = []
+    i = 0
+    in_block = False
+    tool_re = re.compile(r'^  ([\w"*.-]+):(.*)$')
+    pattern_re = re.compile(r'^    (["\'][^"\']*["\']|\S+):\s*(\w+)\s*$')
+    while i < len(fm_lines):
+        line = fm_lines[i]
+        if not in_block:
+            if re.match(r'^permission:\s*$', line):
+                in_block = True
+                i += 1
+                continue
+            out.append(line)
+            i += 1
+            continue
+        # inside the permission block: tool / pattern lines, until the next
+        # top-level key (indent 0) or end of frontmatter.
+        if line.strip() and not line.startswith(" "):
+            in_block = False
+            out.append(line)
+            i += 1
+            continue
+        tm = tool_re.match(line)
+        if tm:
+            tool = tm.group(1).strip('"\'')
+            action = ACTION_RENAMES.get(tool, tool)
+            rest = tm.group(2).strip()
+            if rest:
+                effect = rest.strip('"\'')
+                rules.append((action, "*", effect))
+            i += 1
+            continue
+        pm = pattern_re.match(line)
+        if pm:
+            resource = pm.group(1).strip('"\'')
+            rules.append((action, resource, pm.group(2)))
+            i += 1
+            continue
+        i += 1  # blank/other line inside block: drop with the block
+    return out, rules
+
+
+def _render_native_rules(rules: list[tuple[str, str, str]]) -> list[str]:
+    lines = ["permissions:"]
+    for action, resource, effect in rules:
+        lines.append(f"  - action: {action}")
+        lines.append(f"    resource: {yaml_quote(resource)}")
+        lines.append(f"    effect: {effect}")
+    return lines
+
+
+def sync_preexisting_native_permissions(agents_dir: Path) -> list[str]:
+    """P2-a port of the hand-authored files: V1 `permission:` maps (plus bare
+    temperature/top_p keys) become V2-native `permissions:` arrays and
+    `request.body` tuning, so every pre-existing file decodes on the NATIVE
+    path (V1 keys in the same frontmatter would reroute the file through
+    the legacy migrator, which drops native arrays). Mechanical, idempotent;
+    every other byte preserved.
+    """
+    changed = []
+    for name in sorted(PREEXISTING_AGENTS):
+        path = agents_dir / f"{name}.md"
+        text = path.read_text(encoding="utf-8")
+        lines = text.split("\n")
+        close = next(
+            (i for i, l in enumerate(lines[1:], start=1) if l.strip() == "---"), None
+        )
+        if close is None:
+            raise ValueError(f"{path}: no YAML frontmatter")
+        fm = lines[:close]
+        rest = lines[close:]
+        fm, rules = _port_permission_block(fm)
+        # bare V1 tuning keys -> native request.body
+        temperature = next((l.split(":", 1)[1].strip() for l in fm if l.startswith("temperature:")), None)
+        top_p = next((l.split(":", 1)[1].strip() for l in fm if l.startswith("top_p:")), None)
+        fm = [l for l in fm if not l.startswith(("temperature:", "top_p:"))]
+        # `load_skills:` is not a native key: left in place it reroutes the
+        # file onto the legacy decode path (which then drops the native
+        # permissions array — worse than inert). The load instruction moves
+        # into the body (the mode-B pattern the generated on-demand seats
+        # use); the named skills are real repo skills.
+        load_names: list[str] = []
+        kept: list[str] = []
+        in_ls = False
+        for l in fm:
+            if re.match(r"^load_skills:\s*$", l):
+                in_ls = True
+                continue
+            if in_ls:
+                lm = re.match(r"^\s+-\s+(\S+)\s*$", l)
+                if lm:
+                    load_names.append(lm.group(1))
+                    continue
+                in_ls = False
+            kept.append(l)
+        fm = kept
+        if rules:
+            fm.extend(_render_native_rules(rules))
+        if temperature is not None or top_p is not None:
+            fm.append("request:")
+            fm.append("  body:")
+            if temperature is not None:
+                fm.append(f"    temperature: {temperature}")
+            if top_p is not None:
+                fm.append(f"    top_p: {top_p}")
+        new_lines = fm + rest
+        if load_names:
+            body_line = "On every task, first load " + " and ".join(
+                f"skills/{name}/SKILL.md" for name in load_names
+            ) + " and follow it as your binding contract - never act from memory of it."
+            # rest[0] is the closing ---; the instruction becomes the first
+            # body line (mode-B pattern).
+            new_lines = fm + [rest[0], "", body_line, ""] + rest[1:]
+        new_text = "\n".join(new_lines)
+        if new_text != text:
+            path.write_text(new_text, encoding="utf-8")
+            changed.append(f"{name}.md")
+    return changed
+
+
 # ---------------------------------------------------------------------------
 # opencode.json emission (pin authority; oc-v2-fixbundle)
 # ---------------------------------------------------------------------------
 
 
 def write_opencode_agent_map(repo_root: Path = REPO_ROOT) -> bool:
-    """Set the `agent` map in opencode.json to the omo-derived emission.
+    """Set the `agent` map + `model_fallback` ladder map in opencode.json.
 
     Every other key in the file is preserved byte-for-value; `agent` is
-    placed right after `default_agent` (or appended) for a deterministic,
-    diff-stable layout.
+    placed right after `default_agent` (or appended) and `model_fallback`
+    right after `agent`, for a deterministic, diff-stable layout.
     """
     path = repo_root / "opencode.json"
     cfg = json.loads(path.read_text(encoding="utf-8"))
     rendered = render_agent_config()
-    if cfg.get("agent") == rendered:
+    ladders = render_model_fallback()
+    if cfg.get("agent") == rendered and cfg.get("model_fallback") == ladders:
         return False
+    # Drop the stale ladder map up front: re-copying the pre-existing key
+    # after inserting the fresh one would clobber the new emission.
+    cfg.pop("model_fallback", None)
     new_cfg: dict = {}
-    inserted = False
+    inserted_agent = False
+    inserted_ladder = False
     for key, value in cfg.items():
         new_cfg[key] = value
-        if key == "default_agent":
+        if key == "default_agent" and not inserted_agent:
             new_cfg["agent"] = rendered
-            inserted = True
-    if not inserted:
+            inserted_agent = True
+        if key == "agent" and not inserted_ladder:
+            new_cfg["model_fallback"] = ladders
+            inserted_ladder = True
+    if not inserted_agent:
         new_cfg["agent"] = rendered
+    if not inserted_ladder:
+        new_cfg["model_fallback"] = ladders
     path.write_text(json.dumps(new_cfg, indent=2) + "\n", encoding="utf-8")
     return True
 
@@ -925,33 +1181,45 @@ def write_opencode_agent_map(repo_root: Path = REPO_ROOT) -> bool:
 # against the structural contract both decoders accept.
 # ---------------------------------------------------------------------------
 
-PERMITTED_FM_KEYS = {"description", "mode", "temperature", "top_p", "permission"}
+PERMITTED_FM_KEYS = {"description", "mode", "request", "permissions"}
 MODES = {"primary", "subagent", "all"}
 ACTIONS = {"allow", "deny", "ask"}
 
 
-def _check_permission_value(tool: str, value, where: str, errors: list[str]) -> None:
-    if isinstance(value, str):
-        if value not in ACTIONS:
-            errors.append(f"{where}: permission.{tool} action {value!r} not in {sorted(ACTIONS)}")
-        return
-    if not isinstance(value, dict):
-        errors.append(
-            f"{where}: permission.{tool} must be an action string or a pattern map "
-            f"(bare array/other shapes are silently dropped by the 2.1.0 loader)"
-        )
-        return
-    for pattern, action in value.items():
-        if not isinstance(pattern, str) or not pattern:
-            errors.append(f"{where}: permission.{tool} pattern {pattern!r} is not a non-empty string")
-        if action not in ACTIONS:
-            errors.append(
-                f"{where}: permission.{tool}[{pattern!r}] action {action!r} not in {sorted(ACTIONS)}"
-            )
+def _parse_rules_array(block: list[str]) -> list[tuple[str, str, str]] | None:
+    """Parse the rendered `permissions:` array form; None when not array-shaped."""
+    rules: list[tuple[str, str, str]] = []
+    action = resource = effect = None
+    entries = 0
+    for line in block:
+        em = re.match(r"^  - action: (\S+)$", line)
+        if em:
+            if action is not None and (resource is None or effect is None):
+                return None
+            if action is not None:
+                rules.append((action, resource, effect))
+            action, resource, effect = em.group(1), None, None
+            entries += 1
+            continue
+        rm = re.match(r'^    resource: ("(?:[^"\\]|\\.)*"|\S+)$', line)
+        if rm:
+            resource = rm.group(1)
+            continue
+        fm_ = re.match(r"^    effect: (\w+)$", line)
+        if fm_:
+            effect = fm_.group(1)
+            continue
+        return None
+    if action is not None:
+        if resource is None or effect is None:
+            return None
+        rules.append((action, resource, effect))
+    return rules if entries else None
 
 
 def check_agent_md_schema(path: Path) -> list[str]:
-    """Structural schema check of one generated agent file's frontmatter."""
+    """Structural schema check of one agent file's frontmatter (P2-a: the
+    V2-native contract — description, mode, request, permissions array)."""
     errors: list[str] = []
     where = path.name
     lines = path.read_text(encoding="utf-8").split("\n")
@@ -967,6 +1235,13 @@ def check_agent_md_schema(path: Path) -> list[str]:
             errors.append(
                 f"{where}: frontmatter carries {l.split(':')[0]!r} — model pins live ONLY "
                 "in the opencode.json agent map (a valid file pin overrides the map)"
+            )
+        if re.match(r"^(permission|temperature|top_p):", l):
+            errors.append(
+                f"{where}: frontmatter carries the V1 key {l.split(':')[0]!r} — P2-a "
+                "port: use the native `permissions:` rules array (and request.body for "
+                "tuning); a V1 key reroutes the file through the legacy migrator, which "
+                "silently drops native arrays"
             )
     keys = []
     for l in fm:
@@ -985,61 +1260,43 @@ def check_agent_md_schema(path: Path) -> list[str]:
     elif mode.group(1) not in MODES:
         errors.append(f"{where}: mode {mode.group(1)!r} not in {sorted(MODES)}")
     for num in ("temperature", "top_p"):
-        m = re.search(rf"^{num}: (\S+)", text, re.M)
+        m = re.search(rf"^    {num}: (\S+)$", text, re.M)
         if m and not re.fullmatch(r"-?\d+(?:\.\d+)?", m.group(1)):
-            errors.append(f"{where}: {num} {m.group(1)!r} is not a number")
-    perm_idx = next((i for i, l in enumerate(fm) if re.match(r"^permission:", l)), None)
+            errors.append(f"{where}: request.body.{num} {m.group(1)!r} is not a number")
+    perm_idx = next((i for i, l in enumerate(fm) if re.match(r"^permissions:", l)), None)
     if perm_idx is None:
-        errors.append(f"{where}: missing permission block")
+        errors.append(f"{where}: missing permissions block")
     else:
-        inline = re.match(r"^permission:\s*(.*)$", fm[perm_idx]).group(1).strip()
+        inline = re.match(r"^permissions:\s*(.*)$", fm[perm_idx]).group(1).strip()
         if inline:
-            if inline.startswith("["):
-                errors.append(
-                    f"{where}: permission {inline!r} is a bare array — must be an action "
-                    "string or a pattern map (silently dropped by the 2.1.0 loader)"
-                )
-            elif inline not in ACTIONS:
-                errors.append(f"{where}: permission {inline!r} not in {sorted(ACTIONS)}")
+            errors.append(
+                f"{where}: permissions {inline[:40]!r} is inline — the native form is an "
+                "array of {action, resource, effect} rules"
+            )
         else:
             block: list[str] = []
             for l in fm[perm_idx + 1 :]:
                 if re.match(r"^[a-z_]+:", l):
                     break
                 block.append(l)
-            if not block:
-                errors.append(f"{where}: empty permission block")
+            rules = _parse_rules_array(block)
+            if rules is None:
+                if block:
+                    errors.append(
+                        f"{where}: permissions block is not the native rules-array shape "
+                        "(silently dropped by the loader on decode failure)"
+                    )
+                else:
+                    errors.append(f"{where}: empty permissions block")
             else:
-                tool = None
-                value_lines: list[str] = []
-                for l in block:
-                    tm = re.match(r"^  ([a-z_]+):(.*)$", l)
-                    if tm:
-                        if tool is not None:
-                            _check_permission_value(tool, _parse_perm_value(value_lines), where, errors)
-                        tool = tm.group(1)
-                        value_lines = [tm.group(2)] if tm.group(2).strip() else []
-                    else:
-                        value_lines.append(l.strip())
-                if tool is not None:
-                    _check_permission_value(tool, _parse_perm_value(value_lines), where, errors)
+                for action, resource, effect in rules:
+                    if not re.fullmatch(r"\*|[a-z_]+", action):
+                        errors.append(f"{where}: permissions action {action!r} is not an action name")
+                    if not resource.strip('"'):
+                        errors.append(f"{where}: permissions resource {resource!r} is empty")
+                    if effect not in ACTIONS:
+                        errors.append(f"{where}: permissions effect {effect!r} not in {sorted(ACTIONS)}")
     return errors
-
-
-def _parse_perm_value(value_lines: list[str]):
-    """Rebuild a permission value from rendered lines: string or pattern map."""
-    first = value_lines[0].strip() if value_lines else ""
-    if len(value_lines) <= 1 and first and not first.startswith('"'):
-        return first  # bare action string
-    out = {}
-    for l in value_lines:
-        pm = re.match(r'^"([^"]*)": (\w+)$', l.strip())
-        if pm:
-            out[pm.group(1)] = pm.group(2)
-        elif re.match(r"^'[^']*': \w+$", l.strip()):
-            pm2 = re.match(r"^'([^']*)': (\w+)$", l.strip())
-            out[pm2.group(1)] = pm2.group(2)
-    return out
 
 
 def check_drift(
@@ -1081,8 +1338,11 @@ def check_drift(
                 )
                 break
     # oc-v2-fixbundle: schema gate — the 2.1.0 loader silently drops files
-    # that fail decode; every generated file must be schema-valid.
+    # that fail decode; P2-a: every file (generated AND pre-existing, all
+    # native since the port) must be schema-valid.
     for name in rendered:
+        errors.extend(check_agent_md_schema(agents_dir / f"{name}.md"))
+    for name in sorted(PREEXISTING_AGENTS):
         errors.extend(check_agent_md_schema(agents_dir / f"{name}.md"))
     # oc-v2-fixbundle: the opencode.json `agent` map is the emitted pin
     # authority — it must equal the live-derived emission.
@@ -1092,10 +1352,16 @@ def check_drift(
     except FileNotFoundError:
         errors.append("drift: opencode.json missing")
         cfg = None
-    if cfg is not None and cfg.get("agent") != render_agent_config():
-        errors.append(
-            "drift: opencode.json `agent` map differs from the omo-derived emission"
-        )
+    if cfg is not None:
+        if cfg.get("agent") != render_agent_config():
+            errors.append(
+                "drift: opencode.json `agent` map differs from the omo-derived emission"
+            )
+        if cfg.get("model_fallback") != render_model_fallback():
+            errors.append(
+                "drift: opencode.json `model_fallback` ladder map differs from the "
+                "omo-derived emission (the P2-b fallback chain source)"
+            )
     return errors, len(rendered)
 
 
@@ -1145,6 +1411,14 @@ def check_tokens(skills_dir: Path, agents_dir: Path) -> tuple[list[str], int]:
 # ---------------------------------------------------------------------------
 
 
+def _subagent_rules_of(text: str) -> list[tuple[str, str, str]] | None:
+    """The permissions rules array of an agent file (P2-a native form)."""
+    m = re.search(r"^permissions:\n((?:  - .*\n(?:    .*\n)*)+)", text, re.MULTILINE)
+    if not m:
+        return None
+    return _parse_rules_array(m.group(1).splitlines()) or []
+
+
 def check_dag(agents_dir: Path, skills_dir: Path) -> tuple[list[str], int]:
     errors: list[str] = []
     generated = set(persona_names())
@@ -1176,18 +1450,15 @@ def check_dag(agents_dir: Path, skills_dir: Path) -> tuple[list[str], int]:
         if not path.is_file():
             continue  # drift check owns missing files
         text = path.read_text(encoding="utf-8")
-        m = re.search(r"^  task:\n((?:    .*\n?)+)", text, re.MULTILINE)
-        if not m:
-            errors.append(f"DAG: {name}.md has no task permission block")
+        rules = _subagent_rules_of(text)
+        if rules is None:
+            errors.append(f"DAG: {name}.md has no native permissions rules array")
             continue
-        allows: list[str] = []
-        for entry in m.group(1).splitlines():
-            em = re.match(r'    "([^"]+)": (allow|deny|ask)', entry)
-            if em and em.group(2) == "allow" and em.group(1) != "*":
-                allows.append(em.group(1))
+        allows = [resource.strip('"') for action, resource, effect in rules
+                  if action == "subagent" and effect == "allow" and resource.strip('"') != "*"]
         if allows != expected:
             errors.append(
-                f"DAG: {name}.md task allows {allows} != manifest §9 edges {expected}"
+                f"DAG: {name}.md subagent allows {allows} != manifest §9 edges {expected}"
             )
 
     # No persona edge points at a name that is neither generated nor pre-existing.
@@ -1288,14 +1559,19 @@ def check_variants(
     pins: dict[str, str] | None = None,
     roster: set[str] | None = None,
     efforts: dict[str, list[str]] | None = None,
+    ladders: dict[str, list[str]] | None = None,
 ) -> int:
     """Every emitted model#variant must resolve on the live catalog.
 
     The #max-class error (PR-8 R4: qwen3.8-max has no #max effort) is caught
-    here — never shipped. `roster`/`efforts` injection is for the self-test.
+    here — never shipped — and since P2-b every emitted model_fallback rung
+    is held to the same bar (a dead rung breaks the chain). `roster`/
+    `efforts`/`ladders` injection is for the self-test.
     """
     if pins is None:
         pins = agent_pin_map()
+    if ladders is None and roster is None and efforts is None:
+        ladders = render_model_fallback()
     if roster is None:
         roster = _live_roster()
         if roster is None:
@@ -1326,7 +1602,146 @@ def check_variants(
             f"{name:<22} {pin:<38} {'yes' if base in roster else 'NO':<7} "
             f"{variant or '-':<7} {'PASS' if ok else 'FAIL: ' + '; '.join(notes)}"
         )
+    # P2-b: every emitted ladder rung must also resolve (a dead rung breaks
+    # the chain exactly like a dead pin breaks a seat).
+    ladder_pins: dict[str, str] = {}
+    for head, rungs in (ladders or {}).items():
+        for i, rung in enumerate(rungs):
+            ladder_pins[f"ladder:{head}[{i}]"] = rung
+    for name, pin in ladder_pins.items():
+        base, _, variant = pin.partition("#")
+        ok = True
+        notes = []
+        if base not in roster:
+            ok = False
+            notes.append("not on live roster")
+        if variant:
+            model_efforts = efforts.get(base)
+            if model_efforts is None:
+                ok = False
+                notes.append("no effort options in catalog")
+            elif variant not in model_efforts:
+                ok = False
+                notes.append(f"variant not in {model_efforts}")
+        failures += 0 if ok else 1
+        print(
+            f"{name:<38} {pin:<38} {'yes' if base in roster else 'NO':<7} "
+            f"{variant or '-':<7} {'PASS' if ok else 'FAIL: ' + '; '.join(notes)}"
+        )
     print("check-variants: PASS" if failures == 0 else f"check-variants: FAIL ({failures} invalid)")
+    return 1 if failures else 0
+
+
+# ---------------------------------------------------------------------------
+# Check 6: pin->execution variant parity from live session rows (P1-a,
+# 2026-10-22). The sweep's evidence method: a pin is only TRUE if the session
+# row that ran the agent carries the pinned model+variant. Probe-proven that
+# day: zai-coding-plan/glm-5.3#max SERVES as max end-to-end on the explicit
+# model path (row ses_e9c48021bffe..., variant "max"), while a row created
+# with agent=<name> but no explicit model carries NO committed model and
+# serves default resolution - the "aspirational report line" class. Both
+# truths are exactly what this leg reports; it fails loudly on any row whose
+# served model+variant != the emitted pin for its agent label.
+# ---------------------------------------------------------------------------
+
+SESSION_DB = Path.home() / ".local" / "share" / "opencode" / "opencode.db"
+PARITY_DEFAULT_DAYS = 14
+
+
+def _session_rows(db_path: Path = SESSION_DB, days: int = PARITY_DEFAULT_DAYS):
+    """Recent session rows ({id, agent, model, created}) from the session store."""
+    import sqlite3
+
+    if not db_path.is_file():
+        print(f"FAIL: session store {db_path} not found")
+        return None
+    cutoff_ms = (time.time() - days * 86400) * 1000
+    try:
+        con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        try:
+            raw = con.execute(
+                "select id, agent, model, time_created from session_v2 "
+                "where time_created >= ? order by time_created desc",
+                (cutoff_ms,),
+            ).fetchall()
+        finally:
+            con.close()
+    except sqlite3.Error as e:
+        print(f"FAIL: session store unreadable: {e}")
+        return None
+    rows = []
+    for sid, agent, model_json, created in raw:
+        try:
+            model = json.loads(model_json) if model_json else None
+        except ValueError:
+            model = None
+        rows.append({"id": sid, "agent": agent, "model": model, "created": created})
+    return rows
+
+
+def _parity_row_verdict(pin: dict, row: dict) -> str | None:
+    """None when the row served exactly the pin; else the divergence class."""
+    model = row.get("model")
+    if not isinstance(model, dict) or not model.get("id"):
+        return "no model committed (default-resolution class - pin not applied)"
+    served_base = f"{model.get('providerID')}/{model.get('id')}"
+    pin_base = pin["model"]
+    if served_base != pin_base:
+        return f"served {served_base}"
+    served_variant = model.get("variant") or "default"
+    pin_variant = pin.get("variant") or "default"
+    if served_variant != pin_variant:
+        return f"variant {served_variant} != pin {pin_variant}"
+    return None
+
+
+def check_variant_parity(rows=None, pins=None, verbose=True) -> int:
+    """Every recent row that ran an emitted agent must carry that agent's pin.
+
+    Divergence classes (both fail loudly - an aspirational report line is
+    exactly what this leg exists to kill):
+      pin-not-applied  the row ran the agent label but committed no model
+                       (default-resolution class) or a different base model
+      variant-drift    the row served the pinned base under a different
+                       variant than the emitted pin
+    `rows`/`pins` injection is for the self-test.
+    """
+    if pins is None:
+        pins = render_agent_config()
+    if rows is None:
+        rows = _session_rows()
+        if rows is None:
+            return 1
+    by_agent: dict[str, list[dict]] = {}
+    for row in rows:
+        name = row.get("agent")
+        if name in pins:
+            by_agent.setdefault(name, []).append(row)
+    if not by_agent:
+        print("check-variant-parity: no recent rows carry an emitted agent label")
+        return 0
+    failures = 0
+    if verbose:
+        print(f"{'agent':<22} {'rows':>4}  {'pin':<38} verdict")
+    for name in sorted(by_agent):
+        pin = pins[name]
+        pin_disp = pin["model"] + (f"#{pin['variant']}" if pin.get("variant") else "")
+        bad = []
+        for row in by_agent[name]:
+            verdict = _parity_row_verdict(pin, row)
+            if verdict is not None:
+                bad.append((row["id"], verdict))
+        failures += len(bad)
+        if verbose:
+            status = "PARITY" if not bad else f"DIVERGENT ({len(bad)}/{len(by_agent[name])})"
+            print(f"{name:<22} {len(by_agent[name]):>4}  {pin_disp:<38} {status}")
+            for sid, why in bad:
+                print(f"    {sid}: {why}")
+    print(
+        "check-variant-parity: PASS"
+        if failures == 0
+        else f"check-variant-parity: FAIL ({failures} divergent row(s) - served model != pin; report lines must quote the row, not the pin)"
+    )
     return 1 if failures else 0
 
 
@@ -1376,13 +1791,14 @@ def self_test() -> int:
         if not any("brief-loader" in e for e in err):
             failures.append(f"drift not caught: {err[:3]}")
 
-        # Deliberate DAG violation (extra task allow) must be caught.
+        # Deliberate DAG violation (extra subagent allow) must be caught.
         dag_victim = agents_copy / "tdd-executor.md"
         if dag_victim.is_file():
             dag_victim.write_text(
                 dag_victim.read_text(encoding="utf-8").replace(
-                    '  task:\n    "*": deny\n',
-                    '  task:\n    "*": deny\n    "brief-loader": allow\n',
+                    '  - action: subagent\n    resource: "*"\n    effect: deny\n',
+                    '  - action: subagent\n    resource: "*"\n    effect: deny\n'
+                    '  - action: subagent\n    resource: "brief-loader"\n    effect: allow\n',
                     1,
                 )
             )
@@ -1403,17 +1819,28 @@ def self_test() -> int:
         if not any("sisyphus.md carries model pin" in e for e in err):
             failures.append(f"file model-pin override hazard not caught: {err[:3]}")
 
-        # Schema violation (bare-array permission — the exact shape the 2.1.0
-        # loader silently drops) must be caught.
+        # Schema violations must be caught: a V1 dialect key (the legacy
+        # migrator path that silently drops native arrays) and a non-array
+        # permissions value (the loader's silent-drop class).
         schema_victim = agents_copy / "reference-checker.md"
         schema_victim.write_text(
             schema_victim.read_text(encoding="utf-8").replace(
-                "permission:\n", "permission: [read, grep]\n", 1
+                "permissions:\n", "permissions: {read: allow}\n", 1
             )
         )
         err = check_agent_md_schema(schema_victim)
-        if not any("bare array" in e for e in err):
-            failures.append(f"schema violation (bare array) not caught: {err[:3]}")
+        if not any("not the native rules-array shape" in e or "inline" in e for e in err):
+            failures.append(f"schema violation (non-array permissions) not caught: {err[:3]}")
+
+        v1_victim = agents_copy / "archivist.md"
+        v1_victim.write_text(
+            v1_victim.read_text(encoding="utf-8").replace(
+                "permissions:\n", "temperature: 0.1\npermissions:\n", 1
+            )
+        )
+        err = check_agent_md_schema(v1_victim)
+        if not any("V1 key" in e for e in err):
+            failures.append(f"schema violation (V1 key beside native array) not caught: {err[:3]}")
 
         # Drifted opencode.json agent map must be caught.
         oc = json.loads((root / "opencode.json").read_text(encoding="utf-8"))
@@ -1423,12 +1850,23 @@ def self_test() -> int:
         if not any("opencode.json `agent` map" in e for e in err):
             failures.append(f"opencode.json agent-map drift not caught: {err[:3]}")
 
+        # Drifted model_fallback ladder map must be caught (P2-b).
+        oc = json.loads((root / "opencode.json").read_text(encoding="utf-8"))
+        oc["model_fallback"] = {"stub/fail": ["stub/ok"]}
+        (root / "opencode.json").write_text(json.dumps(oc, indent=2) + "\n")
+        err, _ = check_drift(agents_copy, skills_copy, repo_root=root)
+        if not any("model_fallback" in e for e in err):
+            failures.append(f"opencode.json model_fallback drift not caught: {err[:3]}")
+        # restore for the clean-copy invariant of later legs
+        oc["model_fallback"] = render_model_fallback()
+        (root / "opencode.json").write_text(json.dumps(oc, indent=2) + "\n")
+
     # The #max-class variant error (R4) must be caught, never shipped:
     # qwen3.8-max has no #max effort on the (seeded) live catalog.
     seeded_roster = {
         "zai-coding-plan/glm-5.3", "zai-coding-plan/glm-5.3-flash",
         "opencode-go/qwen3.8-max", "opencode-go/gpt-5.6-luna",
-        "opencode-go/kimi-k3",
+        "opencode-go/kimi-k3", "opencode-go/glm-5.3",
     }
     seeded_efforts = {
         "zai-coding-plan/glm-5.3": ["low", "high", "max"],
@@ -1436,6 +1874,7 @@ def self_test() -> int:
         "opencode-go/qwen3.8-max": ["low", "medium", "xhigh"],
         "opencode-go/gpt-5.6-luna": ["none", "low", "medium", "high", "xhigh", "max"],
         "opencode-go/kimi-k3": ["max"],
+        "opencode-go/glm-5.3": ["low", "high", "max"],
     }
     if check_variants(
         pins={"ultrabrain-lane": "opencode-go/qwen3.8-max#max"},
@@ -1447,6 +1886,38 @@ def self_test() -> int:
         roster=seeded_roster, efforts=seeded_efforts,
     ) != 0:
         failures.append("variant check rejected a valid #xhigh pin")
+
+    # P2-b ladder legs: a dead rung must be caught; a valid rung passes.
+    if check_variants(
+        pins={}, roster=seeded_roster, efforts=seeded_efforts,
+        ladders={"zai-coding-plan/glm-5.3": ["opencode-go/grok-4.6#high"]},
+    ) == 0:
+        failures.append("rung check passed a dead ladder rung (grok-4.6 class)")
+    if check_variants(
+        pins={}, roster=seeded_roster, efforts=seeded_efforts,
+        ladders={"zai-coding-plan/glm-5.3": ["opencode-go/glm-5.3#max"]},
+    ) != 0:
+        failures.append("rung check rejected a valid ladder rung")
+
+    # Pin->execution parity (P1-a): the two divergence classes must be
+    # caught, and a clean row set must pass. Seeded against the REAL
+    # emission so the verdicts reflect live pins.
+    live_pins = render_agent_config()
+    parity_clean = [
+        {"id": "ses_seed_ok1", "agent": "oracle",
+         "model": {"id": "kimi-k3", "providerID": "opencode-go", "variant": "max"}, "created": 1},
+        {"id": "ses_seed_ok2", "agent": "archivist",
+         "model": {"id": "glm-5.3-flash", "providerID": "zai-coding-plan"}, "created": 2},
+    ]
+    if check_variant_parity(rows=parity_clean, pins=live_pins, verbose=False) != 0:
+        failures.append("parity check failed a clean row set")
+    parity_bad = parity_clean + [
+        {"id": "ses_seed_nomodel", "agent": "sisyphus", "model": None, "created": 3},
+        {"id": "ses_seed_drift", "agent": "sisyphus",
+         "model": {"id": "glm-5.3", "providerID": "zai-coding-plan", "variant": "high"}, "created": 4},
+    ]
+    if check_variant_parity(rows=parity_bad, pins=live_pins, verbose=False) == 0:
+        failures.append("parity check passed divergent rows (no-model + variant-drift classes)")
 
     # Source-override legs (subprocess: the override applies at import).
     gen = [sys.executable, str(REPO_ROOT / "scripts" / "generate-pipeline-personas.py")]
@@ -1481,7 +1952,7 @@ def self_test() -> int:
             print(f"FAIL: {f}")
         print("self-test: FAIL")
         return 1
-    print("self-test: PASS (clean pass + broken token + drift + DAG + file-pin hazard + schema catch + json map + variant catch + source-override/refusal legs all proven)")
+    print("self-test: PASS (clean pass + broken token + drift + DAG + file-pin hazard + schema catch + json map + variant catch + ladder catch + parity catch + source-override/refusal legs all proven)")
     return 0
 
 
@@ -1516,6 +1987,15 @@ def main() -> int:
         action="store_true",
         help="variant validity against the live catalog (R4 catch)",
     )
+    mutex.add_argument(
+        "--check-variant-parity",
+        action="store_true",
+        help=(
+            "pin->execution parity from live session rows (the sweep's "
+            "evidence method); fails on variant drift and on rows that ran "
+            "an agent label without the pin applying"
+        ),
+    )
     mutex.add_argument("--self-test", action="store_true", help="gate self-test")
     mutex.add_argument("--list", action="store_true", help="print generated file names")
     args = parser.parse_args()
@@ -1528,6 +2008,8 @@ def main() -> int:
         return check_pins()
     if args.check_variants:
         return check_variants()
+    if args.check_variant_parity:
+        return check_variant_parity()
     if args.self_test:
         return self_test()
     if args.check:

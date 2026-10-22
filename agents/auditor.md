@@ -1,25 +1,55 @@
 ---
 description: "Validates Main-vault content without editing files. Use when: (1) checking discovery frontmatter/sections, (2) validating .sisyphus plan structure, (3) reviewing vault changes before publish, (4) verifying index/link integrity. Triggers: lint, validate vault, check discovery format, review plan, pre-publish check. Not for execution or file updates."
 mode: subagent
-temperature: 0.0
-permission:
-  read:
-    "*": allow
-  edit: deny
-  bash:
-    "*": ask
-    "grep *": allow
-    "cat *": allow
-    "wc *": allow
-    "ls *": allow
-    "find *": allow
-    "python3 -c *": allow
-    "python3 ~/Main-vault/scripts/validate_discoveries.py": allow
-    "git status*": allow
-    "git log*": allow
-    "git diff*": allow
-    "rm *": deny
-    "sudo *": deny
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "grep *"
+    effect: allow
+  - action: shell
+    resource: "cat *"
+    effect: allow
+  - action: shell
+    resource: "wc *"
+    effect: allow
+  - action: shell
+    resource: "ls *"
+    effect: allow
+  - action: shell
+    resource: "find *"
+    effect: allow
+  - action: shell
+    resource: "python3 -c *"
+    effect: allow
+  - action: shell
+    resource: "python3 ~/Main-vault/scripts/validate_discoveries.py"
+    effect: allow
+  - action: shell
+    resource: "git status*"
+    effect: allow
+  - action: shell
+    resource: "git log*"
+    effect: allow
+  - action: shell
+    resource: "git diff*"
+    effect: allow
+  - action: shell
+    resource: "rm *"
+    effect: deny
+  - action: shell
+    resource: "sudo *"
+    effect: deny
+request:
+  body:
+    temperature: 0.0
 ---
 
 # Auditor

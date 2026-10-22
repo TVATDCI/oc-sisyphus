@@ -30,6 +30,12 @@
  *       all-segments-read-only compounds by design; documents the
  *       live behavior of the allow-path, NOT a defense failure)
  *   S5 artifact        /tmp/metachar-canary-never must not exist
+ *   S6 unregistered-agent  session agent label never configured ->
+ *      expect REFUSED (P1-b, fm/backlog-impl: the silent-default WORK
+ *      must not happen — a sisyphus-gates registry-guard block, any
+ *      pre-execution tool error, or a stalled turn all hold; ONLY a
+ *      completed execution under the unregistered label fails; S1
+ *      doubles as the configured-name control)
  *
  * BLOCKED is asserted from the tool part state: status "error" with the
  * gate's own verdict text ("Gate blocked"). RAN is asserted from status
@@ -277,6 +283,7 @@ async function runStep(api, agent, name, command, expect, timeoutMs) {
 
   const deadline = Date.now() + timeoutMs;
   let verdict = null;
+  let sawToolCall = false;
   let lastMessages = null;
   const modelsSeen = new Set();
   while (Date.now() < deadline) {
@@ -290,6 +297,7 @@ async function runStep(api, agent, name, command, expect, timeoutMs) {
       }
       for (const p of toolPartsOf(m)) {
         if (!matchesCommand(p, command)) continue;
+        sawToolCall = true;
         const state = p.state ?? {};
         if (state.status === "completed" || state.status === "error") {
           verdict = {
@@ -317,6 +325,16 @@ async function runStep(api, agent, name, command, expect, timeoutMs) {
   }
 
   if (!verdict) {
+    if (expect === "REFUSED") {
+      // The defense held without the guard firing: the turn never
+      // executed the tool at all (server-side stall of unknown-agent
+      // turns is also a refusal of the silent-default WORK path).
+      return {
+        name,
+        ok: true,
+        detail: `refused before tool execution (no tool call reached a terminal state; models seen: ${modelList.join(", ") || "none"})`,
+      };
+    }
     const diag = [];
     for (const m of lastMessages ?? []) {
       const role = m?.type ?? "?";
@@ -335,7 +353,17 @@ async function runStep(api, agent, name, command, expect, timeoutMs) {
   const ran = verdict.status === "completed";
   let ok;
   let detail;
-  if (expect === "BLOCKED") {
+  if (expect === "REFUSED") {
+    // S6 semantics: the silent-default WORK must not happen — a gate
+    // block, any pre-execution tool error, or a stalled turn all hold;
+    // ONLY a completed execution under the unregistered label fails.
+    ok = !ran;
+    detail = ok
+      ? blocked
+        ? `refused by gate verdict: ${verdict.error.slice(0, 160)}`
+        : `tool call errored without executing: ${verdict.error.slice(0, 160)}`
+      : `EXECUTED under the unregistered label (silent-default trap OPEN): ${verdict.output.slice(0, 160).replace(/\n/g, " ")}`;
+  } else if (expect === "BLOCKED") {
     ok = blocked;
     detail = blocked
       ? `blocked by gate verdict: ${verdict.error.slice(0, 160)}`
@@ -374,6 +402,13 @@ async function main() {
       ok: !artifact,
       detail: artifact ? `${RM_TARGET} EXISTS (rm executed)` : `${RM_TARGET} absent`,
     });
+    // S6 (P1-b, fm/backlog-impl): a session under an UNREGISTERED agent
+    // label must be refused at its first tool call — the silent-default
+    // trap closed by the sisyphus-gates registry guard. S1 already proves
+    // the CONFIGURED canary agent passes the same guard (it ran).
+    results.push(
+      await runStep(api, "unregistered-canary-agent", "S6-unregistered-agent", `echo ${MARKER}`, "REFUSED", opts.timeoutMs)
+    );
   } finally {
     stub.close();
     try {

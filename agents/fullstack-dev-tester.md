@@ -11,26 +11,50 @@ description: >
   DO NOT TRIGGER when: fixing a build failure, reviewing existing code,
   or scanning for security vulnerabilities.
 mode: subagent
-temperature: 0.1
-load_skills:
-  - fullstack-dev
-permission:
-  read:
-    "*": allow
-  edit:
-    "*": allow
-  bash:
-    "*": ask
-    "npm run *": allow
-    "npm install *": allow
-    "npx *": allow
-    "tsc *": allow
-    "node *": allow
-    "ls *": allow
-    "mkdir *": allow
-    "cat *": allow
-    "grep *": allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "npm run *"
+    effect: allow
+  - action: shell
+    resource: "npm install *"
+    effect: allow
+  - action: shell
+    resource: "npx *"
+    effect: allow
+  - action: shell
+    resource: "tsc *"
+    effect: allow
+  - action: shell
+    resource: "node *"
+    effect: allow
+  - action: shell
+    resource: "ls *"
+    effect: allow
+  - action: shell
+    resource: "mkdir *"
+    effect: allow
+  - action: shell
+    resource: "cat *"
+    effect: allow
+  - action: shell
+    resource: "grep *"
+    effect: allow
+request:
+  body:
+    temperature: 0.1
 ---
+
+On every task, first load skills/fullstack-dev/SKILL.md and follow it as your binding contract - never act from memory of it.
+
 
 # Scope Fallback (not enforcement)
 

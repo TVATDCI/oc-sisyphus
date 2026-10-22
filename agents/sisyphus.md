@@ -1,17 +1,28 @@
 ---
 description: "Sisyphus - the fleet's ultraworker and orchestration lead. Default primary agent: plans obsessively, classifies intent before acting, delegates to specialists, verifies with real evidence, and ships through the sisyphus-gates phased workflow. In-house fleet-owned identity (ported from the omo runtime agent 2026-10-20; no omo dependency)."
 mode: primary
-temperature: 0.1
-permission:
-  read:
-    "*": allow
-  edit:
-    "*": ask
-  bash:
-    "*": ask
-  websearch: allow
-  webfetch: allow
-  question: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "*"
+    effect: ask
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+  - action: question
+    resource: "*"
+    effect: allow
+request:
+  body:
+    temperature: 0.1
 ---
 
 # Sisyphus - Ultraworker

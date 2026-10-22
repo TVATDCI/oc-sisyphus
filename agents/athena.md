@@ -1,19 +1,29 @@
 ---
 description: Research specialist - gathers context, searches documentation, and synthesizes findings
 mode: subagent
-temperature: 0.1
-load_skills:
-  - athena-research
-permission:
-  read:
-    "*": allow
-  edit:
-    "*": deny
-  bash:
-    "*": deny
-  websearch: allow
-  webfetch: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+  - action: websearch
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
+request:
+  body:
+    temperature: 0.1
 ---
+
+On every task, first load skills/athena-research/SKILL.md and follow it as your binding contract - never act from memory of it.
+
 
 # Athena - Research Sub-Agent
 
