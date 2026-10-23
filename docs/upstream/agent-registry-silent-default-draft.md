@@ -94,3 +94,40 @@ Runtime behavior at the same time:
 - Known gap (deliberate, source-bound): pure-chat runs that never call a
   tool cannot be blocked on any V2 hook (session hooks cannot fail; only
   tool execute.before has a failure channel) — detect-only for that class.
+
+---
+
+## Addendum 2026-10-23 — v2.1.4 re-verification (battery, not filed; stays under the captain's word)
+
+Re-tested during the fleet's 2.1.4 update evaluation (scratch-sandbox
+battery, differential against the pinned 2.1.2; evidence:
+`~/.sisyphus/evidence/battery-opencode-2.1.4-phase2-2026-10-23.md`):
+
+1. **The silent-default half is FIXED at the source by v2.1.4** — upstream
+   PR #58355 (`fix(core): use the agent's model when a session has none`).
+   Differentially proven with the same session shape (agent reference, no
+   committed model, scriptable stub provider as the agent's pin):
+   - 2.1.2: the turn is served by DEFAULT resolution (observed
+     `opencode/flint-40b-free`), the agent label stamped, the agent's own
+     model never consulted — the exact trap this draft describes.
+   - 2.1.4: the turn is served by the AGENT's model.
+   If the draft is ever filed, the model-resolution half should be dropped
+   or reframed as "fixed in 2.1.4 (#58355)".
+
+2. **The registry-surface half persists in 2.1.4, with context precision:**
+   - `opencode api --standalone agent.list` still returns `{"data":[]}` on
+     2.1.4 (0 of 24 configured agents, built-ins absent) — unchanged from
+     2.1.0/2.1.2.
+   - A `serve` instance's HTTP `GET /api/agent` DOES carry the configured
+     set (observed 32 = 24 configured + built-ins) on BOTH 2.1.2 and 2.1.4 —
+     the darkness is specific to the standalone/api-CLI surface, not the
+     registry itself. Registration timing is racy across server starts
+     (7 → 32 observed across two fresh boots of identical config).
+   - `command.list` via `--server` + password lists built-ins (`init`,
+     `review`) on both versions; global `~/.config/opencode/commands/*.md`
+     are absent from that listing on both (client-side merge path).
+
+3. **Citation refresh for the body:** `packages/core/src/tool.ts` no longer
+   exists at v2.1.4 (tool-dir refactor); `subagent.ts` model-precedence and
+   `run.ts` no-model session.create citations should be re-anchored at the
+   filing target's tag before filing.
