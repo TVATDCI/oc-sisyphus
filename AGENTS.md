@@ -19,23 +19,13 @@ Use **bd** (beads) for task tracking. Run `bd prime` for full workflow context.
 
 ### bd subcommand phase policy (gate v0.4.1+)
 
-**Phase-agnostic** (work in all phases, including fail-closed / session-begin): all reads (`list`, `show`, `search`, `memories`, `stats`, `ready`, `blocked`, `dep`, `doctor`, `stale`, `orphans`, `lint`, `preflight`, `prime`) + append-only record writes (`remember`, `create`, `update`).
-
-**Phase-gated** (blocked outside execution): `close` (requires evidence logged), `defer`, `supersede`, `forget` (deletion), `mol`, `human`, `setup`, `dolt` (incl. `dolt push`, session-close gate), `edit` (interactive), plus the brain-hxm (P0) destructive extensions: `delete`, `sql`, `prune`, `purge`, `gc`, `compact`, `flatten`, `batch`, `import`, `admin` (top-level cover — `admin reset`), `hooks` (top-level cover — `hooks install` persistence vector).
-
-For memory writes via `bd remember`, use `python3 scripts/bd_remember.py` (gate-safe wrapper — passes the `|` delimiter inside Python argv, never hits the shell-safety gate).
+- Full phase-agnostic vs phase-gated subcommand lists + gate-safe memory writes via `scripts/bd_remember.py` → `skill:bd-phase-policy`; load it before any `bd` subcommand outside an execution phase.
 
 - If the wrapper warns a category is not in the canonical set, re-issue with a canonical one (`constraint`, `decision`, `dependency`, `exact`, `files`, `intent`, `next`, `preference`, `reason`) — never store under a warned category.
 
-## Graph Shapes (Delegation Vocabulary)
+## Delegation
 
-Name the delegation shape when fanning out work (source: graph-engineering §15):
-
-- **chain** — serial `task()` calls; simplest, slowest, easiest to trace.
-- **diamond** — parallel fan-out, merge as nodes arrive (independent angles).
-- **barrier** — parallel fan-out, merge ONLY when ALL N terminate (gates: momus/reviewer/regression — partial results mislead).
-
-**Fan-out governance (routing default, E-trim 2026-09-27):** N≤3 per wave; declare node count; one `execution-receipt` per node before merge. If N× the per-window band (§17 #2) exceeds the comfortable band, **collapse diamond→chain by default** — parallelism must buy wall-time the operator actually consumes.
+- Name the delegation shape (chain / diamond / barrier) and the node count when fanning out — shapes, N≤3 fan-out governance, and execution-receipt per node before merge live in `skill:delegation-shapes`.
 
 ## Context Efficiency
 
@@ -44,14 +34,13 @@ Name the delegation shape when fanning out work (source: graph-engineering §15)
 - 🟡 **50–80K** — next slice smaller
 - 🔴 **>80K** — split or archive
 - Thinking budget: 10K tokens/turn max
-- Tier routing (wallet frame, e66b212): mechanical → zai flat-rate tiers; judgment/gates → opencode-go diversity primaries (kimi-k3/grok-4.7 — grok-4.6 retired upstream, roster-verified 2026-10-22); zai-max = fallback floor; opencode pay-go = last resort. Optimize quota + pay-go dollars — session list-price dollars are NOT wallet impact.
+- Tier routing + fallback floors for `task()` dispatches (judging/verify nodes never land a cheap model, even as fallback) → `skill:tier-routing`
 - Always report: `Executing with [model] via [persona]` — the model is the one the SESSION ROW shows as served, **never the pin read back as fact** (silent-default class still live until the desk pin flips; `registry-guard.js` + the parity leg stay load-bearing). Parity check: `scripts/generate-pipeline-personas.py --check-variant-parity`. Pin source of truth: per-desk repo variants `omo.ddd.jsonc` / `omo.tnt.jsonc`, hostname-resolved. Full provenance: `skill:system-reference`.
-- **Judging/verify nodes never land a cheap model — even as fallback (§17 #3):** review, audit, `momus`, `oracle`, and `post-reviewer` nodes must prune cheap models from their fallback chains. One bad cheap-model review inside a graph means downstream agents fix non-bugs, and you can't trace which node started it.
 - **Graph token multiplier (§17 #2):** fan-out multiplies total token burn across parallel windows. A wave running N parallel `task()` nodes should budget roughly **N×** the per-window band above (🟢/🟡/🔴); background fan-outs count against the same budget. If N× exceeds the comfortable band, collapse to serial (`chain`) or reduce N.
 
 ### Compaction & Memory Protocol (full detail: `skill:compaction`)
 
-Trigger compaction at **50% usage** (not 100%). The full protocol — 5 loss categories, immutable-system-prompt rule, handoff schema, hotcache rotation, injection policy, degraded mode, write-before-compaction checklist — lives in `skill:compaction`. Two parts run ALWAYS, not only at compaction time:
+Trigger compaction at **50% usage** (not 100%) — the full protocol lives in `skill:compaction`. Two parts of it run ALWAYS, not only at compaction time:
 
 - **After every completed turn**, capture new facts in the 5 loss categories (exact values, hard constraints, decision reasoning, cross-task dependencies, implicit preferences) via `scripts/bd_remember.py` — do not wait for compaction.
 - **At session boundaries** (begin / continue / post-compaction), inject stored memories: hard constraints first, then recency — labeled `[FROM MEMORY]`.
@@ -92,10 +81,11 @@ Fable 5 / Opus 4.8), kept where they serve this system's gate-hardened posture.
 ## Shell Safety
 
 Always use non-interactive flags: `cp -f`, `mv -f`, `rm -f`, `scp -o BatchMode=yes`, `ssh -o BatchMode=yes`, `apt-get -y`, `HOMEBREW_NO_AUTO_UPDATE=1`. Full reference: `skill:shell-safety`.
+- Throwaway working files: one scratch root per task (e.g. `/tmp/<task>-<rand>/`) — clean it up or record its exact path before session end. A delivered lane answer or merged report never lives only in scratch: archive it to a durable `.sisyphus/` evidence path in the same turn.
 
 ## Compound bash & Layer-3-first (brain-2q4)
 
-The `sisyphus-gates` metachar defense is **enforced live on the DEFAULT path, in EVERY phase** (proof history: `skill:system-reference`). A compound containing `|`, `&&`, `||`, `;`, `&`, `>`, `>>`, `<`, `2>&1`, `$(…)`, or backticks is **blocked in all phases unless every segment is safe-read-only** (Layer 4.5 allow-path, brain-2q4 P2 — `git status && git log` runs by design; `ls && rm -rf …` blocks because the second segment is destructive). Work with it:
+The `sisyphus-gates` metachar defense is **enforced live on the DEFAULT path, in EVERY phase — on the opencode harness only** (pi and every other harness never load it: treat each enforcement claim in this file as harness-scoped and unverified on any other harness until a live canary proves it there; proof history: `skill:system-reference`). A compound containing `|`, `&&`, `||`, `;`, `&`, `>`, `>>`, `<`, `2>&1`, `$(…)`, or backticks is **blocked in all phases unless every segment is safe-read-only** (Layer 4.5 allow-path, brain-2q4 P2 — `git status && git log` runs by design; `ls && rm -rf …` blocks because the second segment is destructive). Work with it:
 
 - **Layer 3 tools for file content** — `read`, `grep`, `glob`; never gated.
 - **Split compounds into bare single commands** — `git status`, then `git log --oneline -5`, as separate calls (Layer 4 allowlist).
@@ -108,14 +98,4 @@ The `sisyphus-gates` metachar defense is **enforced live on the DEFAULT path, in
 - **Language rules** → loaded by `scripts/load-rules.sh` (wave-executor Step 0) · **Agent full prompts** → loaded at delegation time
 - **Toolkits** → `skill:toolkit-lsp` (LSP) · `skill:toolkit-research` (web/docs/GitHub) · `skill:toolkit-session` (session history)
 - **Code search** (semantic, ~98% fewer tokens than grep+read) → `semble search "description" ./path` or the `semble` MCP tools — prefer over grep/glob/read for code-understanding questions
-
-<!-- CODEGRAPH_START -->
-## CodeGraph
-
-In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
-
-- **MCP tools** (when available): `codegraph_explore` answers most code questions in one call — the relevant symbols' verbatim source plus the call paths between them. `codegraph_node` returns one symbol's source + callers, or reads a whole file with line numbers. If the tools are listed but deferred, load them by name via tool search.
-- **Shell** (always works): `codegraph explore "<symbol names or question>"` and `codegraph node <symbol-or-file>` print the same output.
-
-If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
-<!-- CODEGRAPH_END -->
+- **CodeGraph-indexed repos** (`.codegraph/` at the repo root) → `skill:codegraph-usage` — before grep/find/read; no `.codegraph/` directory → skip CodeGraph entirely

@@ -146,7 +146,8 @@ git log --since="<ts>" --oneline   (workdir=/home/vladi/.pi/agent)
 > the gate blocks fetch in the current phase, label the report `vs last-fetched
 > origin`. When `git log --since` output hits its `-10` cap, re-run with a
 > raised `-n` (or an explicit `--count`) so the commit picture is complete —
-> "cap hit" means the sweep is unfinished, not a result.
+> until the re-run lands, report **"at least N commits"**, never an exact
+> count: "cap hit" means the sweep is unfinished, not a result.
 
 Present changes grouped by repo. Flag anything that contradicts the hotcache
 (e.g., files modified after the handoff timestamp that weren't mentioned —
