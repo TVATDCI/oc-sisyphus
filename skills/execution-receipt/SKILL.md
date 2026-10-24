@@ -276,6 +276,7 @@ grep '"bead":"brain-xxx"' "$HOME/.sisyphus/evidence/execution-receipts.jsonl"
 - Use `--key "task-{N}"` for `bd remember` receipts to enable in-place retry updates.
 - Counter is monotonic — never decrement.
 - Receipts survive compaction because they live in `bd remember` and the JSONL log.
+- Toggle a tracking item (bead, harness task, checklist entry) to done only after its verification query returns clean — never on the assumption the pass is finished.
 
 ---
 
