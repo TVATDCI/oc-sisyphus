@@ -22,7 +22,7 @@
    │ └── commands/ # Slash-command definitions (reflection, session-close, session-begin, checkpoint, prime — the P1-d wrapper restoration: session-begin + checkpoint are skill-load wrappers, /prime carries a !`bd prime` shell block)
    │
    ├── 3. SKILL LAYER
-    │ ├── skills/ # 47 real skill directories + 4 symlinked SKILL.md (herdr, herdr-collab from ~/.agents; shell-safety, git-commit-message from ~/dotfiles/agents/skills — B-track unification canonicals, 2026-10-01) + _shared refs (52 total)
+    │ ├── skills/ # 49 real skill directories (compaction + doc-drift-guard added 2026-10-24 by the backpass charter apply) + 4 symlinked SKILL.md (herdr, herdr-collab from ~/.agents; shell-safety, git-commit-message from ~/dotfiles/agents/skills — B-track unification canonicals, 2026-10-01) + _shared refs (54 total)
    │ ├── each has SKILL.md + optional scripts/evals
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator; operator-owned fan-out review: orchestrator-review (fork of plugin-bundled review-work; Sisyphus gate lanes — code-review + security-auditor + ui-auditor + goal-verify + conditional regression-gate + oracle second-opinion)
    │

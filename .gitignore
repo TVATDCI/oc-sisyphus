@@ -49,3 +49,6 @@ lsp-install-decisions.json
 # Archived session state (historical snapshots)
 archive/
 *.bak.*
+
+# backpass repo config (zai model pins, machine-shared)
+.backpassrc.json
