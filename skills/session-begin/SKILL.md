@@ -140,6 +140,14 @@ git log --since="<ts>" --oneline   (workdir=/home/vladi/.pi/agent)
 > `git status`, `git log` are on the safe-bash allowlist unconditionally).
 > Bare `git status` / `git log` pass in every phase.
 
+> **Fetch before reporting ahead/behind; never report a capped log as complete.**
+> Sync state vs origin is only meaningful after `git fetch` per canonical repo —
+> "clean, current with origin/main" from a stale origin is a false current. If
+> the gate blocks fetch in the current phase, label the report `vs last-fetched
+> origin`. When `git log --since` output hits its `-10` cap, re-run with a
+> raised `-n` (or an explicit `--count`) so the commit picture is complete —
+> "cap hit" means the sweep is unfinished, not a result.
+
 Present changes grouped by repo. Flag anything that contradicts the hotcache
 (e.g., files modified after the handoff timestamp that weren't mentioned —
 suggests operator or pi did work opencode doesn't know about).
