@@ -1,7 +1,6 @@
 ---
 name: compaction
-description: Compaction and context-management protocol — fire at ~50% context usage, when compaction is imminent or just fired, when writing or validating a session handoff/hotcache, or when context looks degraded: 5 loss categories, bd_remember extraction, handoff schema, hotcache rotation, memory injection, degraded mode, write-before-compaction checklist.
-user-invocable: false
+description: "Compaction and context-management protocol — fire at ~50% context usage, when compaction is imminent or just fired, when writing or validating a session handoff/hotcache, or when context looks degraded: 5 loss categories, bd_remember extraction, handoff schema, hotcache rotation, memory injection, degraded mode, write-before-compaction checklist."
 metadata:
   internal: true
 ---

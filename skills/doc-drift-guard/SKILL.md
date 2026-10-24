@@ -1,7 +1,6 @@
 ---
 name: doc-drift-guard
-description: Decide COMPLETE-CODEBASE.md sync scope when a change touches skills, agents, routing, permissions, canonical paths, or workflow docs — the routine-model-swap exception (commit-message-only) vs mandatory timeline+prose sync, and routing pin ownership (generated pipeline cast vs per-desk omo.*.jsonc variants).
-user-invocable: false
+description: "Decide COMPLETE-CODEBASE.md sync scope when a change touches skills, agents, routing, permissions, canonical paths, or workflow docs — the routine-model-swap exception (commit-message-only) vs mandatory timeline+prose sync, and routing pin ownership (generated pipeline cast vs per-desk omo.*.jsonc variants)."
 metadata:
   internal: true
 ---
