@@ -122,6 +122,15 @@ python3 scripts/bd_remember.py --scope global --turn 12 --category constraint --
 
 **Signal when the context-management loop is compromised.** Do not silently operate on degraded context.
 
+**Deterministic trigger scan (Swamp Club Guard 2, Oracle 2a — run FIRST):**
+post-compaction and post-resume (session-begin Step 1), run
+`python3 scripts/check_degraded_mode.py` — it mechanically asserts
+handoff-schema completeness and the mechanical trigger facts below and
+emits the trigger list (exit 1 = triggers present). Detection is code;
+the degraded-mode RESPONSE (below) stays model judgment. A scan failure
+is itself a fail-closed trigger (conservative direction — a false
+positive lands safe).
+
 **Degraded mode triggers:**
 - Compaction occurred but handoff message is missing or incomplete
 - Relevant memories exist in `bd remember` but were NOT injected
@@ -169,7 +178,9 @@ python3 scripts/bd_remember.py --scope global --turn 12 --category constraint --
 3. Write structured handoff message to `~/.sisyphus/hotcache.md` (rotate: copy hotcache.md → hotcache-prev.md first, then overwrite)
 4. Archive detailed evidence to `~/.sisyphus/evidence/compaction-{timestamp}.md`
 5. Inject preserved facts from bd remember into working context
-6. Check for degraded mode conditions; signal if triggered
+6. Run the deterministic trigger scan: `python3 scripts/check_degraded_mode.py`;
+   signal per Observable Degraded Mode if triggers fired (exit 1), and treat
+   scan failure (exit 2) as degraded too — fail-closed
 7. Continue with compact context
 ```
 
