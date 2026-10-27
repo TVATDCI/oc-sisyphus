@@ -34,9 +34,35 @@ Never hand-run:  bd remember "scope=...|turn=...|..."  (gate-blocked).
 """
 
 import argparse
+import datetime
+import json
 import os
 import subprocess
 import sys
+
+
+def record_status(status_file, ok, error=None):
+    """Record the outcome of the bd invocation for the degraded-mode scan
+    (Swamp Club Guard 2, Oracle 2a). Written after every REAL bd call
+    (never on --dry-run or pre-invocation validation exits). Consumed by
+    scripts/check_degraded_mode.py as the 'extractor failed last turn'
+    mechanical trigger fact. Best-effort: a status-write failure never
+    fails the wrapper itself."""
+    try:
+        payload = {
+            "last_run": datetime.datetime.now(datetime.timezone.utc).isoformat(
+                timespec="seconds"
+            ),
+            "ok": bool(ok),
+            "error": str(error) if error else None,
+        }
+        tmp = status_file + ".tmp"
+        os.makedirs(os.path.dirname(status_file) or ".", exist_ok=True)
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh)
+        os.replace(tmp, status_file)
+    except OSError:
+        pass  # status is instrumentation, never the failure mode
 
 
 def build_record(scope: str, turn: str, category: str, key: str, value: str) -> str:
@@ -100,6 +126,14 @@ def main() -> int:
         "--dry-run", action="store_true",
         help="print the record and bd command without executing",
     )
+    parser.add_argument(
+        "--status-file",
+        default=os.path.expanduser("~/.sisyphus/extractor-status.json"),
+        help=(
+            "extractor status sink for the degraded-mode scan "
+            "(default: ~/.sisyphus/extractor-status.json)"
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -158,7 +192,8 @@ def main() -> int:
             bd_cmd, capture_output=True, text=True,
             encoding="utf-8", errors="replace", check=False, env=bd_env,
         )
-    except FileNotFoundError:
+    except FileNotFoundError as err:
+        record_status(args.status_file, ok=False, error="bd not found on PATH")
         print(
             "ERROR: bd not found — is it installed and on PATH?",
             file=sys.stderr,
@@ -166,12 +201,20 @@ def main() -> int:
         return 1
 
     if result.returncode != 0:
+        record_status(
+            args.status_file,
+            ok=False,
+            error=f"bd remember exit {result.returncode}: "
+                  f"{result.stderr.strip()[:200]}",
+        )
         print(
             f"bd remember failed (exit {result.returncode}): "
             f"{result.stderr.strip()}",
             file=sys.stderr,
         )
         return result.returncode
+
+    record_status(args.status_file, ok=True)
 
     if result.stdout.strip():
         print(result.stdout.strip())

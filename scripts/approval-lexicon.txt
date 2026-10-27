@@ -1,0 +1,26 @@
+# approval-lexicon.txt — single reviewable source for the bd-proposal
+# approval-claim lexemes (Swamp Club Guard 1, Oracle 1a — ADOPT).
+#
+# Consumed by scripts/screen_bd_proposals.py at session-begin Step 5.
+# A proposal whose value contains any lexeme below (case-insensitive
+# substring) is flagged REQUIRES-OPERATOR-CONFIRM: the value claims
+# operator approval, and approval claims must originate operator-side,
+# never pi-side (the T1 memory-poisoning channel — a plausible false
+# constraint, once promoted, persists and propagates back to pi via the
+# forward bridge, poisoning both contexts).
+#
+# Format: one lexeme per line. Lines starting with '#' and blank lines
+# are ignored. Matching is case-insensitive substring over the proposal
+# value. A false positive lands safe: it only means the operator gets
+# asked. The screen flags, never decides — promotion stays the operator's.
+#
+# Maintenance: lexicon drift is reviewed at scaffolding-audit cadence
+# (Oracle 1a ruling). Keep the set SMALL and approval-shaped; do not add
+# words that merely co-occur with authority (e.g. "operator" alone would
+# flag every fact that mentions the operator at all).
+
+operator said
+approved
+allowed
+confirmed
+skip
