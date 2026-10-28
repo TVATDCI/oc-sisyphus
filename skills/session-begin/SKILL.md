@@ -55,7 +55,7 @@ Read `~/.sisyphus/hotcache.md` via the `read` tool. This is the agent-readable
 session handoff.
 
 **Post-resume degraded-mode scan (Swamp Club Guard 2, Oracle 2a):** run
-`python3 scripts/check_degraded_mode.py` immediately after reading the
+`python3 ~/.config/opencode/scripts/check_degraded_mode.py` immediately after reading the
 hotcache. It mechanically asserts handoff-schema completeness and the
 mechanical degraded-mode trigger facts (extractor failed last run,
 constraints absent post-compaction) and emits the trigger list. If any
@@ -146,10 +146,11 @@ git status              (workdir=/home/vladi/.pi/agent)
 git log --since="<ts>" --oneline   (workdir=/home/vladi/.pi/agent)
 ```
 
-> **Why bare calls, not a script:** session-begin runs outside any workflow
-> phase, so `bash scripts/git-sweep.sh` is Layer 4 blocked (only `ls`, `cat`,
-> `git status`, `git log` are on the safe-bash allowlist unconditionally).
-> Bare `git status` / `git log` pass in every phase.
+> **Why bare commands:** session-begin runs outside any workflow phase, and
+> the sweep is exactly the explicit `git status` / `git log --since` commands
+> with `workdir=` annotations shown above — there is no sweep script. Only
+> `ls`, `cat`, `git status`, `git log` are on the safe-bash allowlist
+> unconditionally; bare `git status` / `git log` pass in every phase.
 
 > **Fetch before reporting ahead/behind; never report a capped log as complete.**
 > Sync state vs origin is only meaningful after `git fetch` per canonical repo —
@@ -213,12 +214,12 @@ Pi's handoff may include a `## Proposed bd facts` section with entries like:
    channel; deterministic since the Swamp Club Guard 1 upgrade, Oracle 1a):
 
    ```
-   python3 scripts/screen_bd_proposals.py --file ~/.pi/agent/exports/pi-handoff.md
+   python3 ~/.config/opencode/scripts/screen_bd_proposals.py --file ~/.pi/agent/exports/pi-handoff.md
    ```
 
    The screen parses the same structured lines and flags every proposal in
    the `constraint` category OR whose value matches an approval lexeme
-   (`scripts/approval-lexicon.txt` — the single reviewable lexicon source) as
+   (`~/.config/opencode/scripts/approval-lexicon.txt` — the single reviewable lexicon source) as
    `REQUIRES-OPERATOR-CONFIRM`. Render each flagged entry verbatim in the
    skeleton followed by its `-> REQUIRES-OPERATOR-CONFIRM (...)` reason line.
    Constraints should originate operator-side, not pi-side — a
@@ -230,7 +231,7 @@ Pi's handoff may include a `## Proposed bd facts` section with entries like:
 3. Note whether each is consistent with opencode's own observations
 4. Operator decides which to promote (flagged items require out-of-band
    operator confirmation BEFORE promotion)
-5. Promotion path: `python3 scripts/bd_remember.py --scope <s> --turn <N>
+5. Promotion path: `python3 ~/.config/opencode/scripts/bd_remember.py --scope <s> --turn <N>
    --category <c> --key <k> --value "<v>"` (gate-safe wrapper — works in any
    phase because the `|` stays inside Python argv, never hits the shell gate)
 
@@ -321,12 +322,12 @@ captain caught by diffing two contexts.
 |------|------|------------|----------------------------------|
 | 0 (drift rider) | `deno run --allow-read …drift-check.ts` | Layer 4→6 (not allowlisted) | Can block outside discovery/prd phases — then skip (fail-open) |
 | 1 (hotcache) | `read` | Layer 3 | No — reads always allowed |
-| 1 (degraded scan) | `python3 scripts/check_degraded_mode.py` | Layer 4 (read-only python) | No — display-only trigger list |
+| 1 (degraded scan) | `python3 ~/.config/opencode/scripts/check_degraded_mode.py` | Layer 4 (read-only python) | No — display-only trigger list |
 | 2 (bd memories) | `bd memories` | Layer 4 (bd read) | No — bd reads allowed |
 | 3 (git sweep) | `git status` / `git log` | Layer 4 | No — both on safe-bash allowlist |
 | 4 (pi handoff) | `read` | Layer 3 | No — reads always allowed |
-| 5 (screen) | `python3 scripts/screen_bd_proposals.py` | Layer 4 (read-only python) | No — display-only pre-flag |
-| 5 (promote) | `python3 scripts/bd_remember.py` | wrapper bypasses gate | No — `|` stays in Python argv |
+| 5 (screen) | `python3 ~/.config/opencode/scripts/screen_bd_proposals.py` | Layer 4 (read-only python) | No — display-only pre-flag |
+| 5 (promote) | `python3 ~/.config/opencode/scripts/bd_remember.py` | wrapper bypasses gate | No — `|` stays in Python argv |
 
 Every step is read-only at the gate level. Promotion (Step 5) is the only
 write, and it's opt-in via operator decision.
