@@ -83,13 +83,13 @@ During compaction, write a structured handoff message (NOT freeform prose):
 
 **How to extract:**
 - After each turn, scan the exchange for facts in the 5 categories
-- Store via the gate-safe wrapper: `python3 scripts/bd_remember.py --scope <global|bead-ID> --turn <N> --category <cat> --key <dedup-key> --value "<fact>"`. Hand-running `bd remember "scope=...|turn=...|..."` is shell-safety-gate-blocked (the canonical record format uses `|` as a delimiter; the wrapper assembles the pipe-string internally in Python so the gate never sees the `|`).
+- Store via the gate-safe wrapper: `python3 ~/.config/opencode/scripts/bd_remember.py --scope <global|bead-ID> --turn <N> --category <cat> --key <dedup-key> --value "<fact>"`. Hand-running `bd remember "scope=...|turn=...|..."` is shell-safety-gate-blocked (the canonical record format uses `|` as a delimiter; the wrapper assembles the pipe-string internally in Python so the gate never sees the `|`).
 - Deduplicate by `{scope}:{category}:{key}` (the wrapper passes this as `bd --key` for update-in-place)
 - If confidence is low, do NOT store
 
 **Example:**
 ```bash
-python3 scripts/bd_remember.py --scope global --turn 12 --category constraint --key new_deps --value "no new dependencies"
+python3 ~/.config/opencode/scripts/bd_remember.py --scope global --turn 12 --category constraint --key new_deps --value "no new dependencies"
 ```
 
 ---
@@ -124,7 +124,7 @@ python3 scripts/bd_remember.py --scope global --turn 12 --category constraint --
 
 **Deterministic trigger scan (Swamp Club Guard 2, Oracle 2a — run FIRST):**
 post-compaction and post-resume (session-begin Step 1), run
-`python3 scripts/check_degraded_mode.py` — it mechanically asserts
+`python3 ~/.config/opencode/scripts/check_degraded_mode.py` — it mechanically asserts
 handoff-schema completeness and the mechanical trigger facts below and
 emits the trigger list (exit 1 = triggers present). Detection is code;
 the degraded-mode RESPONSE (below) stays model judgment. A scan failure
@@ -174,11 +174,11 @@ positive lands safe).
 ```
 1. Detect 50% threshold (token estimate)
 2. Run post-turn extractor on recent turns (capture 5 loss categories) via
-   scripts/bd_remember.py (intent / files / decision / next categories)
+   ~/.config/opencode/scripts/bd_remember.py (intent / files / decision / next categories)
 3. Write structured handoff message to `~/.sisyphus/hotcache.md` (rotate: copy hotcache.md → hotcache-prev.md first, then overwrite)
 4. Archive detailed evidence to `~/.sisyphus/evidence/compaction-{timestamp}.md`
 5. Inject preserved facts from bd remember into working context
-6. Run the deterministic trigger scan: `python3 scripts/check_degraded_mode.py`;
+6. Run the deterministic trigger scan: `python3 ~/.config/opencode/scripts/check_degraded_mode.py`;
    signal per Observable Degraded Mode if triggers fired (exit 1), and treat
    scan failure (exit 2) as degraded too — fail-closed
 7. Continue with compact context
