@@ -1,0 +1,180 @@
+{
+  "recorded-at": "2026-10-28T17:32:54.349Z",
+  "surface-scope": "sis",
+  "last-audit-commit": {
+    "~/.config/opencode": "7b798add860cddc8a935f351b325c103a2e47d63"
+  },
+  "model-state": {
+    "source": {
+      "path": "omo.tnt.jsonc",
+      "sha256": "564d151712fec760247bbb1d9fdd126b1462d6788ba89299bf9213d2891e9276"
+    },
+    "bindings": {
+      "agents/sisyphus": "zai-coding-plan/glm-5.3",
+      "agents/hephaestus": "zai-coding-plan/glm-5.3",
+      "agents/oracle": "opencode-go/kimi-k3",
+      "agents/librarian": "zai-coding-plan/glm-5.3-flash",
+      "agents/explore": "zai-coding-plan/glm-5.3-flash",
+      "agents/multimodal-looker": "zai-coding-plan/glm-5.3-flash",
+      "agents/prometheus": "zai-coding-plan/glm-5.3",
+      "agents/metis": "zai-coding-plan/glm-5.3",
+      "agents/momus": "opencode-go/grok-4.6",
+      "agents/atlas": "zai-coding-plan/glm-5.3",
+      "agents/sisyphus-junior": "zai-coding-plan/glm-5.3-flash",
+      "agents/archivist": "zai-coding-plan/glm-5.3-flash",
+      "agents/athena": "zai-coding-plan/glm-5.3-flash",
+      "agents/auditor": "zai-coding-plan/glm-5.3",
+      "agents/explorer": "zai-coding-plan/glm-5.3-flash",
+      "agents/post-reviewer": "zai-coding-plan/glm-5.3",
+      "agents/reviewer": "zai-coding-plan/glm-5.3",
+      "agents/fullstack-dev-tester": "zai-coding-plan/glm-5.3",
+      "categories/visual-engineering": "zai-coding-plan/glm-5.3-flash",
+      "categories/ultrabrain": "opencode-go/qwen3.8-max",
+      "categories/deep": "zai-coding-plan/glm-5.3",
+      "categories/artistry": "opencode-go/minimax-m3",
+      "categories/quick": "zai-coding-plan/glm-5.3-flash",
+      "categories/unspecified-low": "opencode-go/gpt-5.6-luna",
+      "categories/unspecified-high": "zai-coding-plan/glm-5.3",
+      "categories/writing": "zai-coding-plan/glm-5.3-flash",
+      "categories/git-commit-message": "zai-coding-plan/glm-5.3-flash"
+    },
+    "fallback-chains": {
+      "agents/sisyphus": [
+        "opencode-go/glm-5.3",
+        "opencode-go/grok-4.6",
+        "opencode-go/kimi-k2.7-code",
+        "opencode/glm-5.3"
+      ],
+      "agents/hephaestus": [
+        "opencode-go/kimi-k2.7-code",
+        "opencode-go/glm-5.2",
+        "opencode/glm-5.3"
+      ],
+      "agents/oracle": [
+        "opencode-go/grok-4.6",
+        "zai-coding-plan/glm-5.3",
+        "opencode/deepseek-v4-pro"
+      ],
+      "agents/librarian": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode-go/longcat-2.0",
+        "opencode/glm-5.3-flash"
+      ],
+      "agents/explore": [
+        "opencode-go/qwen3.8-flash",
+        "opencode-go/gpt-5.6-luna",
+        "opencode/glm-5.3-flash"
+      ],
+      "agents/multimodal-looker": [
+        "opencode-go/mimo-v2.5-pro",
+        "opencode-go/deepseek-v4-flash-vision-exp"
+      ],
+      "agents/prometheus": [
+        "opencode-go/kimi-k2.7-code",
+        "opencode-go/glm-5.2",
+        "opencode/glm-5.3"
+      ],
+      "agents/metis": [
+        "opencode-go/qwen3.8-max",
+        "opencode-go/glm-5.2",
+        "opencode/glm-5.3"
+      ],
+      "agents/momus": [
+        "opencode-go/qwen3.8-max",
+        "zai-coding-plan/glm-5.3",
+        "opencode/glm-5.3"
+      ],
+      "agents/atlas": [
+        "opencode-go/kimi-k2.7-code",
+        "opencode-go/glm-5.2",
+        "opencode/glm-5.3"
+      ],
+      "agents/sisyphus-junior": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode-go/qwen3.8-flash",
+        "opencode/glm-5.3-flash"
+      ],
+      "agents/archivist": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode/gpt-5.6-luna"
+      ],
+      "agents/athena": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode/gpt-5.6-luna"
+      ],
+      "agents/auditor": [
+        "opencode-go/glm-5.3",
+        "opencode/glm-5.3"
+      ],
+      "agents/explorer": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode/gpt-5.6-luna"
+      ],
+      "agents/post-reviewer": [
+        "opencode-go/glm-5.3",
+        "opencode/glm-5.3"
+      ],
+      "agents/reviewer": [
+        "opencode-go/glm-5.3",
+        "opencode/glm-5.3"
+      ],
+      "agents/fullstack-dev-tester": [
+        "opencode-go/glm-5.2",
+        "opencode/glm-5.2"
+      ],
+      "categories/visual-engineering": [
+        "opencode-go/minimax-m3",
+        "opencode/qwen3.6-plus",
+        "opencode/glm-5.1"
+      ],
+      "categories/ultrabrain": [
+        "opencode-go/grok-4.6",
+        "opencode-go/kimi-k3",
+        "zai-coding-plan/glm-5.3",
+        "opencode/deepseek-v4-pro"
+      ],
+      "categories/deep": [
+        "opencode-go/kimi-k2.7-code",
+        "opencode-go/glm-5.3",
+        "opencode/glm-5.3"
+      ],
+      "categories/artistry": [
+        "qwen3.8-max",
+        "opencode-go/grok-4.6",
+        "zai-coding-plan/glm-5.3-flash",
+        "opencode/gemini-3-flash"
+      ],
+      "categories/quick": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode/glm-5.3-flash",
+        "opencode/ling-3.0-flash-fin-free"
+      ],
+      "categories/unspecified-low": [
+        "zai-coding-plan/glm-5.3-flash",
+        "opencode/glm-5.3-flash"
+      ],
+      "categories/unspecified-high": [
+        "opencode-go/kimi-k2.7-code",
+        "opencode/glm-5.3"
+      ],
+      "categories/writing": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode/gpt-5.6-luna",
+        "opencode/ling-3.0-flash-fin-free"
+      ],
+      "categories/git-commit-message": [
+        "opencode-go/gpt-5.6-luna",
+        "opencode/glm-5.3-flash",
+        "opencode/ling-3.0-flash-fin-free"
+      ]
+    }
+  },
+  "finding-hashes": [
+    "ff4b7e7f3ed82504",
+    "65f69f9ce9ea92c7",
+    "dacf78f3d22a5191",
+    "8e57a682c5cad656",
+    "939bb53e31bfb80e",
+    "147b4c228ff3991f"
+  ]
+}
