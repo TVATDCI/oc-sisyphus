@@ -275,7 +275,7 @@ list was folded in here):
 - **Invisible-memory philosophy / never-cite-system-prompt** — operator context needs `[FROM MEMORY]` labels and model/route narration for auditability; both Claude prompts' hide-machinery stance is for consumers, not operators.
 - **Banned-word lists ("genuinely/honestly/actually")** — belongs in the agent `<communication>` block (`sisyphus-guidance.md`), not AGENTS.md.
 - **Consumer safety machinery** (CSAM, drug dosing, eating-disorder numerics) — wrong threat model for an engineering operator tool.
-- **Context-window / token-ceiling changes** — out of scope; blocked until the glm-5.2 context-window figure is verified.
+- **Context-window / token-ceiling changes** — out of scope.
 
 ### Teach Skill Added (Jun 25)
 
