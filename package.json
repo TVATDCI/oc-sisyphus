@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@opencode-ai/plugin": "1.16.2"
+    "@opencode-ai/plugin": "1.19.5"
   },
   "scripts": {
     "install:hooks": "bash scripts/install-hooks.sh",

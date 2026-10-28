@@ -1,4 +1,5 @@
 ---
+name: reviewer
 description: "Combined reviewer agent — oracle (architecture/debugging) + auditor (validation) + post-reviewer (code quality). Use when: (1) PRD/plan gate reviews, (2) post-change code review, (3) architecture decisions, (4) 2+ failed fix attempts, (5) pre-commit validation. Read-only — does not edit files."
 mode: subagent
 permissions:

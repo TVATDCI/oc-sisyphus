@@ -1,7 +1,6 @@
 ---
 name: codegraph-usage
 description: Use CodeGraph instead of grep/find/read for code understanding in repos with a .codegraph/ directory at the repo root — codegraph_explore / codegraph_node MCP tools, or codegraph explore / node via shell. Skip CodeGraph entirely when no .codegraph/ exists.
-user-invocable: false
 metadata:
   internal: true
 ---

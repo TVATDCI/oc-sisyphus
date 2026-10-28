@@ -1,4 +1,5 @@
 ---
+name: auditor
 description: "Validates Main-vault content without editing files. Use when: (1) checking discovery frontmatter/sections, (2) validating .sisyphus plan structure, (3) reviewing vault changes before publish, (4) verifying index/link integrity. Triggers: lint, validate vault, check discovery format, review plan, pre-publish check. Not for execution or file updates."
 mode: subagent
 permissions:

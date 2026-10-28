@@ -1,4 +1,5 @@
 ---
+name: post-reviewer
 description: "Post-change reviewer agent. Runs after meaningful code changes to catch mistakes before they compound. Checks: correctness, security, performance, maintainability, test coverage. Read-only — does not edit files. Reports findings with severity and fix suggestions."
 mode: subagent
 permissions:

@@ -1,4 +1,5 @@
 ---
+name: fullstack-dev-tester
 description: >
   Fullstack developer subagent — builds full-stack apps, REST APIs, service
   layers, integrates frontend with backend, handles auth/config/real-time.

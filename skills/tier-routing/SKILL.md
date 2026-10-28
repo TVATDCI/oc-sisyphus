@@ -1,7 +1,6 @@
 ---
 name: tier-routing
 description: Choosing a model, tier, or fallback chain for a task() dispatch or a judging/verify node — wallet-frame tier routing plus the no-cheap-model-at-judging-nodes rule. Load before any dispatch or fan-out decision.
-user-invocable: false
 metadata:
   internal: true
 ---

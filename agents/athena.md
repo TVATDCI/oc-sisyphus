@@ -1,4 +1,5 @@
 ---
+name: athena
 description: Research specialist - gathers context, searches documentation, and synthesizes findings
 mode: subagent
 permissions:
