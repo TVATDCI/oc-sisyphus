@@ -38,6 +38,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
+import process from "node:process";
 import { findingHash, boundQuote, QUOTE_MAX } from "../scripts/lib/finding.ts";
 import type { ModelState } from "../scripts/lib/model-state.ts";
 import {
@@ -45,6 +46,13 @@ import {
   parseJsonc,
   resolveOmoSource,
 } from "../scripts/lib/model-state.ts";
+import {
+  LEGACY_MANIFEST_NAME,
+  manifestFilenameForHost,
+  readManifestText,
+  resolveManifestPaths,
+  seedSuffixedFromLegacy,
+} from "../scripts/lib/manifest-path.ts";
 import {
   checkDrift,
   DriftManifestError,
@@ -309,6 +317,182 @@ try {
 check(
   "drift: unreadable manifest → explicit DriftManifestError (no silent rebuild)",
   unreadableThrew,
+);
+
+// ─── desk-suffixed manifests (captain ruling 2026-10-28) ─────────────────
+
+// Set SCAFFOLD_DESK_HOST for a deterministic desk inside a scope; restore
+// the prior value (or absence) afterwards. The env knob is the SAME one
+// resolveDeskHostname() reads — one hostname mechanism for the omo-variant
+// and manifest-suffix tables alike.
+function withDeskHost<T>(host: string | undefined, fn: () => T): T {
+  const prior = process.env.SCAFFOLD_DESK_HOST;
+  if (host === undefined) delete process.env.SCAFFOLD_DESK_HOST;
+  else process.env.SCAFFOLD_DESK_HOST = host;
+  try {
+    return fn();
+  } finally {
+    if (prior === undefined) delete process.env.SCAFFOLD_DESK_HOST;
+    else process.env.SCAFFOLD_DESK_HOST = prior;
+  }
+}
+
+// Real per-desk model states from the two COMMITTED repo variants —
+// deterministic on any desk (both files live in the repo; no synthetic
+// inventions). They differ at minimum via source.path, the exact
+// 391dd02 class (the recording desk's variant name in the anchor).
+const DDD_VARIANT_TEXT = readFileSync(join(CONFIG_ROOT, "omo.ddd.jsonc"), "utf8");
+const TNT_VARIANT_TEXT = readFileSync(join(CONFIG_ROOT, "omo.tnt.jsonc"), "utf8");
+const dddState = extractModelState(DDD_VARIANT_TEXT, "omo.ddd.jsonc");
+const tntState = extractModelState(TNT_VARIANT_TEXT, "omo.tnt.jsonc");
+
+check(
+  "manifest path: tnt → manifest.tnt.json, dropdeaddev → manifest.ddd.json",
+  manifestFilenameForHost("tnt") === "manifest.tnt.json" &&
+    manifestFilenameForHost("dropdeaddev") === "manifest.ddd.json",
+);
+check(
+  "manifest path: SCAFFOLD_DESK_HOST env injection drives the resolution (deterministic tests)",
+  withDeskHost("tnt", () => resolveManifestPaths("/x").activePath) ===
+      "/x/manifest.tnt.json" &&
+    withDeskHost("dropdeaddev", () => resolveManifestPaths("/x").activePath) ===
+      "/x/manifest.ddd.json",
+);
+let unknownHostThrew = false;
+try {
+  manifestFilenameForHost("bogus");
+} catch {
+  unknownHostThrew = true;
+}
+check(
+  "manifest path: unknown host → fail-closed throw (no shared-file fallback — or the ping-pong returns)",
+  unknownHostThrew,
+);
+let omoEnvSet = false;
+try {
+  omoEnvSet = typeof process.env.OMO_JSONC_PATH === "string" &&
+    process.env.OMO_JSONC_PATH !== "";
+} catch {
+  omoEnvSet = false;
+}
+if (omoEnvSet) {
+  skip("omo variant: OMO_JSONC_PATH override active — hostname-table consistency leg not isolated");
+} else {
+  check(
+    "manifest path: ONE hostname mechanism — SCAFFOLD_DESK_HOST flips the omo VARIANT table too (tnt→omo.tnt.jsonc, ddd→omo.ddd.jsonc)",
+    withDeskHost("tnt", () => resolveOmoSource(CONFIG_ROOT).relPath) ===
+        "omo.tnt.jsonc" &&
+      withDeskHost("dropdeaddev", () => resolveOmoSource(CONFIG_ROOT).relPath) ===
+        "omo.ddd.jsonc",
+  );
+}
+
+// ── legacy-seed migration (one-time, in the recording path) ──
+
+const migDir = tempStateDir();
+const migLegacyText = manifestJson(tntState);
+writeFileSync(join(migDir, LEGACY_MANIFEST_NAME), migLegacyText, "utf8");
+const migPaths = withDeskHost("dropdeaddev", () => resolveManifestPaths(migDir));
+const seededNow = seedSuffixedFromLegacy(migPaths);
+check(
+  "migration: suffixed absent + legacy present → seeded byte-identically from legacy",
+  seededNow === true &&
+    readFileSync(migPaths.activePath, "utf8") === migLegacyText,
+);
+check(
+  "migration: legacy file left in place, untouched (inert; never deleted in a code change)",
+  readFileSync(join(migDir, LEGACY_MANIFEST_NAME), "utf8") === migLegacyText,
+);
+writeFileSync(migPaths.activePath, manifestJson(dddState), "utf8");
+check(
+  "migration: one-time — an existing suffixed file is never re-seeded or overwritten",
+  seedSuffixedFromLegacy(migPaths) === false &&
+    readFileSync(migPaths.activePath, "utf8") === manifestJson(dddState),
+);
+const noLegacyDir = tempStateDir();
+check(
+  "migration: no legacy file → nothing seeded",
+  seedSuffixedFromLegacy(
+    withDeskHost("tnt", () => resolveManifestPaths(noLegacyDir)),
+  ) === false && readdirSync(noLegacyDir).length === 0,
+);
+
+// ── cross-desk file isolation ──
+
+const isoDir = tempStateDir();
+writeFileSync(
+  join(isoDir, "manifest.tnt.json"),
+  manifestJson(tntState),
+  "utf8",
+);
+check(
+  "isolation: a tnt-suffixed manifest NEVER satisfies/silences a ddd drift check (missing, not fresh)",
+  readManifestText(
+    withDeskHost("dropdeaddev", () => resolveManifestPaths(isoDir)),
+  ) === undefined,
+);
+const isoAsTnt = withDeskHost("tnt", () => resolveManifestPaths(isoDir));
+check(
+  "isolation: the tnt desk reads its own suffixed file",
+  readManifestText(isoAsTnt)?.text === manifestJson(tntState),
+);
+// Stale/garbage legacy alongside an owned suffixed file: never opened.
+writeFileSync(join(isoDir, LEGACY_MANIFEST_NAME), "{ garbage not json", "utf8");
+const activeWins = readManifestText(isoAsTnt);
+check(
+  "isolation: once the desk owns its suffixed file, the legacy shared file is never read (stale legacy can neither alarm nor silence)",
+  activeWins?.legacySeed === false &&
+    activeWins?.text === manifestJson(tntState) &&
+    readFileSync(join(isoDir, LEGACY_MANIFEST_NAME), "utf8") ===
+      "{ garbage not json",
+);
+
+// ── first-run semantics + the ping-pong kill (end-to-end, pure) ──
+
+check(
+  "first-run precondition: the two desks' extracted states differ (source.path carries the recording desk's variant — the 391dd02 drift class)",
+  JSON.stringify(dddState) !== JSON.stringify(tntState),
+);
+
+const pingDir = tempStateDir();
+// ddd pulls the change: the repo carries ONLY the legacy shared manifest,
+// recorded by tnt (391dd02 realized this live).
+writeFileSync(join(pingDir, LEGACY_MANIFEST_NAME), manifestJson(tntState), "utf8");
+const dddPaths = withDeskHost("dropdeaddev", () => resolveManifestPaths(pingDir));
+const inherited = readManifestText(dddPaths);
+check(
+  "first-run: suffixed absent → legacy read as ONE-TIME migration seed (read-only)",
+  inherited?.legacySeed === true && inherited?.text === manifestJson(tntState),
+);
+const firstCheck = checkDrift(inherited?.text, dddState);
+check(
+  "first-run: inherited the OTHER desk's anchor → drift fires ONCE (exactly the flag, exit-0 semantics)",
+  firstCheck.outcome === "stale" && firstCheck.output === DRIFT_FLAG,
+);
+// The desk re-records locally (manifest.ts: seed migration, then record).
+seedSuffixedFromLegacy(dddPaths);
+writeFileSync(dddPaths.activePath, manifestJson(dddState), "utf8");
+const secondCheck = checkDrift(readManifestText(dddPaths)?.text, dddState);
+check(
+  "first-run: after the local re-record → fresh (silence thereafter)",
+  secondCheck.outcome === "fresh" && secondCheck.output === "",
+);
+// The other desk re-anchors — its own file AND the legacy shared file:
+// neither can invalidate ddd's own file ever again.
+writeFileSync(
+  join(pingDir, "manifest.tnt.json"),
+  manifestJson(tntState),
+  "utf8",
+);
+writeFileSync(
+  join(pingDir, LEGACY_MANIFEST_NAME),
+  manifestJson(tntState),
+  "utf8",
+);
+const thirdCheck = checkDrift(readManifestText(dddPaths)?.text, dddState);
+check(
+  "ping-pong dead: tnt re-anchoring (its own suffixed file AND rewriting the legacy shared file) can never invalidate ddd again",
+  thirdCheck.outcome === "fresh",
 );
 
 // ─── sis structural layer: skill-count claim verification ────────────────────

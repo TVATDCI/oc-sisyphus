@@ -13,6 +13,11 @@
  * Fail-closed: unknown host or absent file is the caller's hard error —
  * no snapshot, no silent fallback.
  *
+ * DESK HOSTNAME (desk-suffixed-manifests 2026-10-28): resolveDeskHostname()
+ * below is the ONE hostname mechanism shared by the omo-variant table and
+ * the desk-suffixed manifest table (lib/manifest-path.ts) —
+ * SCAFFOLD_DESK_HOST env > os hostname > /etc/hostname fallback.
+ *
  * JSONC-aware parsing ONLY (pitfall table: comments + trailing commas break
  * a naive JSON.parse). Repo precedent: `scripts/omo-query.js` — string-aware
  * comment strip + trailing-comma removal, mirrored here (never strip ad hoc).
@@ -43,12 +48,38 @@ export const OMO_VARIANTS: Record<string, string> = {
 
 export type OmoSource = { absPath: string; relPath: string };
 
+/** Resolve the desk hostname: SCAFFOLD_DESK_HOST env (deterministic tests
+ * + explicit desk override) > node:os hostname with an /etc/hostname
+ * fallback — stays inside a pure `--allow-read` grant (the env probe is
+ * permission-tolerant: a denied read just means the override is not
+ * available, the hostname default still resolves). "" when unresolvable;
+ * callers fail closed via their hostname table lookup. Shared by
+ * resolveOmoSource (variant table) and lib/manifest-path.ts (suffix table).
+ */
+export function resolveDeskHostname(): string {
+  let env: string | undefined;
+  try {
+    env = process.env.SCAFFOLD_DESK_HOST;
+  } catch {
+    env = undefined; // env permission not granted — override simply unavailable
+  }
+  if (env !== undefined && env !== "") {
+    return env.trim().toLowerCase();
+  }
+  try {
+    return hostname().trim().toLowerCase();
+  } catch {
+    try {
+      return readFileSync("/etc/hostname", "utf8").trim().toLowerCase();
+    } catch {
+      return "";
+    }
+  }
+}
+
 /** Resolve the model-binding source: OMO_JSONC_PATH env > the hostname-resolved
- * per-desk REPO VARIANT at the config root. Read-only (node:os hostname with an
- * /etc/hostname fallback — stays inside a pure `--allow-read` grant; the env
- * probe is permission-tolerant: a denied read just means the override is not
- * available, the hostname default still resolves). An unknown hostname throws
- * (fail-closed, mirror of deploy-omo.sh's error). */
+ * per-desk REPO VARIANT at the config root. Read-only. An unknown hostname
+ * throws (fail-closed, mirror of deploy-omo.sh's error). */
 export function resolveOmoSource(configRoot: string): OmoSource {
   let env: string | undefined;
   try {
@@ -59,16 +90,7 @@ export function resolveOmoSource(configRoot: string): OmoSource {
   if (env !== undefined && env !== "") {
     return { absPath: env, relPath: env };
   }
-  let host = "";
-  try {
-    host = hostname().trim().toLowerCase();
-  } catch {
-    try {
-      host = readFileSync("/etc/hostname", "utf8").trim().toLowerCase();
-    } catch {
-      host = "";
-    }
-  }
+  const host = resolveDeskHostname();
   const variant = OMO_VARIANTS[host];
   if (variant === undefined) {
     throw new Error(

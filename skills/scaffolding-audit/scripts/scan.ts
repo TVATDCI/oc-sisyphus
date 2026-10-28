@@ -14,6 +14,7 @@ import { parseRuleTable } from "./lib/spec.ts";
 import type { ManifestAnchor } from "./lib/scan-core.ts";
 import { runScan, renderReport } from "./lib/scan-core.ts";
 import { sisSurfaces, enumerateSkillDirs } from "./lib/surfaces.ts";
+import { readManifestText, resolveManifestPaths } from "./lib/manifest-path.ts";
 
 const SCRIPT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const SKILL_DIR = join(SCRIPT_DIR, "..");
@@ -30,7 +31,10 @@ const SPEC_TWIN = join(
   "spec",
   "spec-shared.md",
 );
-const MANIFEST_PATH = join(SKILL_DIR, "state", "manifest.json");
+const MANIFEST_PATHS = resolveManifestPaths(join(SKILL_DIR, "state"));
+// Anchor read is desk-suffixed (2026-10-28): this desk's manifest, with the
+// legacy shared manifest.json as a read-only migration seed while the
+// suffixed file is absent.
 
 function usage(): never {
   console.error(
@@ -63,13 +67,24 @@ function readIfExists(path: string): string | undefined {
 }
 
 function readAnchor(): ManifestAnchor {
-  const text = readIfExists(MANIFEST_PATH);
-  if (text === undefined) return {};
+  let resolved;
+  try {
+    resolved = readManifestText(MANIFEST_PATHS);
+  } catch (err) {
+    console.error(
+      `manifest unreadable: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    process.exit(1);
+  }
+  if (resolved === undefined) return {};
   let parsed: unknown;
   try {
-    parsed = JSON.parse(text);
+    parsed = JSON.parse(resolved.text);
   } catch {
-    console.error(`manifest unreadable: ${MANIFEST_PATH} does not parse`);
+    const name = resolved.legacySeed
+      ? `${MANIFEST_PATHS.legacyPath} (legacy migration seed)`
+      : MANIFEST_PATHS.activePath;
+    console.error(`manifest unreadable: ${name} does not parse`);
     process.exit(1);
   }
   if (
