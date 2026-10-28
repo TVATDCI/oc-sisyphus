@@ -16,7 +16,7 @@
 # actual runtime, not just the harness.
 #
 # Usage:   scripts/v2-enforcement-proof.sh [opencode-version]
-#          default version: 2.1.0   (pass 1.18.31 for the V1 survival proof)
+#          default version: 2.2.0   (pass 1.18.31 for the V1 survival proof)
 # Env:     CFG_SRC=<tree>    config tree to prove (default: this repo tree);
 #                             point it at ~/.config/opencode to prove the
 #                             currently DEPLOYED tree (read-only copy; the
@@ -51,7 +51,7 @@
 
 set -uo pipefail
 
-VERSION="${1:-2.1.0}"
+VERSION="${1:-2.2.0}"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MISE_ROOT="${MISE_ROOT:-$HOME/.local/share/mise}"
 # CFG_SRC may live under the real HOME; resolve it BEFORE the sandbox env

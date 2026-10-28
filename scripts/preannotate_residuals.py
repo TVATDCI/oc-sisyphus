@@ -44,8 +44,9 @@ Call surface (the ruled Jev lane on this desk):
                                           "needs-human-eyes": "..."}}}}
 
 The opencode.json `providers.opencode.models` map declares jev-1.13-free /
-jev-1.13 as decision models (roster registration); opencode 2.1.x exposes no
-user-facing classify surface, so THIS script is the invocation path.
+jev-1.13 as decision models (roster registration); opencode 2.1.x exposed no
+user-facing classify surface (era finding — unverified for later versions), so
+THIS script is the invocation path.
 
 Usage:
     python3 scripts/preannotate_residuals.py [residuals on stdin]
