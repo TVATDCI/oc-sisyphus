@@ -30,6 +30,24 @@
     ]
   ],
   "default_agent": "sisyphus",
+  "providers": {
+    "opencode": {
+      "models": {
+        "jev-1.13-free": {
+          "type": "decision",
+          "name": "Jev 1.13 Free",
+          "limit": { "context": 32000, "output": 4096 },
+          "cost": { "input": 0, "output": 0 }
+        },
+        "jev-1.13": {
+          "type": "decision",
+          "name": "Jev 1.13",
+          "limit": { "context": 32000, "output": 4096 },
+          "cost": { "input": 0.042, "output": 0 }
+        }
+      }
+    }
+  },
   "agent": {
     "brief-loader": {
       "model": "zai-coding-plan/glm-5.3",
