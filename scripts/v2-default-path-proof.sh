@@ -40,10 +40,9 @@
 #
 # Usage:   scripts/v2-default-path-proof.sh
 # Env:     PIPE_PORT_SCRATCH=<dir>  scratch root (default ~/.cache/pipe-port-m3)
-#          OPENCODE_BIN=<path>      opencode binary (default: the pinned 2.1.4
-#                                   install — battery-green 2026-10-23; the pin
-#                                   flip itself stays captain's, the default here
-#                                   tracks the battery-proven generation)
+#          OPENCODE_BIN=<path>      opencode binary (default: the live-pinned
+#                                   2.2.0 install — the desk pin has flipped;
+#                                   the default here tracks the live pin)
 # Exit:    0 = metachar defense LIVE-ENFORCED on the default path (discovery state)
 #          1 = NOT enforced live (details printed; sandbox kept)
 #
@@ -58,7 +57,7 @@ STAGING="$SCRATCH/staging"
 SB="$SCRATCH/runs/default-path-proof"
 KEEP="${METACHAR_KEEP:-0}"
 
-BIN="${OPENCODE_BIN:-$HOME/.local/share/mise/installs/opencode/2.1.4/node_modules/.bin/opencode}"
+BIN="${OPENCODE_BIN:-$HOME/.local/share/mise/installs/opencode/2.2.0/node_modules/.bin/opencode}"
 if [ ! -x "$BIN" ]; then
   echo "FAIL: opencode binary not found at $BIN" >&2
   exit 1

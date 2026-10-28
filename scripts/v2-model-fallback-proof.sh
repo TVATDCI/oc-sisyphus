@@ -11,7 +11,7 @@
 #      stubfail (HTTP 429 on every request — the RateLimit class) and
 #      stubok (one SSE text turn), plus the ladder
 #      model_fallback: {"stubfail/fail": ["stubok/ok"]}.
-#   3. a real server (2.1.0, the proven harness binary) auto-discovers the
+#   3. a real server (2.2.0, the live-pinned harness binary) auto-discovers the
 #      staged plugin; the canary creates a session pinned to stubfail/fail
 #      and drives a real turn: primary attempt -> 429 -> session.retry hook
 #      -> plugin switchModel(stubok/ok) -> context-refresh re-resolve ->
@@ -34,7 +34,7 @@ STAGING="$SCRATCH/staging"
 SB="$SCRATCH/runs/fallback-proof"
 KEEP="${FALLBACK_KEEP:-0}"
 
-BIN="${OPENCODE_BIN:-$HOME/.local/share/mise/installs/opencode/2.1.0/node_modules/.bin/opencode}"
+BIN="${OPENCODE_BIN:-$HOME/.local/share/mise/installs/opencode/2.2.0/node_modules/.bin/opencode}"
 if [ ! -x "$BIN" ]; then
   echo "FAIL: opencode binary not found at $BIN" >&2
   exit 1
