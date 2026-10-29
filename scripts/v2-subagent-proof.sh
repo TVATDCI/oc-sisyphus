@@ -39,7 +39,7 @@ STAGING="$SCRATCH/staging"
 SB="$SCRATCH/runs/subagent-proof"
 KEEP=0
 
-BIN="${OPENCODE_BIN:-$HOME/.local/share/mise/installs/opencode/2.2.0/node_modules/.bin/opencode}"
+BIN="${OPENCODE_BIN:-$HOME/.local/share/mise/installs/opencode/2.2.2/node_modules/.bin/opencode}"
 if [ ! -x "$BIN" ]; then
   echo "FAIL: opencode binary not found at $BIN" >&2
   exit 1
@@ -167,5 +167,5 @@ VERDICT=FAIL
 if [ "$CANARY_RC" -eq 0 ]; then
   VERDICT=PASS
 fi
-echo "=== verdict: $VERDICT (subagent-session enforcement, opencode 2.2.0, sisyphus-gates) ==="
+echo "=== verdict: $VERDICT (subagent-session enforcement, opencode 2.2.2, sisyphus-gates) ==="
 [ "$VERDICT" = PASS ] && exit 0 || { KEEP=1; exit 1; }

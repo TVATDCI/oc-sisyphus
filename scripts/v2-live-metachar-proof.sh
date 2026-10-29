@@ -14,7 +14,7 @@
 #      workflow.yaml present; sandbox gate key + SIGNED prd/plan PASS
 #      verdicts + state.json at phase=execution approval=approved — the
 #      state where benign singles run and only the metachar screen bites.
-#   2. a REAL opencode 2.2.0 server on a private port in the sandbox env,
+#   2. a REAL opencode 2.2.2 server on a private port in the sandbox env,
 #      auto-discovering plugins/sisyphus-gates.js exactly like the live
 #      host (log line asserted).
 #   3. a scripted stub model (OpenAI-compatible SSE server, loopback only)
@@ -51,7 +51,7 @@ STAGING="$SCRATCH/staging"
 SB="$SCRATCH/runs/metachar-proof"
 KEEP="${METACHAR_KEEP:-0}"
 
-BIN="${OPENCODE_BIN:-$HOME/.local/share/mise/installs/opencode/2.2.0/node_modules/.bin/opencode}"
+BIN="${OPENCODE_BIN:-$HOME/.local/share/mise/installs/opencode/2.2.2/node_modules/.bin/opencode}"
 if [ ! -x "$BIN" ]; then
   echo "FAIL: opencode binary not found at $BIN" >&2
   exit 1

@@ -43,7 +43,7 @@ cannot self-approve destructive work or advance past review phases without
 your cryptographic signature.** You get the productivity; the agent can't
 cause damage.
 
-Built on [OpenCode](https://github.com/sst/opencode) (the agent runtime),
+Built on [OpenCode](https://github.com/anomalyco/opencode) (the agent runtime),
 Sisyphus sits between the agent and every tool call:
 
 ```

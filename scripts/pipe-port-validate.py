@@ -77,10 +77,10 @@ RESULTS = SCRATCH / "results"
 BIN = Path(
     os.environ.get(
         "OPENCODE_BIN",
-        str(Path.home() / ".local/share/mise/installs/opencode/2.2.0/node_modules/.bin/opencode"),
+        str(Path.home() / ".local/share/mise/installs/opencode/2.2.2/node_modules/.bin/opencode"),
     )
 )
-OPencode_VERSION_EXPECTED = "2.2.0"
+OPencode_VERSION_EXPECTED = "2.2.2"
 
 # The port map, transcribed from scripts/generate-pipeline-personas.py
 # (CATEGORIES + PERSONAS) — the single source of truth for pins/modes.
