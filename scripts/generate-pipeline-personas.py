@@ -1153,13 +1153,20 @@ def write_opencode_agent_map(repo_root: Path = REPO_ROOT) -> bool:
     inserted_agent = False
     inserted_ladder = False
     for key, value in cfg.items():
+        if key == "agent":
+            # Pre-existing agent map: overwrite with the fresh emission -
+            # copying `value` here would resurrect the stale map AFTER the
+            # default_agent insertion above (the update case never shipped).
+            new_cfg["agent"] = rendered
+            inserted_agent = True
+            if not inserted_ladder:
+                new_cfg["model_fallback"] = ladders
+                inserted_ladder = True
+            continue
         new_cfg[key] = value
         if key == "default_agent" and not inserted_agent:
             new_cfg["agent"] = rendered
             inserted_agent = True
-        if key == "agent" and not inserted_ladder:
-            new_cfg["model_fallback"] = ladders
-            inserted_ladder = True
     if not inserted_agent:
         new_cfg["agent"] = rendered
     if not inserted_ladder:
@@ -1517,6 +1524,7 @@ def check_pins() -> int:
 
 
 MODELS_KV_KEY = "models-dev:catalog"
+MODELS_KV_KEY_V2 = "models-dev:v2:catalog"
 
 
 def _live_roster() -> set[str] | None:
@@ -1533,34 +1541,63 @@ def _live_roster() -> set[str] | None:
     return set(proc.stdout.split())
 
 
-def _live_efforts() -> dict[str, list[str]] | None:
-    """{provider/model: [effort values]} from the models-dev catalog KV."""
+def _load_catalog_kv(db: Path, key: str) -> str | None:
     import sqlite3
 
-    db = Path.home() / ".local" / "share" / "opencode" / "opencode.db"
-    if not db.is_file():
-        print(f"FAIL: catalog KV source {db} not found")
-        return None
     try:
         con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
         try:
             row = con.execute(
-                "select value from kv where key=?", (MODELS_KV_KEY,)
+                "select value from kv where key=?", (key,)
             ).fetchone()
         finally:
             con.close()
     except sqlite3.Error as e:
         print(f"FAIL: catalog KV unreadable: {e}")
         return None
-    if not row:
-        print(f"FAIL: kv {MODELS_KV_KEY!r} empty — run opencode once to hydrate the catalog")
+    return row[0] if row else None
+
+
+def _live_efforts() -> dict[str, list[str]] | None:
+    """{provider/model: [effort values]} from the models-dev catalog KV.
+
+    Primary source is the v2 catalog KV (`models-dev:v2:catalog`, efforts
+    under capabilities.reasoning.effort); falls back to the retired v1 key
+    (`models-dev:catalog`, reasoning_options[]) for opencode builds whose
+    local cache has not migrated yet.
+    """
+    db = Path.home() / ".local" / "share" / "opencode" / "opencode.db"
+    if not db.is_file():
+        print(f"FAIL: catalog KV source {db} not found")
+        return None
+    v2 = _load_catalog_kv(db, MODELS_KV_KEY_V2)
+    efforts: dict[str, list[str]] = {}
+    if v2:
+        try:
+            body = json.loads(json.loads(v2)["body"])
+        except (ValueError, KeyError, TypeError) as e:
+            print(f"FAIL: catalog KV parse error: {e}")
+            return None
+        for pid, prov in body.items():
+            for mid, model in (prov.get("models") or {}).items():
+                reasoning = (model.get("capabilities") or {}).get("reasoning") or {}
+                vals = reasoning.get("effort") or []
+                if vals:
+                    efforts[f"{pid}/{mid}"] = list(vals)
+        if efforts:
+            return efforts
+    v1 = _load_catalog_kv(db, MODELS_KV_KEY)
+    if not v1:
+        print(
+            f"FAIL: kv {MODELS_KV_KEY_V2!r}/{MODELS_KV_KEY!r} empty — "
+            "run opencode once to hydrate the catalog"
+        )
         return None
     try:
-        body = json.loads(json.loads(row[0])["body"])
+        body = json.loads(json.loads(v1)["body"])
     except (ValueError, KeyError, TypeError) as e:
         print(f"FAIL: catalog KV parse error: {e}")
         return None
-    efforts: dict[str, list[str]] = {}
     for pid, prov in body.items():
         for mid, model in (prov.get("models") or {}).items():
             for opt in model.get("reasoning_options") or []:
@@ -1919,7 +1956,7 @@ def self_test() -> int:
     live_pins = render_agent_config()
     parity_clean = [
         {"id": "ses_seed_ok1", "agent": "oracle",
-         "model": {"id": "kimi-k3", "providerID": "opencode-go", "variant": "max"}, "created": 1},
+         "model": {"id": "kimi-k3.1-pro", "providerID": "opencode-go", "variant": "max"}, "created": 1},
         {"id": "ses_seed_ok2", "agent": "archivist",
          "model": {"id": "glm-5.3-flash", "providerID": "zai-coding-plan"}, "created": 2},
     ]

@@ -30,24 +30,6 @@
     ]
   ],
   "default_agent": "sisyphus",
-  "providers": {
-    "opencode": {
-      "models": {
-        "jev-1.13-free": {
-          "type": "decision",
-          "name": "Jev 1.13 Free",
-          "limit": { "context": 32000, "output": 4096 },
-          "cost": { "input": 0, "output": 0 }
-        },
-        "jev-1.13": {
-          "type": "decision",
-          "name": "Jev 1.13",
-          "limit": { "context": 32000, "output": 4096 },
-          "cost": { "input": 0.042, "output": 0 }
-        }
-      }
-    }
-  },
   "agent": {
     "brief-loader": {
       "model": "zai-coding-plan/glm-5.3",
@@ -126,7 +108,7 @@
       "model": "zai-coding-plan/glm-5.3"
     },
     "oracle": {
-      "model": "opencode-go/kimi-k3",
+      "model": "opencode-go/kimi-k3.1-pro",
       "variant": "max"
     },
     "post-reviewer": {
@@ -153,7 +135,7 @@
       "opencode/glm-5.2",
       "opencode/glm-5.3#high"
     ],
-    "opencode-go/kimi-k3": [
+    "opencode-go/kimi-k3.1-pro": [
       "opencode-go/grok-4.7#xhigh",
       "zai-coding-plan/glm-5.3#max",
       "opencode/deepseek-v4-pro"
@@ -177,7 +159,7 @@
     ],
     "opencode-go/qwen3.8-max": [
       "opencode-go/grok-4.7#xhigh",
-      "opencode-go/kimi-k3#max",
+      "opencode-go/kimi-k3.1-pro#max",
       "zai-coding-plan/glm-5.3#high",
       "opencode/deepseek-v4-pro"
     ],
@@ -190,6 +172,36 @@
       "zai-coding-plan/glm-5.3-flash",
       "opencode/glm-5.3-flash"
     ]
+  },
+  "providers": {
+    "opencode": {
+      "models": {
+        "jev-1.13-free": {
+          "type": "decision",
+          "name": "Jev 1.13 Free",
+          "limit": {
+            "context": 32000,
+            "output": 4096
+          },
+          "cost": {
+            "input": 0,
+            "output": 0
+          }
+        },
+        "jev-1.13": {
+          "type": "decision",
+          "name": "Jev 1.13",
+          "limit": {
+            "context": 32000,
+            "output": 4096
+          },
+          "cost": {
+            "input": 0.042,
+            "output": 0
+          }
+        }
+      }
+    }
   },
   "mcp": {
     "home": {

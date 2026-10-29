@@ -59,7 +59,7 @@
       },
       "oracle": {
         "prompt_append": "file://~/.config/opencode/prompts/oracle-guidance.md",
-        "model": "opencode-go/kimi-k3",
+        "model": "opencode-go/kimi-k3.1-pro",
         "reasoning": "max",
         "temperature": 0.0,
         "fallback_models": [
@@ -322,7 +322,7 @@
             "temperature": 0.0,
           },
           {
-            "model": "opencode-go/kimi-k3",
+            "model": "opencode-go/kimi-k3.1-pro",
             "reasoning": "max",
           },
           {
@@ -473,7 +473,7 @@
         "opencode-go/glm-5.3": 3,
         "opencode-go/glm-5.2": 3,
         "opencode-go/glm-5.1": 3,
-        "opencode-go/kimi-k3": 2,
+        "opencode-go/kimi-k3.1-pro": 2,
         "opencode-go/gpt-5.6-luna": 5,
         "opencode-go/glm-5.3-flash": 5,
         "opencode-go/mimo-v2.5-pro": 1,

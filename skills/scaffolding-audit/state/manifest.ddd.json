@@ -1,18 +1,18 @@
 {
-  "recorded-at": "2026-10-28T14:32:40.726Z",
+  "recorded-at": "2026-10-29T00:36:51.264Z",
   "surface-scope": "sis",
   "last-audit-commit": {
-    "~/.config/opencode": "7059d17b278b84bfe4f13a497c951d2cc96f34c4"
+    "~/.config/opencode": "464b1482c0900ddd24316a9671e710e8a7a51168"
   },
   "model-state": {
     "source": {
       "path": "omo.ddd.jsonc",
-      "sha256": "564d151712fec760247bbb1d9fdd126b1462d6788ba89299bf9213d2891e9276"
+      "sha256": "e2689996249285f24c4cf3d80646211766b221706c85b3484109cfada5695946"
     },
     "bindings": {
       "agents/sisyphus": "zai-coding-plan/glm-5.3",
       "agents/hephaestus": "zai-coding-plan/glm-5.3",
-      "agents/oracle": "opencode-go/kimi-k3",
+      "agents/oracle": "opencode-go/kimi-k3.1-pro",
       "agents/librarian": "zai-coding-plan/glm-5.3-flash",
       "agents/explore": "zai-coding-plan/glm-5.3-flash",
       "agents/multimodal-looker": "zai-coding-plan/glm-5.3-flash",
@@ -129,7 +129,7 @@
       ],
       "categories/ultrabrain": [
         "opencode-go/grok-4.6",
-        "opencode-go/kimi-k3",
+        "opencode-go/kimi-k3.1-pro",
         "zai-coding-plan/glm-5.3",
         "opencode/deepseek-v4-pro"
       ],
@@ -174,7 +174,6 @@
     "65f69f9ce9ea92c7",
     "dacf78f3d22a5191",
     "8e57a682c5cad656",
-    "939bb53e31bfb80e",
     "147b4c228ff3991f"
   ]
 }
