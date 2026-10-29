@@ -14,7 +14,7 @@
     "agents": {
       "sisyphus": {
         "prompt_append": "file://~/.config/opencode/prompts/sisyphus-guidance.md",
-        "model": "zai-coding-plan/glm-5.3",
+        "model": "zai-coding-plan/glm-5.3-flash",
         "reasoning": "max",
         "temperature": 0.1,
         "ultrawork": {
@@ -23,19 +23,7 @@
         },
         "fallback_models": [
           {
-            "model": "opencode-go/glm-5.3",
-            "reasoning": "max",
-          },
-          {
-            "model": "opencode-go/grok-4.6",
-            "reasoning": "high",
-          },
-          {
-            "model": "opencode-go/kimi-k2.7-code",
-            "reasoning": "high",
-          },
-          {
-            "model": "opencode/glm-5.3",
+            "model": "opencode-go/glm-5.3-flash",
           },
         ],
       },

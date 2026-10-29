@@ -118,14 +118,25 @@
       "model": "zai-coding-plan/glm-5.3"
     },
     "sisyphus": {
-      "model": "zai-coding-plan/glm-5.3",
+      "model": "zai-coding-plan/glm-5.3-flash",
       "variant": "max"
     }
   },
   "model_fallback": {
+    "zai-coding-plan/glm-5.3-flash": [
+      "opencode-go/glm-5.3-flash",
+      "opencode-go/gpt-5.6-luna",
+      "opencode-go/longcat-2.0",
+      "opencode-go/qwen3.8-flash",
+      "opencode-go/mimo-v2.5-pro",
+      "opencode-go/gpt-5.6-luna#low",
+      "opencode-go/minimax-m3",
+      "opencode/glm-5.3-flash",
+      "opencode/gpt-5.6-luna",
+      "opencode/qwen3.6-plus",
+      "opencode/glm-5.1"
+    ],
     "zai-coding-plan/glm-5.3": [
-      "opencode-go/glm-5.3#max",
-      "opencode-go/grok-4.7#high",
       "opencode-go/kimi-k2.7-code",
       "opencode-go/glm-5.2",
       "opencode-go/qwen3.8-max#xhigh",
@@ -139,18 +150,6 @@
       "opencode-go/grok-4.7#xhigh",
       "zai-coding-plan/glm-5.3#max",
       "opencode/deepseek-v4-pro"
-    ],
-    "zai-coding-plan/glm-5.3-flash": [
-      "opencode-go/gpt-5.6-luna",
-      "opencode-go/longcat-2.0",
-      "opencode-go/qwen3.8-flash",
-      "opencode-go/mimo-v2.5-pro",
-      "opencode-go/gpt-5.6-luna#low",
-      "opencode-go/minimax-m3",
-      "opencode/glm-5.3-flash",
-      "opencode/gpt-5.6-luna",
-      "opencode/qwen3.6-plus",
-      "opencode/glm-5.1"
     ],
     "opencode-go/grok-4.6": [
       "opencode-go/qwen3.8-max#xhigh",
