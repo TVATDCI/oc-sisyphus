@@ -74,15 +74,26 @@ Work is NOT complete until `git push` succeeds.
     **Budget signal (wallet frame, e66b212):** every session-close receipt carries one line — `Budget: pay-go $X (opencode tier) · quota-round: yes/no · floor-fallbacks: N`. Pay-go dollars = sessions served by the `opencode` provider (the only metered tier, from the session ledger); quota-round = any opencode-go quota consumption this session; floor-fallbacks = zai-max fallback activations. Session list-price dollars are NOT wallet impact — never report them as cost.
 5. **Update issue status** - Close finished work, update in-progress items
 6. **Mark protocol complete** — Run `node ~/.config/opencode/plugins/sisyphus-gates/cli.js protocol complete session-close`. This sets `session_close.status = "complete"` in state.json. **The gate at step 7 will block `git push` if this is skipped.**
-7. **PUSH TO REMOTE**:
+7. **LAND THE CLOSE DOCS — atomic script, cite the receipt**: run
+   `bash scripts/session-close-commit.sh "<close summary line>"` as the close's
+   final doc step (after step 6 — the script refuses while `session_close.status`
+   is open). The script is the sanctioned single door and guards everything
+   fail-closed: sanctioned repo + branch `main` only, working tree limited to
+   EXACTLY `COMPLETE-CODEBASE.md` + `SYSTEM-NARRATIVE.md`, fixed commit prefix
+   `docs(close): <YYYY-MM-DD>`, clean `git pull --rebase` (conflict → refuse),
+   push, then prints the RECEIPT (head sha, staged files, message) — **cite that
+   receipt verbatim in the close report**. Fallback: if the script is ever
+   absent, the operator paste block remains the manual path:
    ```bash
    git pull --rebase
-   BEADS_DIR="${BEADS_DIR:-$HOME/Main-vault/.beads}" bd dolt push
+   git add COMPLETE-CODEBASE.md SYSTEM-NARRATIVE.md
+   git commit -m "docs(close): <YYYY-MM-DD> <close summary>"
    git push
    git status  # MUST show "up to date with origin"
    ```
-   (BEADS_DIR prefix: leg 1 hardening, lane-opencode-v2 2026-09-26 — `bd dolt push`
-   runs from session-close which may be non-interactive; same pattern as doctor.sh
+   Beads stay a separate step: `BEADS_DIR="${BEADS_DIR:-$HOME/Main-vault/.beads}" bd dolt push`
+   (leg 1 hardening, lane-opencode-v2 2026-09-26 — `bd dolt push` runs from
+   session-close which may be non-interactive; same pattern as doctor.sh
    Check 10, commit 3330d37.)
 8. **Clean up** - Clear stashes, prune remote branches
 9. **Verify** - All changes committed AND pushed
