@@ -786,6 +786,21 @@ export function isDestructiveCommand(cmd, depth = 0) {
   const tokens = tokenize(cmd);
   if (tokens.length === 0) return false;
 
+  // brain-rgyi (2026-10-30, captain-ruled follow-up to the PR-26 allowlist):
+  // metachar-free exec/write primitives riding allowlisted star-globs —
+  // rg --pre=<cmd> executes a command per searched file; git diff/log/show
+  // (and GNU diff) --output=<file> writes formatted output to arbitrary
+  // paths. Token-level, position-independent; exact-equality or =-prefix
+  // only, so --prefix/--pretty/--output-indicator-*/--raw-output stay clean.
+  if (
+    tokens.some((token) =>
+      ["--pre", "--output"].some(
+        (flag) => token === flag || token.startsWith(`${flag}=`),
+      ),
+    )
+  )
+    return true;
+
   // Get the first non-env-var command token
   const first = extractCommandName(cmd);
   if (!first) return false;
