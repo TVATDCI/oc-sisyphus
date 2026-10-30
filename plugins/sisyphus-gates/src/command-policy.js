@@ -770,8 +770,28 @@ function hasDangerousEnvPrefix(cmd) {
   return false;
 }
 
+// ─── Sanctioned close-commit door (brain-qicv, 2026-10-30) ───────────────
+// EXACTLY two invocation shapes open the door (args unrestricted):
+//   bash scripts/session-close-commit.sh <args>  ·  scripts/session-close-commit.sh <args>
+// Raw-text anchored match: env prefixes NEVER match (the script's close-status
+// guard must not be bypassable via env-stripped matching), no sh runner, no
+// ./ or parent prefix, no suffixed/other script names. Consumed by BOTH
+// isDestructiveCommand (→ false) and isSafeReadOnlyCommand (→ true, the
+// Layer-4 allow path) so the door opens in every phase — the PR-27 lesson:
+// both surfaces learn the entry together or the door does not open.
+const SANCTIONED_CLOSE_COMMIT_RE =
+  /^\s*(?:bash\s+)?scripts\/session-close-commit\.sh(?:\s.*)?$/;
+
+export function isSanctionedCloseCommitCommand(cmd) {
+  if (typeof cmd !== "string") return false;
+  return SANCTIONED_CLOSE_COMMIT_RE.test(cmd);
+}
+
 export function isDestructiveCommand(cmd, depth = 0) {
   if (typeof cmd !== "string") return false;
+  // The reviewed close-commit script is the only sanctioned git-mutation door
+  // (raw-text match BEFORE env stripping — see the helper's contract).
+  if (isSanctionedCloseCommitCommand(cmd)) return false;
   cmd = stripLeadingEnvExport(cmd);
   if (hasDangerousEnvPrefix(cmd)) return true;
 
@@ -1023,6 +1043,9 @@ const SAFE_GIT_SUBCOMMANDS = new Set([
 ]);
 
 export function isSafeReadOnlyCommand(cmd) {
+  // The sanctioned close-commit script is allowed in EVERY phase via this
+  // Layer-4 allow path (its own internal guards are the safety boundary).
+  if (isSanctionedCloseCommitCommand(cmd)) return true;
   if (typeof cmd !== "string") return false;
   cmd = stripLeadingEnvExport(cmd);
   // P-C (#1): dangerous env-prefix → never safe. Must precede the subcommand
