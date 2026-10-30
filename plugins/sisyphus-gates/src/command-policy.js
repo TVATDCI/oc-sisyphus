@@ -1037,6 +1037,22 @@ export function isSafeReadOnlyCommand(cmd) {
 
   const tokens = tokenize(cmd);
   if (tokens.length === 0) return false;
+
+  // brain-rgyi follow-up (2026-10-30, PR-27 audit): Layer 4 consults this
+  // allow-path BEFORE any isDestructiveCommand call, so safe-read-only and
+  // destructive must be DISJOINT — the git subcommand branch below inspects
+  // only the subcommand, which let `git diff/log/show --output=<file>` ride
+  // this allow unconditionally. Same token screen as isDestructiveCommand,
+  // mirrored here: --pre / --output (exact or =-prefix) are never safe.
+  if (
+    tokens.some((token) =>
+      ["--pre", "--output"].some(
+        (flag) => token === flag || token.startsWith(`${flag}=`),
+      ),
+    )
+  )
+    return false;
+
   const first = extractCommandName(cmd);
   if (!first) return false;
 

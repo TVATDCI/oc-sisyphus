@@ -18,7 +18,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
-import { isDestructiveCommand } from "../src/command-policy.js";
+import { isDestructiveCommand, isSafeReadOnlyCommand } from "../src/command-policy.js";
 
 // ─── --pre: rg preprocessor exec primitive ─────────────────────────────────
 
@@ -123,6 +123,40 @@ describe("token screen — plain allowlisted forms stay clean", () => {
 
   test("git status → not destructive", () => {
     assert.equal(isDestructiveCommand("git status"), false);
+  });
+});
+
+// ─── disjointness: Layer-4 allow-path must refuse the vectors ────────────
+// PR-27 audit finding: gates.js Layer 4 consults isSafeReadOnlyCommand
+// BEFORE any isDestructiveCommand call — safe-read-only and destructive must
+// be disjoint, else the git --output forms ride the unconditional allow.
+
+describe("token screen — safe-read-only disjointness (Layer-4 order)", () => {
+  test("git diff --output=/tmp/x → NOT safe-read-only", () => {
+    assert.equal(isSafeReadOnlyCommand("git diff --output=/tmp/x"), false);
+  });
+
+  test("git log --output /tmp/x → NOT safe-read-only (space form)", () => {
+    assert.equal(isSafeReadOnlyCommand("git log --output /tmp/x"), false);
+  });
+
+  test("git show --output=x HEAD → NOT safe-read-only", () => {
+    assert.equal(isSafeReadOnlyCommand("git show --output=x HEAD"), false);
+  });
+
+  test("diff --output=/tmp/x a b → NOT safe-read-only", () => {
+    assert.equal(isSafeReadOnlyCommand("diff --output=/tmp/x a b"), false);
+  });
+
+  test("rg --pre cmd f → NOT safe-read-only", () => {
+    assert.equal(isSafeReadOnlyCommand("rg --pre cmd /tmp/f.txt"), false);
+  });
+
+  test("plain git diff/log/show + git status STAY safe-read-only", () => {
+    assert.equal(isSafeReadOnlyCommand("git diff HEAD~1"), true);
+    assert.equal(isSafeReadOnlyCommand("git log --oneline -5"), true);
+    assert.equal(isSafeReadOnlyCommand("git show HEAD"), true);
+    assert.equal(isSafeReadOnlyCommand("git status"), true);
   });
 });
 
