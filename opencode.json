@@ -221,6 +221,30 @@
         "--mcp"
       ],
       "enabled": true
+    },
+    "web-search-prime": {
+      "type": "remote",
+      "url": "https://api.z.ai/api/mcp/web_search_prime/mcp",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:Z_AI_API_KEY}"
+      }
+    },
+    "web-reader": {
+      "type": "remote",
+      "url": "https://api.z.ai/api/mcp/web_reader/mcp",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:Z_AI_API_KEY}"
+      }
+    },
+    "zread": {
+      "type": "remote",
+      "url": "https://api.z.ai/api/mcp/zread/mcp",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:Z_AI_API_KEY}"
+      }
     }
   },
   "lsp": true

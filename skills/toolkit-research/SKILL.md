@@ -29,6 +29,30 @@ webfetch({ url: "https://example.com/docs", format: "markdown" })
 **Formats:** `markdown` (default), `text`, `html`
 **Timeout:** max 120 seconds
 
+### zai MCP web tier — `web-search-prime` / `web-reader` / `zread`
+
+Remote zai MCP servers (registered in `opencode.json` `mcp`; auth via
+`"Authorization": "Bearer {env:Z_AI_API_KEY}"` — the key is exported by the
+`~/.local/bin/opencode` launcher wrapper and never appears in the repo):
+
+- `web-search-prime` — fact-class lookups (current facts, quick answers)
+- `web-reader` — one-shot reads of a known URL
+- `zread` — one-shot reads of repositories and documentation trees
+
+**Routing rules (fleet doctrine, 2026-10-30):**
+
+- Fact-class lookups and one-shot reads ONLY — this tier is the scalpel, not
+  the net. **pi remains the primary breadth instrument**: bulk, deep, and
+  multi-query research stays pi's lane — hand it off through the herdr lane,
+  don't fan out here.
+- Light use, no fan-outs — one call answers one question; never loop these
+  tools.
+- Honest meter blindness: the 4000/month zai MCP web pool is fleet-shared
+  (pi-primary user, sis deliberately light), and its quota surface is NOT
+  readable from this seat — any meter/quota read goes through the lane to pi.
+- Pool scoping: the zai **model-prompt** pool stays pi-primary; only the
+  **MCP web** pool is fleet-shared.
+
 ### `context7_resolve-library-id` + `context7_query-docs`
 Two-step process for library documentation:
 
