@@ -775,12 +775,16 @@ function hasDangerousEnvPrefix(cmd) {
 //   bash scripts/session-close-commit.sh <args>  ·  scripts/session-close-commit.sh <args>
 // Raw-text anchored match: env prefixes NEVER match (the script's close-status
 // guard must not be bypassable via env-stripped matching), no sh runner, no
-// ./ or parent prefix, no suffixed/other script names. Consumed by BOTH
+// ./ or parent prefix, no suffixed/other script names — and, the PR-28 audit
+// lesson, the arg tail must be METACHAR-FREE: Layer 4's allow sits above the
+// 4.6 compound screen, so a `;`/`&&`/pipe/substitution tail would ride the
+// door past every backstop. Summaries are plain one-liners; separators stay
+// outside the door. Consumed by BOTH
 // isDestructiveCommand (→ false) and isSafeReadOnlyCommand (→ true, the
 // Layer-4 allow path) so the door opens in every phase — the PR-27 lesson:
 // both surfaces learn the entry together or the door does not open.
 const SANCTIONED_CLOSE_COMMIT_RE =
-  /^\s*(?:bash\s+)?scripts\/session-close-commit\.sh(?:\s.*)?$/;
+  /^\s*(?:bash\s+)?scripts\/session-close-commit\.sh(?:\s[^\n;&|`$<>()\\]*)?$/;
 
 export function isSanctionedCloseCommitCommand(cmd) {
   if (typeof cmd !== "string") return false;

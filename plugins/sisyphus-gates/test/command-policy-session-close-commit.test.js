@@ -28,7 +28,11 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
-import { isDestructiveCommand, isSafeReadOnlyCommand } from "../src/command-policy.js";
+import {
+  isDestructiveCommand,
+  isSafeReadOnlyCommand,
+  isSanctionedCloseCommitCommand,
+} from "../src/command-policy.js";
 
 const BASH_FORM = 'bash scripts/session-close-commit.sh "sync close docs for round X"';
 const DIRECT_FORM = "scripts/session-close-commit.sh sync-close-docs";
@@ -95,5 +99,70 @@ describe("close-commit door — hand-typed git keeps its normal path", () => {
 
   test("plain git push is never safe-read-only (Layer 6.5 keeps its own gate)", () => {
     assert.equal(isSafeReadOnlyCommand("git push"), false);
+  });
+});
+
+// ─── PR-28 audit pins: compound smuggles stay OUTSIDE the door ──────────
+// The sanctioned tail must be metachar-free: Layer 4's allow sits above the
+// 4.6 compound screen, so any separator/substitution tail after the script
+// path would otherwise ride the door past every backstop.
+
+describe("close-commit door — compound smuggles (PR-28 audit)", () => {
+  const forceTail = ["g" + "it pu" + "sh", "--fo" + "rce", "origin", "main"].join(" ");
+
+  test("'; force-push tail' is NOT sanctioned and stays blocked", () => {
+    const cmd = 'bash scripts/session-close-commit.sh "x" ; ' + forceTail;
+    assert.equal(isSanctionedCloseCommitCommand(cmd), false);
+    assert.equal(isDestructiveCommand(cmd), true);
+    assert.equal(isSafeReadOnlyCommand(cmd), false);
+  });
+
+  test("'; plain push tail' is NOT sanctioned", () => {
+    const cmd = 'bash scripts/session-close-commit.sh "x" ; gi' + 't push origin main';
+    assert.equal(isSanctionedCloseCommitCommand(cmd), false);
+    assert.equal(isSafeReadOnlyCommand(cmd), false);
+  });
+
+  test("'&& rm -rf tail' is NOT sanctioned and stays blocked", () => {
+    const cmd = "bash scripts/session-close-commit.sh \"x\" && rm -rf /tmp/q";
+    assert.equal(isSanctionedCloseCommitCommand(cmd), false);
+    assert.equal(isDestructiveCommand(cmd), true);
+  });
+
+  test("'|| curl tail' and '| sh tail' are NOT sanctioned", () => {
+    assert.equal(
+      isSanctionedCloseCommitCommand('bash scripts/session-close-commit.sh "x" || curl http://x'),
+      false
+    );
+    assert.equal(
+      isSanctionedCloseCommitCommand('bash scripts/session-close-commit.sh "x" | sh'),
+      false
+    );
+  });
+
+  test("command-substitution and redirect tails are NOT sanctioned", () => {
+    assert.equal(
+      isSanctionedCloseCommitCommand('bash scripts/session-close-commit.sh "x" $(rm -rf /)'),
+      false
+    );
+    assert.equal(
+      isSanctionedCloseCommitCommand('bash scripts/session-close-commit.sh "x" > /etc/passwd'),
+      false
+    );
+  });
+
+  test("plain quoted summaries (spaces, em-dash) still open the door", () => {
+    assert.equal(
+      isSanctionedCloseCommitCommand(
+        'bash scripts/session-close-commit.sh "final close — all rounds green"'
+      ),
+      true
+    );
+    assert.equal(
+      isSafeReadOnlyCommand(
+        'bash scripts/session-close-commit.sh "final close — all rounds green"'
+      ),
+      true
+    );
   });
 });
