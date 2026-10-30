@@ -177,6 +177,12 @@ permissions:
   - action: shell
     resource: "bd update * --claim"
     effect: allow
+  - action: shell
+    resource: "bash scripts/session-close-commit.sh *"
+    effect: allow
+  - action: shell
+    resource: "scripts/session-close-commit.sh *"
+    effect: allow
   - action: websearch
     resource: "*"
     effect: allow
