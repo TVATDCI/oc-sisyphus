@@ -53,6 +53,9 @@ const TRUST_ROOT_WRITE_PATTERNS = [
   // from their terminal (outside opencode), so this does NOT change the
   // existing operator workflow.
   [/opencode\.json$/i, "opencode plugin config"],
+  // Layer-0 hardening (brain-xrtj, 2026-10-30): the verdict-signing key is
+  // never agent-writable — a forged key would sign fake PASS verdicts.
+  [/sisyphus-gate-key$/i, "verdict-signing key"],
 ];
 
 /**
@@ -72,6 +75,12 @@ const TRUST_ROOT_READ_PATTERNS = [
   [/sisyphus-gates\/dist(?:\/|$)/i, "plugin dist source"],
   [/sisyphus-gates\/src(?:\/|$)/i, "plugin src source"],
   [/sisyphus-gates\/threat-model\.md$/i, "plugin threat model"],
+  // Layer-0 hardening (brain-xrtj, 2026-10-30): with the curated shell
+  // allowlist in agents/sisyphus.md, file dumpers run without opencode-layer
+  // asks — the key and .env-class secrets are blocked here, by mechanism.
+  [/sisyphus-gate-key$/i, "verdict-signing key"],
+  [/\/[^/]*\.env$/i, ".env-class file"],
+  [/\/\.env\.(?!example$)[^/]*$/i, ".env-class file"],
 ];
 
 /**

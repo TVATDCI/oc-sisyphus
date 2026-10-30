@@ -12,6 +12,171 @@ permissions:
   - action: shell
     resource: "*"
     effect: ask
+  - action: shell
+    resource: "gh auth status *"
+    effect: allow
+  - action: shell
+    resource: "gh repo view *"
+    effect: allow
+  - action: shell
+    resource: "gh search *"
+    effect: allow
+  - action: shell
+    resource: "gh pr view *"
+    effect: allow
+  - action: shell
+    resource: "gh pr diff *"
+    effect: allow
+  - action: shell
+    resource: "gh pr checks *"
+    effect: allow
+  - action: shell
+    resource: "gh release view *"
+    effect: allow
+  - action: shell
+    resource: "gh release list *"
+    effect: allow
+  - action: shell
+    resource: "gh issue view *"
+    effect: allow
+  - action: shell
+    resource: "gh issue list *"
+    effect: allow
+  - action: shell
+    resource: "git status *"
+    effect: allow
+  - action: shell
+    resource: "git log *"
+    effect: allow
+  - action: shell
+    resource: "git diff *"
+    effect: allow
+  - action: shell
+    resource: "git show *"
+    effect: allow
+  - action: shell
+    resource: "git branch"
+    effect: allow
+  - action: shell
+    resource: "git branch -a"
+    effect: allow
+  - action: shell
+    resource: "git branch -vv"
+    effect: allow
+  - action: shell
+    resource: "git branch -r"
+    effect: allow
+  - action: shell
+    resource: "git branch --list *"
+    effect: allow
+  - action: shell
+    resource: "git remote"
+    effect: allow
+  - action: shell
+    resource: "git remote -v"
+    effect: allow
+  - action: shell
+    resource: "git ls-files *"
+    effect: allow
+  - action: shell
+    resource: "git blame *"
+    effect: allow
+  - action: shell
+    resource: "cat *"
+    effect: allow
+  - action: shell
+    resource: "head *"
+    effect: allow
+  - action: shell
+    resource: "tail *"
+    effect: allow
+  - action: shell
+    resource: "ls *"
+    effect: allow
+  - action: shell
+    resource: "file *"
+    effect: allow
+  - action: shell
+    resource: "stat *"
+    effect: allow
+  - action: shell
+    resource: "wc *"
+    effect: allow
+  - action: shell
+    resource: "grep *"
+    effect: allow
+  - action: shell
+    resource: "rg *"
+    effect: allow
+  - action: shell
+    resource: "diff *"
+    effect: allow
+  - action: shell
+    resource: "which *"
+    effect: allow
+  - action: shell
+    resource: "readlink *"
+    effect: allow
+  - action: shell
+    resource: "md5sum *"
+    effect: allow
+  - action: shell
+    resource: "sha256sum *"
+    effect: allow
+  - action: shell
+    resource: "jq *"
+    effect: allow
+  - action: shell
+    resource: "node --version"
+    effect: allow
+  - action: shell
+    resource: "npm --version"
+    effect: allow
+  - action: shell
+    resource: "git --version"
+    effect: allow
+  - action: shell
+    resource: "gh --version"
+    effect: allow
+  - action: shell
+    resource: "rg --version"
+    effect: allow
+  - action: shell
+    resource: "jq --version"
+    effect: allow
+  - action: shell
+    resource: "bun --version"
+    effect: allow
+  - action: shell
+    resource: "python3 --version"
+    effect: allow
+  - action: shell
+    resource: "mise --version"
+    effect: allow
+  - action: shell
+    resource: "opencode --version"
+    effect: allow
+  - action: shell
+    resource: "npm view *"
+    effect: allow
+  - action: shell
+    resource: "npm list *"
+    effect: allow
+  - action: shell
+    resource: "mise ls *"
+    effect: allow
+  - action: shell
+    resource: "mise ls-remote *"
+    effect: allow
+  - action: shell
+    resource: "mise current *"
+    effect: allow
+  - action: shell
+    resource: "bd create *"
+    effect: allow
+  - action: shell
+    resource: "bd update * --claim"
+    effect: allow
   - action: websearch
     resource: "*"
     effect: allow
