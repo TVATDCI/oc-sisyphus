@@ -28,6 +28,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import {
   isDestructiveCommand,
   isSafeReadOnlyCommand,
@@ -39,7 +40,12 @@ const { SUBCOMMAND_BD, BD_TIER_READ, BD_TIER_ASK, BD_TIER_GATED, BD_TIER_PHASE_A
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
-// `bd --help` verb inventory (bd 2.x, captured 2026-11-01 on this desk).
+// `bd --help` verb inventory (bd 1.0.3 / 1b2dd2cb, captured 2026-11-01 on
+// this desk). Frozen snapshot for portability; the totality test ALSO diffs
+// the LIVE `bd --help` against the map when the binary is present — the
+// frozen list alone passed vacuously once (B1: swarm/worktree/mail were
+// missing from BOTH list and map, so they agreed with each other and with
+// neither with reality).
 const BD_HELP_VERBS = [
   // Working With Issues
   "assign", "children", "close", "comment", "comments", "create", "create-form",
@@ -64,9 +70,31 @@ const BD_HELP_VERBS = [
   "admin", "jira", "linear", "repo",
   // Additional Commands
   "ado", "audit", "blocked", "completion", "cook", "defer", "formula",
-  "github", "gitlab", "help", "human", "init-safety", "mol", "notion",
-  "orphans", "ready", "rename", "ship", "undefer", "version",
+  "github", "gitlab", "help", "human", "init-safety", "mail", "mol", "notion",
+  "orphans", "ready", "rename", "ship", "swarm", "undefer", "version",
+  "worktree",
 ];
+
+/**
+ * Parse the verb inventory out of live `bd --help` output (indented
+ * "  verb        Description" lines). Returns null when bd is absent or the
+ * output shape is unrecognized — callers must treat null as "live diff
+ * skipped", never as an empty (vacuous) inventory.
+ */
+function liveBdVerbs() {
+  try {
+    const out = execFileSync("bd", ["--help"], { encoding: "utf8", timeout: 15000 });
+    const verbs = new Set();
+    for (const line of out.split("\n")) {
+      const m = line.match(/^\s{2,}([a-z][a-z0-9-]*)\s{2,}\\S/);
+      if (m) verbs.add(m[1]);
+    }
+    if (verbs.size < 20) return null; // parsed shape looks wrong — refuse to assert on it
+    return [...verbs].sort();
+  } catch {
+    return null;
+  }
+}
 
 function parseSisyphusBdShellRules() {
   const text = readFileSync(join(REPO_ROOT, "agents", "sisyphus.md"), "utf8");
@@ -90,7 +118,6 @@ function parseSisyphusBdShellRules() {
 
 describe("bd verb-tier map (mutation-boundary ask tier)", () => {
   test("tier totality: every bd --help verb lands in exactly one disposition", () => {
-    const readPlusAgnostic = new Set([...BD_TIER_READ, ...BD_TIER_PHASE_AGNOSTIC_WRITE]);
     const missing = BD_HELP_VERBS.filter(
       (v) => !BD_TIER_READ.has(v) && !BD_TIER_ASK.has(v) && !BD_TIER_GATED.has(v) && !BD_TIER_PHASE_AGNOSTIC_WRITE.has(v),
     );
@@ -105,7 +132,33 @@ describe("bd verb-tier map (mutation-boundary ask tier)", () => {
       ].filter(Boolean);
       assert.equal(memberships.length, 1, `${v} must land in exactly one tier, got: ${memberships.join(",")}`);
     }
-    assert.ok(readPlusAgnostic.size > 0);
+  });
+
+  test("live inventory diff: every verb the installed bd exposes is classified (B1 non-vacuous guard)", () => {
+    const live = liveBdVerbs();
+    if (live === null) {
+      // bd absent or unparseable: the frozen snapshot above still ran; say so
+      // loudly instead of passing silently over the skipped live diff.
+      console.log("bd-ask-tier: live bd inventory unavailable — live diff skipped, frozen snapshot asserted only");
+      return;
+    }
+    const unclassified = live.filter(
+      (v) => !BD_TIER_READ.has(v) && !BD_TIER_ASK.has(v) && !BD_TIER_GATED.has(v) && !BD_TIER_PHASE_AGNOSTIC_WRITE.has(v),
+    );
+    assert.deepEqual(
+      unclassified,
+      [],
+      `installed bd exposes verbs the tier map does not classify (bd shipped new verbs?) — add them with a tier ruling: ${unclassified.join(", ")}`,
+    );
+    // rot the other way: a frozen-snapshot verb that live bd no longer has
+    // means the inventory (or the parser) drifted.
+    const liveSet = new Set(live);
+    const vanished = BD_HELP_VERBS.filter((v) => !liveSet.has(v));
+    assert.deepEqual(
+      vanished,
+      [],
+      `frozen inventory carries verbs the installed bd no longer exposes — refresh BD_HELP_VERBS: ${vanished.join(", ")}`,
+    );
   });
 
   test("ask tier is disjoint from the gated tier and the read tier", () => {

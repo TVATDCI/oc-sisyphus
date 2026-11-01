@@ -361,9 +361,13 @@ const SUBCOMMAND_BD = {
 // absent from the ARITY table), silently allowing the whole verb family.
 //
 // This map is the single enumeration owner for the bd verb tiers, captured
-// from `bd --help` (2.x, 2026-11-01). It does NOT change the plugin's own
-// decision sets: SUBCOMMAND_BD.safe/destructive above stay byte-identical
-// (Finding A fail-closed bd tracking preserved). The tiers:
+// from `bd --help` (1.0.3 / 1b2dd2cb, 2026-11-01) and diffed against the
+// live inventory by the totality test (test/bd-ask-tier.test.js parses the
+// real `bd --help` when the binary is present — the hand-built list alone
+// passed vacuously once already; the live diff is the guard). It does NOT
+// change the plugin's own decision sets: SUBCOMMAND_BD.safe/destructive
+// above stay byte-identical (Finding A fail-closed bd tracking preserved).
+// The tiers:
 //   read   — query/display verbs; stanza allow tier (silent, safe).
 //   ask    — mutating verbs whose only plugin disposition is pass-through;
 //            the PERMISSION stanza is their boundary (ask tier). Must never
@@ -471,6 +475,14 @@ const BD_TIER_ASK = new Set([
   "rename",
   "ship",
   "undefer",
+  // bd 1.0.3 audit addendum (B1, shift-left audit 2026-11-01): three live
+  // verbs the first transcription dropped — the totality test passed
+  // vacuously because the test inventory omitted the same three. Ruled ASK:
+  // all three mutate or delegate; none is rm-class destructive; read is
+  // wrong for all three. The live-inventory diff keeps this from recurring.
+  "swarm", // management for structured epics — mutates
+  "worktree", // manages git worktrees — mutates
+  "mail", // delegates to a mail provider — sends
 ]);
 
 // Verbs this map deliberately does NOT re-classify because the plugin already
