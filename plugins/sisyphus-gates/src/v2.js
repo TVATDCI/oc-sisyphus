@@ -63,6 +63,7 @@ import { recordEvent } from "./metrics.js";
 import { loadMcpPrefixes } from "./mcp-classifier.js";
 import { resolveMemoryKey } from "./memory-key.js";
 import { loadSandboxConfig } from "./sandbox-policy.js";
+import { bdAskTierEscalation } from "./command-policy.js";
 import {
   allowedAgents,
   unregisteredAgentReason,
@@ -509,6 +510,24 @@ export const v2Definition = {
         if (action && !action.startsWith("read")) {
           event.effect = "ask";
         }
+      }
+
+      // bd ask-tier enforcement (fm/sis-gates-ask-enforcement): ask-tier
+      // bd verbs surface the permission ask REGARDLESS of the effect the
+      // host computed from configured rules + saved grants. This kills
+      // both bypass classes the twin re-test proved live: the saved
+      // `bd *`-class grant (PermissionSaved appends after configured
+      // rules, findLast wins — one always-click used to silence every
+      // later bd verb) and the computed-allow default (the built-in
+      // subagent `shell * allow`; PR 30's tier map was data without
+      // enforcement). Reads keep today's clean behavior; gated and
+      // destructive classes keep their existing plugin blocks (the gate
+      // throws before permission evaluation runs). Decision owner:
+      // bdAskTierEscalation in command-policy.js (one law, both
+      // generations).
+      const escalation = bdAskTierEscalation(event.action, event.resources);
+      if (escalation) {
+        event.effect = escalation;
       }
     });
 
