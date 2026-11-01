@@ -86,8 +86,14 @@ function liveBdVerbs() {
     const out = execFileSync("bd", ["--help"], { encoding: "utf8", timeout: 15000 });
     const verbs = new Set();
     for (const line of out.split("\n")) {
-      const m = line.match(/^\s{2,}([a-z][a-z0-9-]*)\s{2,}\\S/);
-      if (m) verbs.add(m[1]);
+      // F1/F2 (re-audit 2026-11-01): \S must be the non-whitespace class (a
+      // literal backslash-S matches nothing → 0 verbs → vacuous skip), and
+      // the gap must be \s+ — bd renders single-space gaps after long verb
+      // names (find-duplicates), which \s{2,} silently drops. The Usage
+      // block's `bd [flags]` / `bd [command]` lines parse as a fake verb
+      // named after the binary — excluded explicitly.
+      const m = line.match(/^\s{2,}([a-z][a-z0-9-]*)\s+\S/);
+      if (m && m[1] !== "bd") verbs.add(m[1]);
     }
     if (verbs.size < 20) return null; // parsed shape looks wrong — refuse to assert on it
     return [...verbs].sort();
@@ -134,12 +140,12 @@ describe("bd verb-tier map (mutation-boundary ask tier)", () => {
     }
   });
 
-  test("live inventory diff: every verb the installed bd exposes is classified (B1 non-vacuous guard)", () => {
+  test("live inventory diff: every verb the installed bd exposes is classified (B1 non-vacuous guard)", (t) => {
     const live = liveBdVerbs();
     if (live === null) {
-      // bd absent or unparseable: the frozen snapshot above still ran; say so
-      // loudly instead of passing silently over the skipped live diff.
-      console.log("bd-ask-tier: live bd inventory unavailable — live diff skipped, frozen snapshot asserted only");
+      // bd absent or unparseable: the frozen snapshot above still ran; the
+      // skip is COUNTED by the runner (t.skip), never a silent green.
+      t.skip("live bd inventory unavailable — frozen snapshot asserted by the totality test only");
       return;
     }
     const unclassified = live.filter(
@@ -158,6 +164,18 @@ describe("bd verb-tier map (mutation-boundary ask tier)", () => {
       vanished,
       [],
       `frozen inventory carries verbs the installed bd no longer exposes — refresh BD_HELP_VERBS: ${vanished.join(", ")}`,
+    );
+    // the guard must be able to CATCH its own defect class (re-audit 2026-11-01):
+    // clone the map minus one live verb and assert the diff surfaces it. If
+    // this ever fails, the live diff has gone vacuous again and the test is
+    // lying about coverage.
+    const holeyAsk = new Set([...BD_TIER_ASK].filter((v) => v !== "swarm"));
+    const holeyUnclassified = live.filter(
+      (v) => !BD_TIER_READ.has(v) && !holeyAsk.has(v) && !BD_TIER_GATED.has(v) && !BD_TIER_PHASE_AGNOSTIC_WRITE.has(v),
+    );
+    assert.ok(
+      holeyUnclassified.includes("swarm"),
+      "self-check failed: removing swarm from the map did NOT surface it in the live diff — the guard is vacuous",
     );
   });
 
