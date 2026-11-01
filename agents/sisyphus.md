@@ -172,10 +172,67 @@ permissions:
     resource: "mise current *"
     effect: allow
   - action: shell
-    resource: "bd create *"
+    resource: "bd ready *"
     effect: allow
   - action: shell
-    resource: "bd update * --claim"
+    resource: "bd prime *"
+    effect: allow
+  - action: shell
+    resource: "bd list *"
+    effect: allow
+  - action: shell
+    resource: "bd show *"
+    effect: allow
+  - action: shell
+    resource: "bd blocked *"
+    effect: allow
+  - action: shell
+    resource: "bd search *"
+    effect: allow
+  - action: shell
+    resource: "bd query *"
+    effect: allow
+  - action: shell
+    resource: "bd memories *"
+    effect: allow
+  - action: shell
+    resource: "bd stats *"
+    effect: allow
+  - action: shell
+    resource: "bd doctor *"
+    effect: allow
+  - action: shell
+    resource: "bd info *"
+    effect: allow
+  - action: shell
+    resource: "bd preflight *"
+    effect: allow
+  - action: shell
+    resource: "bd stale *"
+    effect: allow
+  - action: shell
+    resource: "bd orphans *"
+    effect: allow
+  - action: shell
+    resource: "bd lint *"
+    effect: allow
+  - action: shell
+    resource: "bd count *"
+    effect: allow
+  - action: shell
+    resource: "bd history *"
+    effect: allow
+  - action: shell
+    resource: "bd graph *"
+    effect: allow
+  - action: shell
+    resource: "bd status *"
+    effect: allow
+  - action: shell
+    resource: "bd where *"
+    effect: allow
+  - action: shell
+    resource: "bd --version"
     effect: allow
   - action: shell
     resource: "bash scripts/session-close-commit.sh *"

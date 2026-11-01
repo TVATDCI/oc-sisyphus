@@ -352,6 +352,172 @@ const SUBCOMMAND_BD = {
   ]),
 };
 
+// ─── bd verb-tier map (mutation-boundary ask tier, 2026-11-01) ────────────
+// The twin desk's mutation-boundary finding (PRs 26/27 era) proven live on
+// 2.2.2 (fm/sis-gates-zai-verb-ship repro, scratch evidence dir): bd write-
+// class verbs landed with NO boundary on the primary seat — `bd create *` was
+// an explicit stanza ALLOW, and one "always" click on any bd ask saves the
+// ARITY-fallback pattern `bd *` project-wide (shell/parse.ts prefix(); bd is
+// absent from the ARITY table), silently allowing the whole verb family.
+//
+// This map is the single enumeration owner for the bd verb tiers, captured
+// from `bd --help` (2.x, 2026-11-01). It does NOT change the plugin's own
+// decision sets: SUBCOMMAND_BD.safe/destructive above stay byte-identical
+// (Finding A fail-closed bd tracking preserved). The tiers:
+//   read   — query/display verbs; stanza allow tier (silent, safe).
+//   ask    — mutating verbs whose only plugin disposition is pass-through;
+//            the PERMISSION stanza is their boundary (ask tier). Must never
+//            carry a stanza allow.
+//   gated  — verbs the plugin itself BLOCKS (SUBCOMMAND_BD.destructive);
+//            stanza rules are irrelevant (the gate throws first).
+//   phase-agnostic — create/update: mutating, but Layer-4-safe BY DESIGN
+//            (Finding A: fail-closed phases need bd tracking writes); the
+//            ask boundary for them is the permission stanza, which must not
+//            allow them explicitly.
+const BD_TIER_READ = new Set([
+  "ready",
+  "prime",
+  "list",
+  "show",
+  "blocked",
+  "search",
+  "query",
+  "memories",
+  "recall",
+  "stats",
+  "doctor",
+  "info",
+  "ping",
+  "preflight",
+  "stale",
+  "orphans",
+  "lint",
+  "count",
+  "diff",
+  "find-duplicates",
+  "history",
+  "status",
+  "statuses",
+  "types",
+  "state",
+  "children",
+  "graph",
+  "version",
+  "context",
+  "where",
+  "human",
+  "onboard",
+  "quickstart",
+  "init-safety",
+  "completion",
+  "help",
+  "--help",
+  "-h",
+  "--version",
+  "-V",
+]);
+
+const BD_TIER_ASK = new Set([
+  // issue mutations
+  "assign",
+  "comment",
+  "comments", // "view or manage" — mutation-capable
+  "create-form",
+  "duplicate",
+  "label",
+  "link",
+  "note",
+  "priority",
+  "promote",
+  "q", // quick capture = create
+  "reopen",
+  "set-state",
+  "tag",
+  "todo",
+  // structure mutations
+  "dep", // manage — dep add/remove mutate (tree views read)
+  "duplicates", // "find and optionally merge"
+  "epic", // management — create/add subcommands
+  "gate",
+  "merge-slot",
+  // sync & data mutations
+  "backup",
+  "branch", // list or create
+  "export", // writes a JSONL file
+  "federation",
+  "restore",
+  "vc",
+  // setup & config mutations
+  "bootstrap", // non-destructive but writes the database
+  "config", // get reads, set writes
+  "init",
+  "kv",
+  "remember",
+  "rules", // audit and compact
+  "upgrade",
+  "migrate",
+  "rename-prefix",
+  // integrations & misc mutations
+  "ado",
+  "audit", // append-only JSONL write
+  "cook",
+  "formula",
+  "github",
+  "gitlab",
+  "jira",
+  "linear",
+  "notion",
+  "repo",
+  "rename",
+  "ship",
+  "undefer",
+]);
+
+// Verbs this map deliberately does NOT re-classify because the plugin already
+// blocks them (SUBCOMMAND_BD.destructive + the enumeratees below overlap it).
+// Kept as an explicit list so the totality test can prove every `bd --help`
+// verb lands in exactly one disposition.
+const BD_TIER_GATED = new Set([
+  "close",
+  "defer",
+  "supersede",
+  "forget",
+  "mol",
+  "setup",
+  "dolt",
+  "delete",
+  "edit", // opens $EDITOR and mutates — plugin-blocked (SUBCOMMAND_BD.destructive)
+  "sql",
+  "prune",
+  "purge",
+  "gc",
+  "compact",
+  "flatten",
+  "batch",
+  "import",
+  "admin",
+  "hooks",
+]);
+
+// Mutating verbs that stay Layer-4-safe by the Finding A ruling (fail-closed
+// phases must keep bd record writes). The ask boundary for them is the
+// permission stanza — pinned by the stanza-coherence test, never a stanza
+// allow.
+const BD_TIER_PHASE_AGNOSTIC_WRITE = new Set(["create", "update"]);
+
+/**
+ * True iff the command is a bd invocation whose subcommand lands in the ask
+ * tier (mutating verb, plugin pass-through — the permission stanza must ask).
+ * Exact-subcommand match on the second token; no prefix sloppiness.
+ */
+export function isAskTierCommand(cmd) {
+  if (typeof cmd !== "string") return false;
+  const tokens = tokenize(cmd);
+  if (tokens.length < 2) return false;
+  if (tokens[0] !== "bd") return false;
+  return BD_TIER_ASK.has(tokens[1]) || BD_TIER_PHASE_AGNOSTIC_WRITE.has(tokens[1]);
+}
+
 const SUBCOMMAND_GIT = {
   safe: new Set(["status", "log", "diff", "show", "ls-files"]),
   flagCheck: (_sub, rest) => {
@@ -1181,4 +1347,9 @@ export function isSafeCompoundCommand(cmd) {
 export const _internal = {
   normalize,
   stripLeadingEnvExport,
+  SUBCOMMAND_BD,
+  BD_TIER_READ,
+  BD_TIER_ASK,
+  BD_TIER_GATED,
+  BD_TIER_PHASE_AGNOSTIC_WRITE,
 };
