@@ -30,6 +30,23 @@ const MCP_READ_VERBS = /^(read|get|list|stat|info|head|search|query|find|exists|
 // self-names its tools with its own server prefix.
 const MCP_WRITE_VERBS = /^(write|create|update|delete|remove|move|rename|edit|put|patch|set|save|upload|copy|mkdir|rmdir|append)/;
 
+// MCP-WEB-TIER (2026-10-30 landing; this ship is the captain-ruled
+// follow-up): the zai MCP web tier's tool names do not START with a
+// read-verb prefix ("web_search_prime", "webReader"), so the verb
+// heuristic left them unknown → deny-by-default and the fleet-shared web
+// tier stayed connected-but-call-blocked in agent sessions. These are
+// EXACT-name read tools, pinned verbatim (post-prefix-strip, lowercased —
+// getMcpClassification lowercases before matching). Exact matching means
+// a renamed, suffixed, or near-miss sibling ("webreaderx",
+// "web_search_prime_export") still denies; nothing here relaxes the
+// write-verb regex.
+const MCP_EXPLICIT_READ_TOOLS = new Set([
+  "web_search_prime", // web-search-prime server: the web search call
+  "webreader", // web-reader server: one-shot URL read
+  "search_doc", // zread server: repository doc search
+  "get_repo_structure", // zread server: repository tree read
+]);
+
 // ─── MCP prefix set (loaded from opencode.json at startup) ──────────────────
 
 let MCP_PREFIXES = new Set();
@@ -54,7 +71,15 @@ export function loadMcpPrefixes(configDirectory) {
       const cfg = JSON.parse(raw);
       if (cfg.mcp && typeof cfg.mcp === "object") {
         for (const serverName of Object.keys(cfg.mcp)) {
-          MCP_PREFIXES.add(serverName.toLowerCase() + "_");
+          const lower = serverName.toLowerCase();
+          MCP_PREFIXES.add(lower + "_");
+          // Hyphenated server names may dispatch with the hyphens
+          // normalized to underscores depending on host generation; the
+          // alias keeps the Layer 3.5 classification stable across both
+          // dispatch shapes (same server, same verbs).
+          if (lower.includes("-")) {
+            MCP_PREFIXES.add(lower.replaceAll("-", "_") + "_");
+          }
         }
       }
     } catch {
@@ -88,7 +113,10 @@ export function getMcpClassification(tool) {
         toolName = toolName.slice(prefix.length);
       }
       const server = prefix.slice(0, -1); // remove trailing _
-      if (MCP_READ_VERBS.test(toolName)) {
+      if (
+        MCP_EXPLICIT_READ_TOOLS.has(toolName) ||
+        MCP_READ_VERBS.test(toolName)
+      ) {
         return { type: "mcp", classification: "read", server };
       }
       if (MCP_WRITE_VERBS.test(toolName)) {
@@ -113,6 +141,7 @@ export function isInitialized() {
 export const _internal = {
   MCP_READ_VERBS,
   MCP_WRITE_VERBS,
+  MCP_EXPLICIT_READ_TOOLS,
   getPrefixes: () => MCP_PREFIXES,
   setPrefixes: (arr) => { MCP_PREFIXES = new Set(arr); },
   resetPrefixes: () => { MCP_PREFIXES = new Set(); },

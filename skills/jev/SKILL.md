@@ -69,9 +69,9 @@ decision models under `providers.opencode.models` — the opencode.ai catalog
 also serves them natively (rolling out as of 2026-10-28); the explicit entry
 pins the lane against catalog churn (config wins over catalog, merge-proven
 sandbox-verified 2026-10-28). Not a chat model: the opencode runtime —
-re-checked through v2.2.0 on 2026-10-28 (`opencode --help` surface audit
-lists no classify surface; v2.2.2 flip 2026-10-30 — classify-surface
-re-audit pending on the flipped pin) — gives no user-facing classify surface, so the
+re-checked on the live pin 2026-11-01 (`opencode --help` at v2.2.2 carries
+zero classify-surface mentions; re-audit closed) — gives no user-facing
+classify surface, so the
 invocation paths are:
 
 1. **The script** (residual lane, and any single question): pipe state+question
