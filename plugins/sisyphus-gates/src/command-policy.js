@@ -530,6 +530,71 @@ export function isAskTierCommand(cmd) {
   return BD_TIER_ASK.has(tokens[1]) || BD_TIER_PHASE_AGNOSTIC_WRITE.has(tokens[1]);
 }
 
+/**
+ * True iff ANY segment of a (possibly compound) command invokes a bd
+ * ask-tier verb. Single-segment commands reduce to isAskTierCommand.
+ *
+ * Compound-awareness is load-bearing: the stanza's retired-pattern class
+ * (`bd ready *` read allows, or a saved `bd *` grant) matches the WHOLE
+ * raw command string by prefix, so `bd ready && bd create --title x`
+ * computes an allow at the permission layer even though a write verb
+ * rides the second segment. The split uses the same separators
+ * isSafeCompoundCommand splits on (quote-unaware there too; quotes are
+ * pre-rejected on that path). A quoted string containing "&&" can
+ * produce a false positive here — the error direction is an extra ask,
+ * never a silent run, which is the safe side of this boundary.
+ */
+export function askTierCommandPresent(cmd) {
+  if (typeof cmd !== "string") return false;
+  if (isAskTierCommand(cmd)) return true;
+  if (!cmd.includes("&&") && !cmd.includes("||") && !/[|;&\n]/.test(cmd)) {
+    return false;
+  }
+  return cmd
+    .split(/&&|\|\||[|;&]|\n/)
+    .map((seg) => seg.trim())
+    .some((seg) => seg.length > 0 && isAskTierCommand(seg));
+}
+
+/**
+ * The permission-layer disposition for ONE evaluated permission event.
+ *
+ * Returns "ask" when the event is a shell permission over resources any
+ * of which carries a bd ask-tier verb, and null (no opinion) otherwise —
+ * the caller keeps whatever effect it computed.
+ *
+ * This is the enforcement owner for the bd ask tier (fm/
+ * sis-gates-ask-enforcement): it is consulted by BOTH plugin generations
+ * (v2.js permission.evaluate — the live 2.2.2 surface — and plugin.js
+ * permission.ask, the 1.18 rollback surface). The override is
+ * UNCONDITIONAL on the caller's computed effect: opencode 2.2.2 appends
+ * saved grants (PermissionSaved rules) after configured rules and
+ * resolves findLast-wins, and its built-in subagent default carries
+ * `shell * allow` — both classes compute "allow" for ask-tier verbs, and
+ * both must lose to the configured ask boundary. The host never hands
+ * the hook a "deny" (deny short-circuits before the evaluate trigger),
+ * so an override here can only ever tighten ask|allow → ask, never
+ * weaken a denial.
+ *
+ * Action names: the live V2 shell tool evaluates as action "shell";
+ * "bash" is accepted as the V1-era alias so a host that still names the
+ * bash action gets the same boundary.
+ */
+export function bdAskTierEscalation(action, resources) {
+  if (typeof action !== "string") return null;
+  const normalized = action === "bash" ? "shell" : action;
+  if (normalized !== "shell") return null;
+  const list = Array.isArray(resources)
+    ? resources
+    : typeof resources === "string"
+      ? [resources]
+      : [];
+  for (const resource of list) {
+    if (askTierCommandPresent(resource)) return "ask";
+  }
+  return null;
+}
+
 const SUBCOMMAND_GIT = {
   safe: new Set(["status", "log", "diff", "show", "ls-files"]),
   flagCheck: (_sub, rest) => {

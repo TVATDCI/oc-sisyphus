@@ -21,6 +21,7 @@ import { recordEvent } from "./metrics.js";
 import { loadMcpPrefixes } from "./mcp-classifier.js";
 import { resolveMemoryKey } from "./memory-key.js";
 import { loadSandboxConfig } from "./sandbox-policy.js";
+import { bdAskTierEscalation } from "./command-policy.js";
 
 export const server = async (_input, _options) => {
   // W1.E: load the workflow config up front so the yaml-driven phase
@@ -222,6 +223,28 @@ export const server = async (_input, _options) => {
         if (input.patterns?.some((p) => !p.startsWith("read"))) {
           output.status = "ask";
         }
+      }
+
+      // bd ask-tier enforcement (fm/sis-gates-ask-enforcement): same
+      // decision owner as the V2 permission.evaluate hook — an ask-tier
+      // bd verb re-raises the ask even when a saved `bd *`-class grant
+      // (or any computed allow) would let it run. The 1.18 Permission
+      // shape carries the action on `type` and the matched resource on
+      // `pattern` (string | string[]); the bash tool's command, when the
+      // generation delivers it, rides metadata.command. Every source is
+      // consulted additively — absent fields degrade to a no-op, never a
+      // regression on the pinned rollback surface.
+      const patternResources = Array.isArray(input.pattern)
+        ? input.pattern
+        : typeof input.pattern === "string"
+          ? [input.pattern]
+          : [];
+      const commandResources =
+        typeof input.metadata?.command === "string" ? [input.metadata.command] : [];
+      if (
+        bdAskTierEscalation(input.type, [...patternResources, ...commandResources]) === "ask"
+      ) {
+        output.status = "ask";
       }
     },
   };

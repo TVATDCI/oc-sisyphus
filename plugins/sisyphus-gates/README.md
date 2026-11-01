@@ -20,6 +20,10 @@ Phase-based governance gate enforcement for the Sisyphus workflow. Blocks writes
 | 6       | Phase-specific           | All tools                           | Discovery/PRD-writing: allow all. PRD-review: block destructive. Plan-approved: block destructive.                                                                                                            |
 | **6.5** | **Session-close gate**   | **bash**                            | **`git push` / `bd dolt push` blocked when `session_close.status === "open"` (protocol started but not completed). Operator-side state field; prose claims of "closed" are non-authoritative.**                |
 
+## bd ask tier (permission layer)
+
+Independent of the decision stack above: mutating bd verbs (the PR-30 tier map — `BD_TIER_ASK` + the Finding A phase-agnostic writes) surface a permission ASK regardless of what the host's rules computed. `bdAskTierEscalation` in `src/command-policy.js` is the single decision owner, consulted by both plugin generations' permission hooks (V2 `permission.evaluate` — the live surface — and V1 `permission.ask`). It re-raises the ask even when a saved `bd *`-class grant (one always-click saves it project-wide; the host appends saved rules after configured rules, findLast-wins) or a computed-allow default would let the verb run — the grant stays but is inert for ask-tier verbs. Compound-aware: `bd ready && bd create --title x` asks even though the read prefix computes an allow. Reads, allowlisted commands, and gated/destructive classes are untouched (gates throw before permission evaluation runs).
+
 ## Sandbox allowlist (Layer 3.7)
 
 **Opt-in.** When `sandbox_paths` is not configured or empty, behavior is byte-identical to v0.2.0 without the feature.
