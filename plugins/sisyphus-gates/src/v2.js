@@ -63,7 +63,7 @@ import { recordEvent } from "./metrics.js";
 import { loadMcpPrefixes } from "./mcp-classifier.js";
 import { resolveMemoryKey } from "./memory-key.js";
 import { loadSandboxConfig } from "./sandbox-policy.js";
-import { bdAskTierEscalation } from "./command-policy.js";
+import { bdAskTierEscalation, askTierCommandPresent } from "./command-policy.js";
 import {
   allowedAgents,
   unregisteredAgentReason,
@@ -240,6 +240,101 @@ export function resolveOptions(ctx) {
   const fromHost = ctx?.options && typeof ctx.options === "object" ? ctx.options : {};
   const fromConfig = readOptionsFromConfig(ctx?.location?.directory || process.cwd());
   return { ...fromConfig, ...fromHost };
+}
+
+/**
+ * bd ask-tier consult shim (fm/store-preemption-fix) — the UNCONDITIONAL
+ * permission evaluation for ask-tier bd verbs.
+ *
+ * WHY THIS EXISTS (the twin desk's discriminators report, 2026-11-02):
+ * the same gates code asks for bd writes against a fresh bd store and ran
+ * them silently against the twin's production store — the stored state on
+ * the desk (a project-scoped PermissionSaved grant `bd *`, minted by the
+ * host's ARITY fallback because bd is absent from its shell/parse.ts arity
+ * table) silenced every bd ask-tier verb in seat processes whose loaded
+ * plugin generation did not carry the PR-31 escalation. The permission
+ * event the evaluate hook needs is produced by the HOST's internal
+ * shell-tool assert; when the loaded module's consult is stale or absent,
+ * that event carries no ask-tier opinion and the stored allow wins. No
+ * desk should need store surgery to get asks.
+ *
+ * THE FIX: the plugin stops depending on the host's internal assert as
+ * the only source of the consult. The tool hook is the surface that
+ * demonstrably ALWAYS fires on both desks at every generation (rm blocks
+ * everywhere); from it, for ask-tier bd verbs, the plugin raises the
+ * permission request ITSELF through the host's public plugin surface
+ * ctx.permission.assert (verified in the 2.2.2 binary:
+ * permission={hook,list,get,reply,assert}). Because the tool hook and the
+ * permission evaluate hook are registered by the SAME module instance,
+ * the consult raised here always carries the PR-31 escalation: no stored
+ * grant, stanza allow, or session permission can resolve the evaluation
+ * to allow without the ask re-raising. Deny rules short-circuit BEFORE
+ * the evaluate trigger inside the host — a stored deny still blocks, now
+ * through this shim's throw.
+ *
+ * SHAPE: action "shell" + the raw command as the single resource — the
+ * same action/resource the host's own shell tool asserts, so the dialog
+ * renders standard and bdAskTierEscalation governs identically. NO save
+ * markers: the ask tier never mints grants (an always-click on this
+ * consult saves nothing).
+ *
+ * GENERATION ASYMMETRY (record-why): the shim is V2-only. The V1 1.18
+ * rollback surface exposes no plugin-raised permission call (its API is
+ * the permission.ask hook), and that generation's host consults the hook
+ * on every request — the saved-grant fast path does not exist there, and
+ * the silence class never reproduced on 1.18, so plugin.js is untouched.
+ * Hosts whose V2 ctx lacks permission.assert degrade to a no-op (noted
+ * once at startup); the evaluate-hook escalation remains the enforcement
+ * there, exactly as before this shim.
+ *
+ * COST, ON RECORD: on stanzas that themselves ask for the command (the
+ * fleet's blanket `shell *` ask), an APPROVED bd write is consulted twice
+ * (this shim's evaluation, then the host's own). Extra asks are the safe
+ * direction of this boundary — the silenced ask is the failure class.
+ */
+let askShimUnavailableNoted = false;
+
+export function resetAskShimNoteForTest() {
+  askShimUnavailableNoted = false;
+}
+
+/**
+ * Raise the ask-tier permission evaluation through the host's plugin
+ * surface. Resolves when the evaluation concluded allow (or an answered
+ * ask approved the command); throws a gate-block error when the host
+ * denied the command or the supervisor rejected/declined the ask. On a
+ * host without the assert surface this is a noted no-op — never silent
+ * enforcement loss, because that generation still runs the evaluate-hook
+ * escalation registered in this same setup().
+ */
+export async function raiseAskTierConsult(permissionSurface, event, command) {
+  if (!permissionSurface || typeof permissionSurface.assert !== "function") {
+    if (!askShimUnavailableNoted) {
+      askShimUnavailableNoted = true;
+      console.warn(
+        "[sisyphus-gates] bd ask-tier consult shim inactive: host exposes no ctx.permission.assert surface. " +
+          "The permission.evaluate escalation (registered in this setup) remains the enforcement."
+      );
+    }
+    return;
+  }
+  const source = { type: "tool" };
+  if (typeof event?.messageID === "string" && event.messageID) source.messageID = event.messageID;
+  if (typeof event?.id === "string" && event.id) source.id = event.id;
+  try {
+    await permissionSurface.assert({
+      action: "shell",
+      resources: [command],
+      ...(typeof event?.agent === "string" && event.agent ? { agent: event.agent } : {}),
+      ...(typeof event?.sessionID === "string" && event.sessionID ? { sessionID: event.sessionID } : {}),
+      source,
+      metadata: { sisyphus_ask_tier: "consult", command },
+    });
+  } catch (err) {
+    throw new Error(
+      `⛔ Gate blocked: bd ask-tier command not permitted by its permission evaluation: ${command}`
+    );
+  }
 }
 
 /**
@@ -489,6 +584,19 @@ export const v2Definition = {
           matched_pattern: decision.sandboxAllow.matchedPattern,
           matched_sandbox_path: decision.sandboxAllow.matchedSandboxPath,
         });
+      }
+
+      // bd ask-tier consult shim (fm/store-preemption-fix): at this point
+      // the command proceeds — every gate-block path already threw. An
+      // ask-tier bd verb gets its permission evaluation raised HERE, by
+      // the plugin, before the tool runs — unconditional on any stored
+      // allow (see raiseAskTierConsult). Reads never consult; the
+      // destructive/gated classes never reach this line (throw above).
+      if (gateTool === "bash") {
+        const command = typeof args?.command === "string" ? args.command : "";
+        if (command && askTierCommandPresent(command)) {
+          await raiseAskTierConsult(ctx?.permission, event, command);
+        }
       }
     });
 
