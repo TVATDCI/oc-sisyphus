@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "node --test test/*.test.js test/adversarial/*.test.js",
+    "build": "node tools/build-dist.js",
     "self-test": "node test/self-test/run.js",
     "test:all": "npm test && npm run self-test",
     "sign": "node cli.js sign-verdict",
