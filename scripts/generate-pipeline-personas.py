@@ -460,14 +460,37 @@ PROFILES = {
         {"action": "websearch", "resource": "*", "effect": "allow"},
         {"action": "webfetch", "resource": "*", "effect": "allow"},
     ],
-    # writer + bd: issue filing is the seat's whole job; bd's append-only
-    # subcommands are phase-agnostic and the destructive ones stay gated by
-    # the sisyphus-gates plugin.
+    # writer + bd: issue filing is the seat's whole job. Phase-agnostic
+    # bd record writes (create/update) stay Layer-4-safe at the plugin gate
+    # (fail-closed phases never hard-block them), but they MUST NOT carry a
+    # stanza allow: a `bd *` allow computes allow at the permission layer
+    # ahead of the ask tier, so in any window where the plugin's escalation
+    # hook is not live in the seat process (stale generation after a pull)
+    # bd writes run SILENT — the twin desk's third finding, reproduced live
+    # (fm/phase-agnostic-ask-fix, repro/red-bdgrant-pre31). The stanza
+    # grants only the read tier (silent, safe); every mutating bd verb
+    # falls through to the blanket shell ask and is governed by the ask
+    # tier under pure rule resolution — no hook required.
     "writer-bd": [
         {"action": "read", "resource": "*", "effect": "allow"},
         {"action": "edit", "resource": "*", "effect": "ask"},
         {"action": "shell", "resource": "*", "effect": "ask"},
-        {"action": "shell", "resource": "bd *", "effect": "allow"},
+        {"action": "shell", "resource": "bd ready *", "effect": "allow"},
+        {"action": "shell", "resource": "bd list *", "effect": "allow"},
+        {"action": "shell", "resource": "bd show *", "effect": "allow"},
+        {"action": "shell", "resource": "bd blocked *", "effect": "allow"},
+        {"action": "shell", "resource": "bd search *", "effect": "allow"},
+        {"action": "shell", "resource": "bd memories *", "effect": "allow"},
+        {"action": "shell", "resource": "bd stats *", "effect": "allow"},
+        {"action": "shell", "resource": "bd doctor *", "effect": "allow"},
+        {"action": "shell", "resource": "bd info *", "effect": "allow"},
+        {"action": "shell", "resource": "bd preflight *", "effect": "allow"},
+        {"action": "shell", "resource": "bd stale *", "effect": "allow"},
+        {"action": "shell", "resource": "bd orphans *", "effect": "allow"},
+        {"action": "shell", "resource": "bd lint *", "effect": "allow"},
+        {"action": "shell", "resource": "bd count *", "effect": "allow"},
+        {"action": "shell", "resource": "bd history *", "effect": "allow"},
+        {"action": "shell", "resource": "bd status *", "effect": "allow"},
         {"action": "shell", "resource": "ls *", "effect": "allow"},
         {"action": "shell", "resource": "grep *", "effect": "allow"},
         {"action": "shell", "resource": "find *", "effect": "allow"},

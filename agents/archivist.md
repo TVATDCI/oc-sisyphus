@@ -2,6 +2,14 @@
 name: archivist
 description: "Execution agent for Main-vault file operations and vertical-slice implementation. Runs individual vault scripts and creates/edits wiki content when delegated by vault-ops, or directly for one-off operations. Triggers: create wiki page, edit wiki, implement slice, update wiki file. NOT for: orchestrating publishing workflows (use vault-ops), read-only validation (use vault-lint or auditor)."
 mode: subagent
+# bd: read tier only. Phase-agnostic record writes (create/update) stay
+# Layer-4-safe at the plugin gate but must NOT carry a stanza allow — a
+# `bd *` allow computes allow at the permission layer ahead of the ask
+# tier, so on any seat window where the plugin's escalation hook is not
+# live (stale generation after a pull) bd writes ran SILENT (twin desk
+# third finding, fm/phase-agnostic-ask-fix). Mutating verbs fall through
+# to the blanket shell ask below: they ask, the supervisor approves, and
+# fail-closed phases keep bd record writes working (Finding A stands).
 permissions:
   - action: read
     resource: "*"
@@ -61,7 +69,52 @@ permissions:
     resource: "bash *"
     effect: allow
   - action: shell
-    resource: "bd *"
+    resource: "bd ready *"
+    effect: allow
+  - action: shell
+    resource: "bd list *"
+    effect: allow
+  - action: shell
+    resource: "bd show *"
+    effect: allow
+  - action: shell
+    resource: "bd blocked *"
+    effect: allow
+  - action: shell
+    resource: "bd search *"
+    effect: allow
+  - action: shell
+    resource: "bd memories *"
+    effect: allow
+  - action: shell
+    resource: "bd stats *"
+    effect: allow
+  - action: shell
+    resource: "bd doctor *"
+    effect: allow
+  - action: shell
+    resource: "bd info *"
+    effect: allow
+  - action: shell
+    resource: "bd preflight *"
+    effect: allow
+  - action: shell
+    resource: "bd stale *"
+    effect: allow
+  - action: shell
+    resource: "bd orphans *"
+    effect: allow
+  - action: shell
+    resource: "bd lint *"
+    effect: allow
+  - action: shell
+    resource: "bd count *"
+    effect: allow
+  - action: shell
+    resource: "bd history *"
+    effect: allow
+  - action: shell
+    resource: "bd status *"
     effect: allow
   - action: shell
     resource: "ls *"
