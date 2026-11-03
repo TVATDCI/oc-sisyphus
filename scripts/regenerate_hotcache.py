@@ -140,6 +140,27 @@ GENERATED_MARKER_RE = re.compile(
 )
 
 
+# git vars git itself injects into hook environments (GIT_DIR et al). When
+# this script runs as a child of a git hook (the repo's pre-push hook runs
+# the suite that exercises it), GIT_DIR would override `git -C <repo>`
+# discovery and silently read the WRONG repository — the 2026-11-03
+# incident class. Stripping restores cwd-based discovery per the --git-repo
+# contract. (bd gets the same strip for hygiene.)
+GIT_HOOK_ENV_VARS = (
+    "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY", "GIT_COMMON_DIR",
+)
+
+
+def sanitized_git_env(extra=None):
+    env = {**os.environ}
+    for var in GIT_HOOK_ENV_VARS:
+        env.pop(var, None)
+    if extra:
+        env.update(extra)
+    return env
+
+
 # ── Fingerprints ─────────────────────────────────────────────────────────────
 
 
@@ -172,7 +193,7 @@ def load_memories(beads_dir: str) -> dict:
     long values. The result is a raw {bd_id: record_string} map (metadata
     keys like schema_version are skipped at parse time).
     """
-    env = {**os.environ, "BEADS_DIR": beads_dir}
+    env = sanitized_git_env({"BEADS_DIR": beads_dir})
     try:
         result = subprocess.run(
             ["bd", "memories", "--json"],
@@ -244,6 +265,7 @@ def load_git_head(git_repo: str):
             encoding="utf-8",
             errors="replace",
             check=False,
+            env=sanitized_git_env(),
         )
     except FileNotFoundError:
         return None

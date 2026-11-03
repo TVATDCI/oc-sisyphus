@@ -66,20 +66,34 @@ function scratchRoot(label) {
   return mkdtempSync(join(tmpdir(), `mem-${label}-`));
 }
 
-/** Fleet isolation law (Nov 2 entry phrasing): HOME + five XDG + BEADS_DIR. */
+/**
+ * Fleet isolation law (Nov 2 entry phrasing): HOME + five XDG + BEADS_DIR —
+ * plus the GIT_* vars git injects into HOOK environments (GIT_DIR et al).
+ * Without the strip, any test spawned from a git hook (the repo's pre-push
+ * hook runs this suite!) silently reroutes its git/bd subprocesses into the
+ * checkout repo — the 2026-11-03 incident this standing set now guards
+ * against (see the GIT_DIR immunity test below).
+ */
 function envelope(root, storeBeadsDir) {
+  const env = {
+    ...process.env,
+    HOME: root,
+    XDG_CONFIG_HOME: join(root, ".config"),
+    XDG_DATA_HOME: join(root, ".local/share"),
+    XDG_CACHE_HOME: join(root, ".cache"),
+    XDG_STATE_HOME: join(root, ".local/state"),
+    XDG_RUNTIME_DIR: join(root, ".run"),
+    BEADS_DIR: storeBeadsDir,
+  };
+  for (const k of [
+    "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY", "GIT_COMMON_DIR",
+  ]) {
+    delete env[k];
+  }
   return {
     cwd: join(root, "cwd"),
-    env: {
-      ...process.env,
-      HOME: root,
-      XDG_CONFIG_HOME: join(root, ".config"),
-      XDG_DATA_HOME: join(root, ".local/share"),
-      XDG_CACHE_HOME: join(root, ".cache"),
-      XDG_STATE_HOME: join(root, ".local/state"),
-      XDG_RUNTIME_DIR: join(root, ".run"),
-      BEADS_DIR: storeBeadsDir,
-    },
+    env,
     encoding: "utf-8",
     timeout: 180000,
   };
@@ -110,7 +124,10 @@ function readMemories(root, beadsDir) {
   return JSON.parse(r.stdout);
 }
 
-/** Scratch git repo with a pinned-date commit — deterministic git input. */
+/** Scratch git repo with a pinned-date commit — deterministic git input.
+ *  GIT_* vars stripped: the same hook-env leak the envelope guards (git sets
+ *  GIT_DIR when spawning hooks; a suite run from inside one must never let
+ *  fixture commits land in the checkout repo — 2026-11-03 incident). */
 function initGitRepo(root, subject) {
   const repo = join(root, "fixture-repo");
   mkdirSync(repo, { recursive: true });
@@ -124,6 +141,12 @@ function initGitRepo(root, subject) {
     GIT_COMMITTER_EMAIL: "fixture@example.invalid",
     HOME: root,
   };
+  for (const k of [
+    "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY", "GIT_COMMON_DIR",
+  ]) {
+    delete env[k];
+  }
   const opts = { cwd: repo, env, encoding: "utf-8" };
   writeFileSync(join(repo, "f.txt"), "fixture\n");
   execFileSync("git", ["init", "-q"], opts);
@@ -555,6 +578,68 @@ describe("memory doctrine standing set (T1–T6)", () => {
       /os\.environ\.get\(\s*"BEADS_DIR"/,
       "T6: wrapper no longer honors the BEADS_DIR env pin — cwd-independent store resolution lost",
     );
+  });
+
+  test("GIT_DIR immunity: inherited git-hook env vars cannot reroute fixture git ops into the checkout repo", (t) => {
+    if (!BD_AVAILABLE) {
+      t.skip("bd unavailable — standing set leg requires a real store");
+      return;
+    }
+    const root = scratchRoot("t7");
+    try {
+      const beadsDir = initStore(root, "deskA");
+      const statePath = writeFixtureState(root);
+      const gitRepo = initGitRepo(root, "T7 fixture head commit");
+      const cachePath = join(root, "hotcache.md");
+
+      // Simulate the hook environment that caused the 2026-11-03 incident:
+      // run the flow with GIT_DIR deliberately poisoned in the test process
+      // env. The envelope/initGitRepo strips must make every fixture git op
+      // land in the scratch repo — never the checkout hosting the suite.
+      const poisoned = process.env.GIT_DIR;
+      process.env.GIT_DIR = "/definitely-not-a-real-git-dir-t7";
+      const cleanGitEnv = { ...process.env };
+      delete cleanGitEnv.GIT_DIR;
+      const gitOpts = { encoding: "utf-8", timeout: 15000, env: cleanGitEnv };
+      let worktreeHeadBefore;
+      try {
+        worktreeHeadBefore = spawnSync("git", ["rev-parse", "HEAD"], gitOpts).stdout.trim();
+
+        const w = wrapperWrite(root, beadsDir, {
+          scope: "global", turn: 1, category: "next", key: "t7_step", value: "T7 poisoned-env step",
+        });
+        assert.equal(w.status, 0, `seed write failed under poisoned env: ${w.stderr}`);
+        const r = regenerate(root, { beadsDir, statePath, gitRepo, outPath: cachePath });
+        assert.equal(r.status, 0, `regeneration failed under poisoned env: ${r.stderr}`);
+        const cache = readFileSync(cachePath, "utf-8");
+        assert.ok(
+          cache.includes("T7 fixture head commit"),
+          "GIT_DIR leak: regenerator read the wrong repo's head under a poisoned env",
+        );
+        const mem = readMemories(root, beadsDir);
+        assert.ok(mem["global:next:t7_step"], "GIT_DIR leak: bd store resolution disturbed by poisoned env");
+      } finally {
+        if (poisoned === undefined) {
+          delete process.env.GIT_DIR;
+        } else {
+          process.env.GIT_DIR = poisoned;
+        }
+      }
+
+      // the checkout repo hosting this suite run must be untouched
+      const worktreeHeadAfter = spawnSync("git", ["rev-parse", "HEAD"], gitOpts).stdout.trim();
+      assert.equal(
+        worktreeHeadAfter, worktreeHeadBefore,
+        "GIT_DIR immunity broken: a commit landed in the checkout repo while the suite ran under a poisoned env",
+      );
+      const worktreeStatus = spawnSync("git", ["status", "--short"], gitOpts).stdout.trim();
+      assert.ok(
+        !worktreeStatus.includes("f.txt"),
+        "GIT_DIR immunity broken: fixture file f.txt leaked into the checkout repo's status",
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

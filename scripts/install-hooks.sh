@@ -14,7 +14,21 @@ if [ -z "$REPO_ROOT" ]; then
 fi
 
 HOOK_SRC="$REPO_ROOT/scripts/pre-push.sh"
-HOOK_DST="$REPO_ROOT/.git/hooks/pre-push"
+
+# Resolve the COMMON git dir: in a worktree, $REPO_ROOT/.git is a file (a
+# gitdir pointer), and hooks live in the shared common dir — installing to
+# .git/hooks/ fails with "Not a directory" (first worktree lane that tried
+# to install, 2026-11-03). --path-format=absolute needs git ≥ 2.31; fall
+# back to the relative form + manual absolutization.
+COMMON_DIR="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+if [ -z "$COMMON_DIR" ]; then
+  COMMON_DIR="$(git rev-parse --git-common-dir)"
+  case "$COMMON_DIR" in
+    /*) ;;                              # already absolute
+    *) COMMON_DIR="$REPO_ROOT/$COMMON_DIR" ;;
+  esac
+fi
+HOOK_DST="$COMMON_DIR/hooks/pre-push"
 
 if [ ! -f "$HOOK_SRC" ]; then
   echo "ERROR: $HOOK_SRC not found"
