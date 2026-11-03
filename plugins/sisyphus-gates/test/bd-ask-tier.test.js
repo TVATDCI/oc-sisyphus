@@ -30,48 +30,56 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import {
+  askTierCommandPresent,
+  bdAskTierEscalation,
   isDestructiveCommand,
   isSafeReadOnlyCommand,
   isAskTierCommand,
   _internal,
 } from "../src/command-policy.js";
 
-const { SUBCOMMAND_BD, BD_TIER_READ, BD_TIER_ASK, BD_TIER_GATED, BD_TIER_PHASE_AGNOSTIC_WRITE } = _internal;
+const {
+  SUBCOMMAND_BD,
+  BD_TIER_READ,
+  BD_TIER_ASK,
+  BD_TIER_GATED,
+  BD_TIER_PHASE_AGNOSTIC_WRITE,
+  BD_NESTED_ASK_CHILDREN,
+  BD_NESTED_GATED_CHILDREN,
+  BD_ASK_FLAGS,
+} = _internal;
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
-// `bd --help` verb inventory (bd 1.0.3 / 1b2dd2cb, captured 2026-11-01 on
-// this desk). Frozen snapshot for portability; the totality test ALSO diffs
-// the LIVE `bd --help` against the map when the binary is present — the
-// frozen list alone passed vacuously once (B1: swarm/worktree/mail were
-// missing from BOTH list and map, so they agreed with each other and with
-// neither with reality).
+// `bd --help` verb inventory (bd 1.3.2 / 9b65b9e, captured 2026-11-03 on
+// this desk from the scratch-built tag binary under the isolation envelope;
+// fm/bd-132-rehearsal-policy). Sorted live parse — 119 verbs: the 1.0.3
+// snapshot minus `stats` (verb retired upstream) plus conflicts, events,
+// heartbeat, metrics, migrate-personal, provenance, reclaim,
+// recompute-blocked, schema, serve, sync, unclaim. Frozen snapshot for
+// portability; the totality test ALSO diffs the LIVE `bd --help` against the
+// map when the binary is present — the frozen list alone passed vacuously
+// once (B1: swarm/worktree/mail were missing from BOTH list and map, so they
+// agreed with each other and with neither with reality).
 const BD_HELP_VERBS = [
-  // Working With Issues
-  "assign", "children", "close", "comment", "comments", "create", "create-form",
-  "delete", "edit", "gate", "label", "link", "list", "merge-slot", "note",
-  "priority", "promote", "q", "query", "reopen", "search", "set-state", "show",
-  "state", "tag", "todo", "update",
-  // Views & Reports
-  "count", "diff", "find-duplicates", "history", "lint", "stale", "status",
-  "statuses", "types",
-  // Dependencies & Structure
-  "dep", "duplicate", "duplicates", "epic", "graph", "supersede",
-  // Sync & Data
-  "backup", "branch", "export", "federation", "import", "restore", "vc",
-  // Setup & Configuration
-  "bootstrap", "config", "context", "dolt", "forget", "hooks", "human", "info",
-  "init", "init-safety", "kv", "memories", "onboard", "prime", "quickstart",
-  "recall", "remember", "setup", "where",
-  // Maintenance
-  "batch", "compact", "doctor", "flatten", "gc", "migrate", "ping",
-  "preflight", "prune", "purge", "rename-prefix", "rules", "sql", "upgrade",
-  // Integrations & Advanced
-  "admin", "jira", "linear", "repo",
-  // Additional Commands
-  "ado", "audit", "blocked", "completion", "cook", "defer", "formula",
-  "github", "gitlab", "help", "human", "init-safety", "mail", "mol", "notion",
-  "orphans", "ready", "rename", "ship", "swarm", "undefer", "version",
+  "admin", "ado", "assign", "audit", "backup", "batch", "blocked",
+  "bootstrap", "branch", "children", "close", "comment", "comments",
+  "compact", "completion", "config", "conflicts", "context", "cook",
+  "count", "create", "create-form", "defer", "delete", "dep", "diff",
+  "doctor", "dolt", "duplicate", "duplicates", "edit", "epic", "events",
+  "export", "federation", "find-duplicates", "flatten", "forget",
+  "formula", "gate", "gc", "github", "gitlab", "graph", "heartbeat",
+  "help", "history", "hooks", "human", "import", "info", "init",
+  "init-safety", "jira", "kv", "label", "linear", "link", "lint", "list",
+  "mail", "memories", "merge-slot", "metrics", "migrate",
+  "migrate-personal", "mol", "note", "notion", "onboard", "orphans",
+  "ping", "preflight", "prime", "priority", "promote", "provenance",
+  "prune", "purge", "q", "query", "quickstart", "ready", "recall",
+  "reclaim", "recompute-blocked", "remember", "rename", "rename-prefix",
+  "reopen", "repo", "restore", "rules", "schema", "search", "serve",
+  "set-state", "setup", "ship", "show", "sql", "stale", "state", "status",
+  "statuses", "supersede", "swarm", "sync", "tag", "todo", "types",
+  "unclaim", "undefer", "update", "upgrade", "vc", "version", "where",
   "worktree",
 ];
 
@@ -219,6 +227,202 @@ describe("bd verb-tier map (mutation-boundary ask tier)", () => {
     assert.equal(isAskTierCommand("bd close x"), false, "gated verb");
     assert.equal(isAskTierCommand("bd"), false, "bare invocation");
     assert.equal(isAskTierCommand("git status"), false, "non-bd");
+  });
+
+  test("bd 1.3.2 adopted rulings land in the adopted tiers (fm/bd-132-rehearsal-policy, 2026-11-03)", () => {
+    // READ: verified inspect-only parent forms only.
+    for (const v of ["events", "metrics", "provenance", "schema"]) {
+      assert.ok(BD_TIER_READ.has(v), `${v} must be READ`);
+    }
+    // ASK: recompute-blocked is a repair write and must NEVER be
+    // phase-agnostic or safe-set (pinned here by name, per the ruling).
+    for (const v of ["recompute-blocked", "heartbeat", "reclaim", "unclaim", "conflicts"]) {
+      assert.ok(BD_TIER_ASK.has(v), `${v} must be ASK`);
+      assert.ok(!SUBCOMMAND_BD.safe.has(v), `${v} must never join the phase-agnostic safe set`);
+      assert.ok(!BD_TIER_PHASE_AGNOSTIC_WRITE.has(v), `${v} must never be phase-agnostic`);
+    }
+    // GATED: sync + migrate-personal tightened UP from the scout's ask
+    // proposal; serve operationally non-adopted. GATED = plugin-blocked.
+    for (const v of ["serve", "sync", "migrate-personal"]) {
+      assert.ok(BD_TIER_GATED.has(v), `${v} must be GATED`);
+      assert.ok(SUBCOMMAND_BD.destructive.has(v), `${v} must join SUBCOMMAND_BD.destructive`);
+    }
+    // RETIRED: stats left the CLI in 1.3.2 — no tier membership, no stanza
+    // allow, no safe-set entry.
+    for (const set of [BD_TIER_READ, BD_TIER_ASK, BD_TIER_GATED, BD_TIER_PHASE_AGNOSTIC_WRITE, SUBCOMMAND_BD.safe, SUBCOMMAND_BD.destructive]) {
+      assert.ok(!set.has("stats"), "stats must be fully retired from every bd set");
+    }
+    // No newly introduced write became phase-agnostic.
+    for (const v of ["events", "metrics", "provenance", "schema", "serve", "sync", "migrate-personal", "recompute-blocked", "heartbeat", "reclaim", "unclaim", "conflicts"]) {
+      assert.ok(!BD_TIER_PHASE_AGNOSTIC_WRITE.has(v), `${v} must not be phase-agnostic`);
+    }
+  });
+
+  test("nested-subcommand/flag audit: a READ parent must not blanket-allow a mutating child (oracle condition, 2026-11-03)", () => {
+    // ASK-class children under READ parents: ask tier + never safe-read-only.
+    const nestedAsk = [
+      "bd metrics on",
+      "bd metrics off",
+      "bd events prune",
+      "bd provenance record",
+    ];
+    for (const cmd of nestedAsk) {
+      assert.equal(isAskTierCommand(cmd), true, `${cmd} must ride the ask boundary`);
+      assert.equal(isSafeReadOnlyCommand(cmd), false, `${cmd} must never pass as safe read-only`);
+      assert.equal(isDestructiveCommand(cmd), false, `${cmd} is ask-class, not gated`);
+    }
+    // GATED-class nested form: plugin-blocked like the destructive set.
+    assert.equal(isDestructiveCommand("bd migrate schema"), true, "bd migrate schema must be gated");
+    assert.equal(isDestructiveCommand("bd migrate"), false, "bd migrate (bare) stays ask-tier");
+    assert.equal(isAskTierCommand("bd migrate schema"), true, "bd migrate schema also tightens to ask at the permission layer");
+    // ASK-class flags on stanza-allowed READ parents.
+    const flagAsk = [
+      "bd doctor --fix",
+      "bd doctor --fix --yes",
+      "bd doctor --fix-child-parent",
+      "bd doctor --source=jsonl",
+      "bd doctor --force",
+      "bd orphans --fix",
+      "bd orphans -f",
+      "bd preflight --fix",
+    ];
+    for (const cmd of flagAsk) {
+      assert.equal(isAskTierCommand(cmd), true, `${cmd} must ride the ask boundary`);
+      assert.equal(isSafeReadOnlyCommand(cmd), false, `${cmd} must never pass as safe read-only`);
+    }
+    // The inspect-only parent forms STAY read/safe — the demotion must not
+    // over-tighten the legitimate reads.
+    const stillRead = [
+      "bd events",
+      "bd events tail",
+      "bd events export",
+      "bd metrics",
+      "bd metrics example",
+      "bd provenance log bd-123",
+      "bd provenance by-ref abc",
+      "bd schema",
+      "bd doctor",
+      "bd doctor --check=artifacts",
+      "bd orphans",
+      "bd preflight",
+    ];
+    for (const cmd of stillRead) {
+      assert.equal(isAskTierCommand(cmd), false, `${cmd} is an inspect-only form — must stay read`);
+      assert.equal(isSafeReadOnlyCommand(cmd), true, `${cmd} must stay safe read-only`);
+    }
+    // The demotion tables themselves are non-empty — this test must not go
+    // vacuous if the maps are ever emptied.
+    assert.ok(Object.keys(BD_NESTED_ASK_CHILDREN).length >= 3, "nested-ask children table must stay populated");
+    assert.ok(Object.keys(BD_NESTED_GATED_CHILDREN).length >= 1, "nested-gated children table must stay populated");
+    assert.ok(BD_ASK_FLAGS.length >= 3, "ask-flag table must stay populated");
+  });
+
+  test("audit blocker B1: bd doctor --clean/--yes consent forms ride the ask boundary (fm/bd-132-doctor-flags-fix, 2026-11-03)", () => {
+    // The audit probe: `bd doctor --check=pollution --clean --yes` DELETES
+    // test issues from the database and `--check=artifacts --clean` DELETES
+    // files; `-y/--yes` skips the only confirmation. Pre-fix every one of
+    // these rode the READ tier silently (safe:true, ask:false) on a
+    // stanza-allowed parent (`bd doctor *`) — the hole pre-exists on main.
+    const consentAsk = [
+      "bd doctor --clean",
+      "bd doctor --yes",
+      "bd doctor -y",
+      "bd doctor --check=pollution --clean --yes",
+      "bd doctor --check=artifacts --clean -y",
+      "bd doctor --clean=true", // =-attached spelling
+      "bd doctor --force=true", // =-attached spelling (the bare-only --force$ escape)
+      "bd doctor --fix --yes",
+      "bd doctor --force", // regression pin: pre-B1 entry still demotes
+    ];
+    for (const cmd of consentAsk) {
+      assert.equal(isAskTierCommand(cmd), true, `${cmd} must ride the ask boundary`);
+      assert.equal(isSafeReadOnlyCommand(cmd), false, `${cmd} must never pass as safe read-only`);
+      assert.equal(isDestructiveCommand(cmd), false, `${cmd} is ask-class, not gated`);
+      // PR-27/28 law: safe-read-only and destructive stay disjoint under the
+      // new forms (Layer 4 consults the allow-path BEFORE destructive).
+      assert.ok(
+        !(isSafeReadOnlyCommand(cmd) && isDestructiveCommand(cmd)),
+        `${cmd} must never classify as both safe and destructive`,
+      );
+    }
+
+    // The audit's robustness nits — doctor's file-writing flags close at the
+    // same boundary. `--perf` (CPU profile write) and `-o` (attached short
+    // form of --output) are ask-class; a bare `--output` token ALSO trips the
+    // global exec/write token screen, so the plugin blocks it — the ask layer
+    // naming it too keeps the classifiers in agreement.
+    const fileWriteAsk = ["bd doctor --perf", "bd doctor -o diagnostics.json"];
+    for (const cmd of fileWriteAsk) {
+      assert.equal(isAskTierCommand(cmd), true, `${cmd} must ride the ask boundary`);
+      assert.equal(isSafeReadOnlyCommand(cmd), false, `${cmd} must never pass as safe read-only`);
+      assert.equal(isDestructiveCommand(cmd), false, `${cmd} is ask-class, not gated`);
+    }
+    const outputBlocked = "bd doctor --output diagnostics.json";
+    assert.equal(isAskTierCommand(outputBlocked), true, "--output must ALSO name the ask boundary (classifier agreement)");
+    assert.equal(isSafeReadOnlyCommand(outputBlocked), false, "--output must never pass as safe read-only");
+    assert.equal(isDestructiveCommand(outputBlocked), true, "--output trips the global exec/write token screen — plugin-blocked");
+    assert.equal(askTierCommandPresent("bd doctor --source jsonl"), true, "--source space form must demote (the bare --source= attached-only escape)");
+    assert.equal(isSafeReadOnlyCommand("bd doctor --source jsonl"), false, "--source space form must never pass as safe read-only");
+
+    // The verb-agnostic consent tier generalizes: a synthetic future verb and
+    // other real READ parents demote WITHOUT any new enumeration entry.
+    const inherited = [
+      "bd somefutureverb --yes", // synthetic verb + consent flag
+      "bd somefutureverb --clean", // synthetic verb + deletion flag
+      "bd status --force", // real stanza-allowed READ parent
+      "bd schema --clean", // real READ parent on the safe set
+    ];
+    for (const cmd of inherited) {
+      assert.equal(isAskTierCommand(cmd), true, `${cmd}: the verb-agnostic consent tier must inherit to any read parent`);
+      assert.equal(isSafeReadOnlyCommand(cmd), false, `${cmd} must never pass as safe read-only`);
+    }
+
+    // No over-tightening: inspect-only doctor forms and benign long flags
+    // stay read/safe — the consent tier must not swallow them.
+    const stillRead = [
+      "bd doctor",
+      "bd doctor --check=artifacts",
+      "bd doctor --check=pollution",
+      "bd doctor --check-health",
+      "bd doctor --json",
+      "bd doctor --verbose",
+      "bd doctor --dry-run", // preview (no --fix) stays read; `--fix --dry-run` asks via --fix
+      "bd schema --json",
+    ];
+    for (const cmd of stillRead) {
+      assert.equal(isAskTierCommand(cmd), false, `${cmd} is an inspect-only form — must stay read`);
+      assert.equal(isSafeReadOnlyCommand(cmd), true, `${cmd} must stay safe read-only`);
+    }
+
+    // The verb-agnostic tier itself is non-vacuous and tightly anchored.
+    const agnostic = BD_ASK_FLAGS.filter((f) => f.verb === "*");
+    assert.equal(agnostic.length, 1, "exactly one verb-agnostic consent entry");
+    for (const flag of ["--yes", "-y", "--force", "--clean"]) {
+      assert.ok(agnostic[0].pattern.test(flag), `consent tier must match ${flag}`);
+      assert.ok(agnostic[0].pattern.test(`${flag}=true`), `consent tier must match =-attached ${flag}`);
+    }
+    for (const benign of ["--verbose", "--json", "--deep", "-v", "--dry-run", "--check"]) {
+      assert.ok(!agnostic[0].pattern.test(benign), `consent tier must not over-match ${benign}`);
+    }
+
+    // Compound smuggling behind a read allow asks (same separators as the
+    // Layer-4.5 compound path), and the permission-layer owner tightens the
+    // `bd doctor *` stanza-allow shape to ask — grant-blind.
+    assert.equal(
+      askTierCommandPresent("bd ready && bd doctor --clean --yes"),
+      true,
+      "compound smuggling the consent form must ask",
+    );
+    assert.equal(
+      bdAskTierEscalation("shell", ["bd doctor --check=pollution --clean --yes"]),
+      "ask",
+      "escalation must tighten the stanza-allowed consent form",
+    );
+    assert.equal(
+      bdAskTierEscalation("shell", ["bd doctor"]),
+      null,
+      "plain bd doctor stays clean at the permission layer",
+    );
   });
 });
 

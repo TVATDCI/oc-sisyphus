@@ -87,9 +87,6 @@ permissions:
     resource: "bd memories *"
     effect: allow
   - action: shell
-    resource: "bd stats *"
-    effect: allow
-  - action: shell
     resource: "bd doctor *"
     effect: allow
   - action: shell

@@ -7,7 +7,7 @@
  * recomputes the hash from src/ and fails the suite when dist is stale
  * relative to src.
  *
- * src-stamp: sha256:33161805375c33fc358f33603f0a655f1cc7f0254762718392c6ef50812e656e
+ * src-stamp: sha256:a2337f80c614137d8ead758f5facb02c7f5f5898d80fdab12dea78ef885d6a3f
  *
  * V1 contract (guarded by test/v2-plugin.test.js and re-asserted in
  * test/dist-staleness.test.js): named `server` only — NO default export

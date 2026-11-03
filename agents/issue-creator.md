@@ -48,7 +48,16 @@ permissions:
     resource: "bd memories *"
     effect: allow
   - action: shell
-    resource: "bd stats *"
+    resource: "bd events *"
+    effect: allow
+  - action: shell
+    resource: "bd metrics *"
+    effect: allow
+  - action: shell
+    resource: "bd provenance *"
+    effect: allow
+  - action: shell
+    resource: "bd schema *"
     effect: allow
   - action: shell
     resource: "bd doctor *"

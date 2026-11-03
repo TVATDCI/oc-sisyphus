@@ -227,7 +227,11 @@ test("G5: bd destructive subs → destructive", () => {
 });
 
 test("G5: bd safe subs → safe read-only, not destructive", () => {
-  for (const sub of ["ready", "prime", "list", "show", "stats", "doctor", "version", "memories", "remember", "create", "update", "stale", "orphans", "lint", "preflight"]) {
+  // fm/bd-132-rehearsal-policy (2026-11-03): stats retired (gone from bd
+  // 1.3.2); the four 1.3.2 read verbs join the safe set — their nested
+  // mutations are demoted by BD_NESTED_*/BD_ASK_FLAGS (covered in
+  // bd-ask-tier.test.js).
+  for (const sub of ["ready", "prime", "list", "show", "doctor", "version", "memories", "remember", "create", "update", "stale", "orphans", "lint", "preflight", "events", "metrics", "provenance", "schema"]) {
     assert.equal(isDestructiveCommand(`bd ${sub}`), false, `bd ${sub} must NOT be destructive`);
     assert.equal(isSafeReadOnlyCommand(`bd ${sub}`), true, `bd ${sub} must be safe read-only`);
   }
