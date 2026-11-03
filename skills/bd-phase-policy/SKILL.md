@@ -12,3 +12,5 @@ metadata:
 **Phase-gated** (blocked outside execution): `close` (requires evidence logged), `defer`, `supersede`, `forget` (deletion), `mol`, `human`, `setup`, `dolt` (incl. `dolt push`, session-close gate), `edit` (interactive), plus the brain-hxm (P0) destructive extensions: `delete`, `sql`, `prune`, `purge`, `gc`, `compact`, `flatten`, `batch`, `import`, `admin` (top-level cover — `admin reset`), `hooks` (top-level cover — `hooks install` persistence vector).
 
 For memory writes via `bd remember`, use `python3 scripts/bd_remember.py` (gate-safe wrapper — passes the `|` delimiter inside Python argv, never hits the shell-safety gate).
+
+Write-law and authority questions (sole-door, categories, supersede-not-duplicate, source+date, no raw-web promotion) are owned by `skill:memory-doctrine`; this skill owns only the phase gating.
