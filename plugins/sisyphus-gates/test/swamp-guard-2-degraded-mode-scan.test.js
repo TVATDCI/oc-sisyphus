@@ -117,14 +117,30 @@ describe("Guard 2 — degraded-mode trigger scan (deterministic, fail-closed dir
     });
   });
 
-  test("missing 'Compacted at:' marker -> schema-incomplete TRIGGER", () => {
+  test("missing both provenance markers -> schema-incomplete TRIGGER", () => {
     withFixtures((dir) => {
       const broken = COMPLETE_HANDOFF.replace("**Compacted at:** 2026-10-27T00:00:00Z\n", "");
       const hc = makeHandoff(dir, "hotcache.md", broken);
       const st = makeStatus(dir, { last_run: "2026-10-27T00:00:00+00:00", ok: true, error: null });
       const res = runScan(hc, st);
       assert.equal(res.status, 1);
-      assert.match(res.stdout, /TRIGGER schema-incomplete: missing 'Compacted at:' marker/);
+      assert.match(res.stdout, /TRIGGER schema-incomplete: missing provenance\/staleness marker/);
+    });
+  });
+
+  test("regenerated-from fingerprint marker accepted as the staleness marker (regeneration path)", () => {
+    withFixtures((dir) => {
+      // a rebuilt-from-authority cache (scripts/regenerate_hotcache.py) carries
+      // NO wall clock — determinism law — so its provenance marker is the
+      // fingerprint line; the scan must accept it as schema-complete.
+      const regenerated = COMPLETE_HANDOFF.replace(
+        "**Compacted at:** 2026-10-27T00:00:00Z",
+        "**Regenerated from:** bd=abcabcabcabc state=defdefdefdef git=none",
+      );
+      const hc = makeHandoff(dir, "hotcache.md", regenerated);
+      const st = makeStatus(dir, { last_run: "2026-10-27T00:00:00+00:00", ok: true, error: null });
+      const res = runScan(hc, st);
+      assert.equal(res.status, 0, `regenerated cache must scan CLEAN: ${res.stdout}`);
     });
   });
 

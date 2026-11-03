@@ -12,6 +12,15 @@
 
 set -euo pipefail
 
+# Strip the GIT_* vars git injects into hook environments BEFORE running the
+# suite. Hooks run with GIT_DIR/GIT_WORK_TREE set (pointing at this repo);
+# any suite test that spawns git (fixtures, scratch repos) would otherwise
+# inherit them and silently commit into the checkout repo — the 2026-11-03
+# incident where the sis-memory standing set's T3 fixture commit landed on
+# the pushing branch via exactly this channel. The hook's own git calls
+# below work by normal discovery without these vars.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_COMMON_DIR || true
+
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 PLUGIN_DIR="$REPO_ROOT/plugins/sisyphus-gates"
 
