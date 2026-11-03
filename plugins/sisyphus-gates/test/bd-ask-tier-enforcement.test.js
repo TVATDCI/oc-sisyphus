@@ -86,7 +86,7 @@ describe("askTierCommandPresent — compound-aware ask-tier detection", () => {
     assert.equal(askTierCommandPresent("bd ready"), false);
     assert.equal(askTierCommandPresent("bd list --json"), false);
     assert.equal(askTierCommandPresent("bd ready && bd show x"), false);
-    assert.equal(askTierCommandPresent("bd list && bd stats"), false);
+    assert.equal(askTierCommandPresent("bd list && bd events"), false);
   });
 
   test("non-bd commands are never ask-tier", () => {

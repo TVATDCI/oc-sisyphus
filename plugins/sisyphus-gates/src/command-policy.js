@@ -306,7 +306,17 @@ const SUBCOMMAND_BD = {
     "search",
     "memories",
     "remember",
-    "stats",
+    // stats retired 2026-11-03 (bd-132 policy round): verb gone from bd 1.3.2
+    // (scout §7.1a delta); keeping it here could only match a vanished verb.
+    // bd 1.3.2 read verbs (fm/bd-132-rehearsal-policy, adopted tier rulings
+    // 2026-11-03): parents are inspect-only; their mutating children and
+    // fix-flags are demoted by BD_NESTED_ASK_CHILDREN / BD_ASK_FLAGS below —
+    // the bd branch of isSafeReadOnlyCommand consults them, so a nested
+    // mutation can never ride this phase-agnostic safe set.
+    "events",
+    "metrics",
+    "provenance",
+    "schema",
     "doctor",
     "version",
     "config",
@@ -349,6 +359,15 @@ const SUBCOMMAND_BD = {
     "import",
     "admin", // top-level cover: admin reset + every privileged db-maintenance op
     "hooks", // top-level cover: hooks install writes executable git hooks (persistence vector)
+    // bd 1.3.2 gated rulings (fm/bd-132-rehearsal-policy, adopted 2026-11-03;
+    // oracle tightened sync + migrate-personal UP from the scout's ask
+    // proposal): serve binds a server (operationally non-adopted); sync moves
+    // or mutates corpus state; migrate-personal is difficult to reverse.
+    // `bd migrate schema` is gated via BD_NESTED_GATED_CHILDREN (nested
+    // under the ask-tier migrate parent).
+    "serve",
+    "sync",
+    "migrate-personal",
   ]),
 };
 
@@ -361,8 +380,9 @@ const SUBCOMMAND_BD = {
 // absent from the ARITY table), silently allowing the whole verb family.
 //
 // This map is the single enumeration owner for the bd verb tiers, captured
-// from `bd --help` (1.0.3 / 1b2dd2cb, 2026-11-01) and diffed against the
-// live inventory by the totality test (test/bd-ask-tier.test.js parses the
+// from `bd --help` (1.0.3 / 1b2dd2cb, 2026-11-01; refreshed for bd 1.3.2 /
+// 9b65b9e on 2026-11-03 by fm/bd-132-rehearsal-policy from the scratch-built
+// binary) and diffed against the live inventory by the totality test (test/bd-ask-tier.test.js parses the
 // real `bd --help` when the binary is present — the hand-built list alone
 // passed vacuously once already; the live diff is the guard). It does NOT
 // change the plugin's own decision sets: SUBCOMMAND_BD.safe/destructive
@@ -388,7 +408,18 @@ const BD_TIER_READ = new Set([
   "query",
   "memories",
   "recall",
-  "stats",
+  // stats retired 2026-11-03: gone from bd 1.3.2's CLI (scout §7.1a: 1 of
+  // the 118 commands removed); stanza allow retired with it.
+  // bd 1.3.2 read rulings (fm/bd-132-rehearsal-policy, adopted 2026-11-03):
+  // verified inspect-only PARENT forms only — nested-audit of the built
+  // 1.3.2 binary's per-verb --help found mutating children (metrics on/off,
+  // events prune, provenance record) and mutating flags (doctor --fix*,
+  // orphans -f/--fix, preflight --fix); those exact forms are demoted to
+  // ask/gated by BD_NESTED_* / BD_ASK_FLAGS, never silently allowed.
+  "events",
+  "metrics",
+  "provenance",
+  "schema",
   "doctor",
   "info",
   "ping",
@@ -483,6 +514,16 @@ const BD_TIER_ASK = new Set([
   "swarm", // management for structured epics — mutates
   "worktree", // manages git worktrees — mutates
   "mail", // delegates to a mail provider — sends
+  // bd 1.3.2 ask rulings (fm/bd-132-rehearsal-policy, adopted 2026-11-03):
+  // recompute-blocked is a repair WRITE (rebuilds is_blocked rows) and must
+  // NEVER join the phase-agnostic safe set; heartbeat/reclaim/unclaim mutate
+  // lease/claim state; conflicts resolves conflict state. serve/sync/
+  // migrate-personal were tightened to GATED instead (see BD_TIER_GATED).
+  "recompute-blocked",
+  "heartbeat",
+  "reclaim",
+  "unclaim",
+  "conflicts",
 ]);
 
 // Verbs this map deliberately does NOT re-classify because the plugin already
@@ -497,6 +538,14 @@ const BD_TIER_GATED = new Set([
   "mol",
   "setup",
   "dolt",
+  // bd 1.3.2 gated rulings (fm/bd-132-rehearsal-policy, adopted 2026-11-03;
+  // oracle amendments: sync + migrate-personal tightened UP from the scout's
+  // ask proposal — sync can move/mutate corpus state, migrate-personal is
+  // hard to reverse; serve binds a server and stays operationally
+  // non-adopted — GATED is not approval to run it).
+  "serve",
+  "sync",
+  "migrate-personal",
   "delete",
   "edit", // opens $EDITOR and mutates — plugin-blocked (SUBCOMMAND_BD.destructive)
   "sql",
@@ -517,6 +566,60 @@ const BD_TIER_GATED = new Set([
 // allow.
 const BD_TIER_PHASE_AGNOSTIC_WRITE = new Set(["create", "update"]);
 
+// ─── bd nested-subcommand / flag demotions (oracle condition, 2026-11-03) ──
+// fm/bd-132-rehearsal-policy: the adopted 1.3.2 tier table classifies PARENT
+// verbs; the oracle's structural condition is that a READ classification
+// must not conceal a write below it. The nested audit of the built 1.3.2
+// binary's per-verb --help found:
+//   - mutating children under READ parents: `bd metrics on|off` (config
+//     write), `bd events prune` (deletes journal records), `bd provenance
+//     record` (appends provenance events);
+//   - the adopted GATED nested form `bd migrate schema` (schema migration —
+//     difficult to reverse) under the ask-tier migrate parent;
+//   - mutating flags on stanza-allowed READ parents: `bd doctor --fix /
+//     --fix-child-parent / --source= / --force` (repairs/rebuilds),
+//     `bd orphans -f/--fix` (closes orphans), `bd preflight --fix`.
+// ASK-class nested forms never join the phase-agnostic safe set and never
+// compute a stanza allow (bdAskTierEscalation tightens saved grants back to
+// ask); GATED-class nested forms are plugin-blocked like the destructive
+// set. The safe direction of error is an extra ask, never a silent run.
+const BD_NESTED_ASK_CHILDREN = {
+  metrics: new Set(["on", "off"]),
+  events: new Set(["prune"]),
+  provenance: new Set(["record"]),
+};
+
+const BD_NESTED_GATED_CHILDREN = {
+  migrate: new Set(["schema"]),
+};
+
+// Flag patterns that demote a READ-parent invocation to the ask tier.
+// Matched against the argument tokens after the subcommand. `--fix --dry-run`
+// previews also ask — modeling the conjunction is fragile and the extra ask
+// is the safe side of the boundary.
+const BD_ASK_FLAGS = [
+  { verb: "doctor", pattern: /^(--fix|--fix-child-parent|--source=|--force$)/ },
+  { verb: "orphans", pattern: /^(-f|--fix)/ },
+  { verb: "preflight", pattern: /^--fix/ },
+];
+
+/**
+ * True iff a bd argv demotes to a mutating nested form: an ASK-class child
+ * (tokens[2] exact match), a GATED-class child, or an ASK-class flag.
+ * argv[1] must already be the bd subcommand.
+ */
+function bdNestedMutation(argv) {
+  const sub = argv[1];
+  const rest = argv.slice(2);
+  if (rest.length > 0) {
+    if (BD_NESTED_ASK_CHILDREN[sub]?.has(rest[0])) return true;
+    if (BD_NESTED_GATED_CHILDREN[sub]?.has(rest[0])) return true;
+  }
+  return BD_ASK_FLAGS.some(
+    (f) => f.verb === sub && rest.some((a) => f.pattern.test(a)),
+  );
+}
+
 /**
  * True iff the command is a bd invocation whose subcommand lands in the ask
  * tier (mutating verb, plugin pass-through — the permission stanza must ask).
@@ -527,7 +630,15 @@ export function isAskTierCommand(cmd) {
   const tokens = tokenize(cmd);
   if (tokens.length < 2) return false;
   if (tokens[0] !== "bd") return false;
-  return BD_TIER_ASK.has(tokens[1]) || BD_TIER_PHASE_AGNOSTIC_WRITE.has(tokens[1]);
+  return (
+    BD_TIER_ASK.has(tokens[1]) ||
+    BD_TIER_PHASE_AGNOSTIC_WRITE.has(tokens[1]) ||
+    // Oracle condition: a READ parent must not blanket-allow a mutating
+    // child/flag — `bd metrics off`, `bd events prune`, `bd provenance
+    // record`, `bd doctor --fix` ride the ask boundary even though the
+    // parent verb is READ-classified.
+    bdNestedMutation(tokens)
+  );
 }
 
 /**
@@ -1128,7 +1239,13 @@ export function isDestructiveCommand(cmd, depth = 0) {
       return true;
     }
     if (first === "npm" && SUBCOMMAND_NPM.destructive.has(sub)) return true;
-    if (first === "bd" && SUBCOMMAND_BD.destructive.has(sub)) return true;
+    if (first === "bd") {
+      if (SUBCOMMAND_BD.destructive.has(sub)) return true;
+      // Adopted GATED nested form: `bd migrate schema` is plugin-blocked
+      // like the destructive set (fm/bd-132-rehearsal-policy, 2026-11-03).
+      if (rest.length > 0 && BD_NESTED_GATED_CHILDREN[sub]?.has(rest[0]))
+        return true;
+    }
     if (first === "kubectl" && SUBCOMMAND_KUBECTL.destructive.has(sub))
       return true;
     if (first === "docker" && SUBCOMMAND_DOCKER.destructive.has(sub))
@@ -1378,7 +1495,10 @@ export function isSafeReadOnlyCommand(cmd) {
   // Other safe read-only commands
   if (first === "bd") {
     if (tokens.length < 2) return false;
-    return SUBCOMMAND_BD.safe.has(tokens[1]);
+    if (!SUBCOMMAND_BD.safe.has(tokens[1])) return false;
+    // A nested mutation (child or fix-flag) can never ride the
+    // phase-agnostic safe set — oracle condition, 2026-11-03.
+    return !bdNestedMutation(tokens);
   }
   return SAFE_READ_ONLY_TOKENS.has(first);
 }
@@ -1429,4 +1549,7 @@ export const _internal = {
   BD_TIER_ASK,
   BD_TIER_GATED,
   BD_TIER_PHASE_AGNOSTIC_WRITE,
+  BD_NESTED_ASK_CHILDREN,
+  BD_NESTED_GATED_CHILDREN,
+  BD_ASK_FLAGS,
 };

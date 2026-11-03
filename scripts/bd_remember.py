@@ -20,7 +20,9 @@ Key design choices (learned from agent 2's empirical bd findings):
     --key, bd slugifies the full value into the key → append-only → duplicates.
     The dedup key is {scope}:{category}:{key}, matching AGENTS.md's
     "Deduplicate by {scope}:{category}:{key}" rule.
-  - --dolt-auto-commit on : bd defaults to off, meaning writes sit in the
+  - --dolt-auto-commit on : bd 1.0.3 defaulted to off (1.3.x flipped the
+    default to on); explicit 'on' stays correct and self-documenting either
+    way. 'off' means writes sit in the
     uncommitted working set and can be clobbered by the next auto-import.
     'on' commits after each write → durable.
 
