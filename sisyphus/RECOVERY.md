@@ -26,6 +26,7 @@
 | Lost all state | Restore from snapshot | Re-run Wave 0/1/2 steps |
 | `~/.sisyphus/workflow.yaml` missing | Plugin fail-closes (W1.E) | Recreate from `~/.sisyphus/workflow.yaml` (only place it lives) |
 | Gate verdict says PASS but should be FAIL | Check `<!-- SISYPHUS_GATE -->` block in review file | Re-run `/skill:momus-prd-reviewer` |
+| Hotcache lost / corrupt / suspected stale | `python3 ~/.config/opencode/scripts/regenerate_hotcache.py` (see §8b) | `--check` to confirm staleness first; rebuild is always safe |
 | Plugin API drift / unexpected upgrade | `node ~/.config/opencode/scripts/verify-plugin-compat.js` | Re-pin in `opencode.json`, restart opencode |
 | Provider claim in docs conflicts with JSON | JSON is canon: `~/.config/opencode/oh-my-openagent.json` (5/17 on openrouter, 12/17 on opencode native) | Edit JSON, run `node ~/.config/opencode/scripts/verify-plugin-compat.js` |
 
@@ -177,6 +178,42 @@ node ~/.config/opencode/scripts/verify-plugin-compat.js
 - The bad plugin version has already been **tagged and released** (reverting git doesn't un-tag a release)
 - The running clone is on an older commit and you want to catch up to a known-good release tag
 - You want the rollback to be **visible in `opencode.json`** (so future `verify-plugin-compat.js` runs continue to enforce it)
+
+## 8b. Procedure G — Regenerate the Hotcache (memory-doctrine slice two, 2026-11-03)
+
+The hotcache (`~/.sisyphus/hotcache.md`) is a DERIVED, EXPIRING, REBUILDABLE
+ACCELERATOR — never a truth root (skills/memory-doctrine §1). Losing it is a
+warm-start loss, never data loss: rebuild, don't mourn (§3).
+
+```bash
+# 0. Optional: is the cache actually stale? (fingerprint comparison vs bosses)
+python3 ~/.config/opencode/scripts/regenerate_hotcache.py --check
+#    HOTCACHE-CURRENT  = fingerprints match bd/state/git — no rebuild needed
+#    HOTCACHE-STALE    = a boss moved past the cache — rebuild
+#    HOTCACHE-CHECK-NA = model-written handoff (staleness owned by its own timestamps)
+
+# 1. Rebuild from authority (bd memories + state.json projection + git head)
+python3 ~/.config/opencode/scripts/regenerate_hotcache.py
+
+# 2. Verify the rebuilt cache passes the degraded-mode scan (schema + markers)
+python3 ~/.config/opencode/scripts/check_degraded_mode.py
+
+# 3. Rotate the previous artifact aside, same convention as compaction
+#    (only if a pre-existing hotcache.md is present and worth keeping)
+#    mv -f ~/.sisyphus/hotcache.md ~/.sisyphus/hotcache-prev.md  # BEFORE step 1
+```
+
+Properties (the determinism law): same inputs → byte-identical output — no
+wall clock, no randomness, no order instability in the product. Staleness is
+content-fingerprint drift, machine-checkable via `--check`. If two durable
+facts contradict (same write-law identity, different values), the rebuilt
+cache SURFACES both verbatim in a `## Contradictions (resolution required)`
+section — resolve at the boss surface (bd update/forget under one key), never
+by picking a side in the cache.
+
+Related: `--print-injection --budget N` renders the bounded hydration set
+(hard constraints first, then dependency/exact, then the rest — the mechanism
+slice three wires into session-begin under the numeric budget law).
 
 **When NOT to use this:** If main is broken, use `git revert`. If the local filesystem is corrupt, use a snapshot restore (§6).
 

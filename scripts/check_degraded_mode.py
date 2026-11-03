@@ -21,10 +21,18 @@ Mechanical checks (compaction SKILL.md trigger list, mechanical subset):
                                    (Session Handoff / Files Modified /
                                    Decisions Made / Next Steps / Evidence
                                    References / Preserved Constraints /
-                                   Critical Values + the Compacted-at
-                                   marker). Header-text based: the live
-                                   hotcache uses ##, the template ### —
-                                   both are the same schema.
+                                   Critical Values) or missing the
+                                   provenance/staleness marker: either the
+                                   compaction `**Compacted at:**` marker or
+                                   the regeneration `**Regenerated from:**`
+                                   fingerprint marker (scripts/regenerate_hotcache.py
+                                   rebuilds the cache from authority with NO
+                                   wall clock — determinism law — so its
+                                   staleness marker is the fingerprint line;
+                                   memory-doctrine §3 "hotcache honesty:
+                                   staleness/provenance markers"). Header-text
+                                   based: the live hotcache uses ##, the
+                                   template ### — both are the same schema.
   3. constraints-absent         — Preserved Constraints section present
                                    but empty (may be legitimate when the
                                    session had no constraints — detection
@@ -158,10 +166,15 @@ def main() -> int:
             )
         else:
             checks += 1
-            if not re.search(r"\*\*Compacted at:\*\*", text):
+            if not (
+                re.search(r"\*\*Compacted at:\*\*", text)
+                or re.search(r"\*\*Regenerated from:\*\*", text)
+            ):
                 check(
                     "schema-incomplete",
-                    "missing 'Compacted at:' marker line",
+                    "missing provenance/staleness marker line "
+                    "('Compacted at:' for compaction artifacts, "
+                    "'Regenerated from:' for rebuilt-from-authority caches)",
                 )
 
         # ── Check 3: constraints absent post-compaction ────────────────

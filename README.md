@@ -176,7 +176,7 @@ Five layers work together.
 
 A Node.js plugin that sits between OpenCode and every tool call the AI tries.
 It inspects each action, blocks the dangerous ones, and enforces a phased
-workflow. 20 source modules, 674 unit tests across 27 test files, 22
+workflow. 21 source modules, 906 unit tests across 44 test files, 22
 end-to-end scenarios.
 
 **Decision stack** (checked in order, first match wins):
@@ -323,9 +323,9 @@ the cryptographic signature — never from forgeable text.
 ├── COMPLETE-CODEBASE.md       # Full system map (architecture, timeline, routing)
 ├── SYSTEM-NARRATIVE.md        # Era-structured developmental history + rationale
 ├── plugins/sisyphus-gates/    # Governance plugin
-│   ├── src/                   # 20 source modules
+│   ├── src/                   # 21 source modules
 │   ├── cli.js                 # Operator-only signing CLI (sign-verdict, approve, protocol)
-│   ├── test/                  # 27 test files (674 tests) + 22 self-test scenarios
+│   ├── test/                  # 44 test files (906 tests) + 22 self-test scenarios
 │   └── THREAT-MODEL.md        # Attack surface analysis
 ├── skills/                    # 47 skill packs
 ├── rules/                     # Language + concern rules

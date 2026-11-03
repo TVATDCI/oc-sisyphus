@@ -68,6 +68,8 @@ During compaction, write a structured handoff message (NOT freeform prose):
 
 **Storage:** Write handoff to `~/.sisyphus/hotcache.md` as the compaction artifact. Do NOT modify AGENTS.md.
 
+**Recovery (memory-doctrine §3 — rebuild, don't mourn):** the hotcache is a derived accelerator, never a truth root. If it is lost, corrupt, or suspected stale, `python3 ~/.config/opencode/scripts/regenerate_hotcache.py` rebuilds it deterministically from the boss surfaces (bd memories + state.json projection + git head) — same inputs, byte-identical output, staleness carried as content fingerprints (`--check`). A lost hotcache is a warm-start loss, never data loss.
+
 ---
 
 ### Post-Turn Memory Extractor
