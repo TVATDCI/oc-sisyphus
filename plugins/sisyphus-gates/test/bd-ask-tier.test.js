@@ -30,6 +30,8 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import {
+  askTierCommandPresent,
+  bdAskTierEscalation,
   isDestructiveCommand,
   isSafeReadOnlyCommand,
   isAskTierCommand,
@@ -313,6 +315,114 @@ describe("bd verb-tier map (mutation-boundary ask tier)", () => {
     assert.ok(Object.keys(BD_NESTED_ASK_CHILDREN).length >= 3, "nested-ask children table must stay populated");
     assert.ok(Object.keys(BD_NESTED_GATED_CHILDREN).length >= 1, "nested-gated children table must stay populated");
     assert.ok(BD_ASK_FLAGS.length >= 3, "ask-flag table must stay populated");
+  });
+
+  test("audit blocker B1: bd doctor --clean/--yes consent forms ride the ask boundary (fm/bd-132-doctor-flags-fix, 2026-11-03)", () => {
+    // The audit probe: `bd doctor --check=pollution --clean --yes` DELETES
+    // test issues from the database and `--check=artifacts --clean` DELETES
+    // files; `-y/--yes` skips the only confirmation. Pre-fix every one of
+    // these rode the READ tier silently (safe:true, ask:false) on a
+    // stanza-allowed parent (`bd doctor *`) — the hole pre-exists on main.
+    const consentAsk = [
+      "bd doctor --clean",
+      "bd doctor --yes",
+      "bd doctor -y",
+      "bd doctor --check=pollution --clean --yes",
+      "bd doctor --check=artifacts --clean -y",
+      "bd doctor --clean=true", // =-attached spelling
+      "bd doctor --force=true", // =-attached spelling (the bare-only --force$ escape)
+      "bd doctor --fix --yes",
+      "bd doctor --force", // regression pin: pre-B1 entry still demotes
+    ];
+    for (const cmd of consentAsk) {
+      assert.equal(isAskTierCommand(cmd), true, `${cmd} must ride the ask boundary`);
+      assert.equal(isSafeReadOnlyCommand(cmd), false, `${cmd} must never pass as safe read-only`);
+      assert.equal(isDestructiveCommand(cmd), false, `${cmd} is ask-class, not gated`);
+      // PR-27/28 law: safe-read-only and destructive stay disjoint under the
+      // new forms (Layer 4 consults the allow-path BEFORE destructive).
+      assert.ok(
+        !(isSafeReadOnlyCommand(cmd) && isDestructiveCommand(cmd)),
+        `${cmd} must never classify as both safe and destructive`,
+      );
+    }
+
+    // The audit's robustness nits — doctor's file-writing flags close at the
+    // same boundary. `--perf` (CPU profile write) and `-o` (attached short
+    // form of --output) are ask-class; a bare `--output` token ALSO trips the
+    // global exec/write token screen, so the plugin blocks it — the ask layer
+    // naming it too keeps the classifiers in agreement.
+    const fileWriteAsk = ["bd doctor --perf", "bd doctor -o diagnostics.json"];
+    for (const cmd of fileWriteAsk) {
+      assert.equal(isAskTierCommand(cmd), true, `${cmd} must ride the ask boundary`);
+      assert.equal(isSafeReadOnlyCommand(cmd), false, `${cmd} must never pass as safe read-only`);
+      assert.equal(isDestructiveCommand(cmd), false, `${cmd} is ask-class, not gated`);
+    }
+    const outputBlocked = "bd doctor --output diagnostics.json";
+    assert.equal(isAskTierCommand(outputBlocked), true, "--output must ALSO name the ask boundary (classifier agreement)");
+    assert.equal(isSafeReadOnlyCommand(outputBlocked), false, "--output must never pass as safe read-only");
+    assert.equal(isDestructiveCommand(outputBlocked), true, "--output trips the global exec/write token screen — plugin-blocked");
+    assert.equal(askTierCommandPresent("bd doctor --source jsonl"), true, "--source space form must demote (the bare --source= attached-only escape)");
+    assert.equal(isSafeReadOnlyCommand("bd doctor --source jsonl"), false, "--source space form must never pass as safe read-only");
+
+    // The verb-agnostic consent tier generalizes: a synthetic future verb and
+    // other real READ parents demote WITHOUT any new enumeration entry.
+    const inherited = [
+      "bd somefutureverb --yes", // synthetic verb + consent flag
+      "bd somefutureverb --clean", // synthetic verb + deletion flag
+      "bd status --force", // real stanza-allowed READ parent
+      "bd schema --clean", // real READ parent on the safe set
+    ];
+    for (const cmd of inherited) {
+      assert.equal(isAskTierCommand(cmd), true, `${cmd}: the verb-agnostic consent tier must inherit to any read parent`);
+      assert.equal(isSafeReadOnlyCommand(cmd), false, `${cmd} must never pass as safe read-only`);
+    }
+
+    // No over-tightening: inspect-only doctor forms and benign long flags
+    // stay read/safe — the consent tier must not swallow them.
+    const stillRead = [
+      "bd doctor",
+      "bd doctor --check=artifacts",
+      "bd doctor --check=pollution",
+      "bd doctor --check-health",
+      "bd doctor --json",
+      "bd doctor --verbose",
+      "bd doctor --dry-run", // preview (no --fix) stays read; `--fix --dry-run` asks via --fix
+      "bd schema --json",
+    ];
+    for (const cmd of stillRead) {
+      assert.equal(isAskTierCommand(cmd), false, `${cmd} is an inspect-only form — must stay read`);
+      assert.equal(isSafeReadOnlyCommand(cmd), true, `${cmd} must stay safe read-only`);
+    }
+
+    // The verb-agnostic tier itself is non-vacuous and tightly anchored.
+    const agnostic = BD_ASK_FLAGS.filter((f) => f.verb === "*");
+    assert.equal(agnostic.length, 1, "exactly one verb-agnostic consent entry");
+    for (const flag of ["--yes", "-y", "--force", "--clean"]) {
+      assert.ok(agnostic[0].pattern.test(flag), `consent tier must match ${flag}`);
+      assert.ok(agnostic[0].pattern.test(`${flag}=true`), `consent tier must match =-attached ${flag}`);
+    }
+    for (const benign of ["--verbose", "--json", "--deep", "-v", "--dry-run", "--check"]) {
+      assert.ok(!agnostic[0].pattern.test(benign), `consent tier must not over-match ${benign}`);
+    }
+
+    // Compound smuggling behind a read allow asks (same separators as the
+    // Layer-4.5 compound path), and the permission-layer owner tightens the
+    // `bd doctor *` stanza-allow shape to ask — grant-blind.
+    assert.equal(
+      askTierCommandPresent("bd ready && bd doctor --clean --yes"),
+      true,
+      "compound smuggling the consent form must ask",
+    );
+    assert.equal(
+      bdAskTierEscalation("shell", ["bd doctor --check=pollution --clean --yes"]),
+      "ask",
+      "escalation must tighten the stanza-allowed consent form",
+    );
+    assert.equal(
+      bdAskTierEscalation("shell", ["bd doctor"]),
+      null,
+      "plain bd doctor stays clean at the permission layer",
+    );
   });
 });
 

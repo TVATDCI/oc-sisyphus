@@ -288,6 +288,24 @@ describe("v2 permission.evaluate — ask-tier enforcement in live-shape events",
       assert.equal(event.effect, "ask");
     });
   });
+
+  test("audit blocker B1: the bd doctor * stanza-allow shape cannot ferry --clean/--yes (fm/bd-132-doctor-flags-fix, 2026-11-03)", async () => {
+    await withTempHome(async (home) => {
+      writeStateFile(home, { phase: "execution", approval_status: "approved" });
+      const evaluate = await bootV2Permission();
+      // effect "allow" = exactly what the `bd doctor *` stanza allow (or a
+      // saved grant / subagent default) computes for the consent-flag form:
+      // `bd doctor --check=pollution --clean --yes` deletes test issues and
+      // skips the confirmation. The escalation must tighten it to ask; the
+      // plain inspect form on the SAME surface stays allow.
+      const clean = { sessionID: "enforce-7", action: "shell", resources: ["bd doctor --check=pollution --clean --yes"], effect: "allow" };
+      evaluate(clean);
+      assert.equal(clean.effect, "ask", "the read-allow ferry of --clean/--yes must ask");
+      const plain = { sessionID: "enforce-7", action: "shell", resources: ["bd doctor"], effect: "allow" };
+      evaluate(plain);
+      assert.equal(plain.effect, "allow", "plain bd doctor must stay allow on the same surface");
+    });
+  });
 });
 
 // ─── V1 enforcement: permission.ask hook (the pinned rollback surface) ─────

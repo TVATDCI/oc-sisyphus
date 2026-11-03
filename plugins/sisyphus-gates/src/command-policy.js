@@ -579,6 +579,12 @@ const BD_TIER_PHASE_AGNOSTIC_WRITE = new Set(["create", "update"]);
 //   - mutating flags on stanza-allowed READ parents: `bd doctor --fix /
 //     --fix-child-parent / --source= / --force` (repairs/rebuilds),
 //     `bd orphans -f/--fix` (closes orphans), `bd preflight --fix`.
+//     Audit blocker B1 (fresh-context audit of this branch,
+//     data/bd-132-policy-audit/report.md; closed by fm/bd-132-doctor-flags-fix
+//     2026-11-03): the first enumeration missed `bd doctor --clean`
+//     (deletes detected test issues / safe-to-delete artifact files) and
+//     `-y/--yes` (skips the only confirmation prompt) — the form rode the
+//     READ tier silently at every layer (hole pre-existing on main 1.0.3).
 // ASK-class nested forms never join the phase-agnostic safe set and never
 // compute a stanza allow (bdAskTierEscalation tightens saved grants back to
 // ask); GATED-class nested forms are plugin-blocked like the destructive
@@ -597,8 +603,26 @@ const BD_NESTED_GATED_CHILDREN = {
 // Matched against the argument tokens after the subcommand. `--fix --dry-run`
 // previews also ask — modeling the conjunction is fragile and the extra ask
 // is the safe side of the boundary.
+//
+// verb "*" is the VERB-AGNOSTIC consent tier (audit blocker B1,
+// fm/bd-132-doctor-flags-fix 2026-11-03): consent-skip/deletion flags whose
+// meaning does not depend on the parent verb — `-y/--yes` skips the only
+// confirmation a mutating form has, `--force` forces the action, `--clean`
+// deletes detected items. They demote ANY parent verb carrying them, so the
+// next read-classified verb that grows a mutating flag inherits the ask
+// boundary WITHOUT a new enumeration entry (a read parent must never
+// blanket-allow a mutating flag form — oracle structural condition).
+// `(=.*)?$` covers both bare and `=`-attached spellings (`--force=true`).
+// Verb-scoped entries stay for flags that only mutate on that verb (doctor's
+// repair/export/profile flags — incl. the space form `--source jsonl` and
+// the file-writing `--output/-o`/`--perf`, the audit's robustness nits). The
+// safe direction of error is an extra ask, never a silent run.
 const BD_ASK_FLAGS = [
-  { verb: "doctor", pattern: /^(--fix|--fix-child-parent|--source=|--force$)/ },
+  { verb: "*", pattern: /^(--yes|-y|--force|--clean)(=.*)?$/ },
+  {
+    verb: "doctor",
+    pattern: /^(--fix|--fix-child-parent|--source(=|$)|--perf|--output|-o)/,
+  },
   { verb: "orphans", pattern: /^(-f|--fix)/ },
   { verb: "preflight", pattern: /^--fix/ },
 ];
@@ -616,7 +640,10 @@ function bdNestedMutation(argv) {
     if (BD_NESTED_GATED_CHILDREN[sub]?.has(rest[0])) return true;
   }
   return BD_ASK_FLAGS.some(
-    (f) => f.verb === sub && rest.some((a) => f.pattern.test(a)),
+    (f) =>
+      // verb "*" = the verb-agnostic consent tier: matches any subcommand.
+      (f.verb === "*" || f.verb === sub) &&
+      rest.some((a) => f.pattern.test(a)),
   );
 }
 
