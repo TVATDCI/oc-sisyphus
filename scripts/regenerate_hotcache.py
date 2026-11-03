@@ -44,21 +44,30 @@ every such conflict in a dedicated cache section (both sides verbatim,
 resolution required) and never silently resolves by newest-wins, order, or
 any other tiebreak. Detection is code; resolution stays judgment.
 
-Bounded hydration (doctrine §3; T5): `--print-injection --budget N` renders
-the budget-selected injection set — hard constraints first, then
-dependency/exact values, then the remaining categories in canonical key
-order, filling whole entries until the budget is exhausted. NOTE: recency is
-NOT derivable from today's store (bd memory records carry no dates) — tier 3
-is canonical key order, a deterministic stand-in documented here; the NUMERIC
-budget value for session-begin lands with slice three, which is also the
-slice that wires this mechanism into the session-begin ritual (the Step-2
-fixed mechanism stays operative until then — no silent bending either way).
+Bounded hydration (doctrine §3; T5, landed slice three): `--print-injection
+--budget N` renders the budget-selected injection set — hard constraints
+first, then dependency/exact values, then the remaining categories in
+canonical key order, filling whole entries until the budget is exhausted.
+The bound is HARD and never silent: stdout always carries the BOUND
+accounting line, and a TRUNCATED line naming the first omitted record
+whenever the budget cut anything. The structural retention scan rides the
+same read at zero extra cost (REVIEW line: contradiction + duplicate-identity
+counts; memory-doctrine §4). NOTE: recency is NOT derivable from today's
+store (bd memory records carry no dates) — tier 3 is canonical key order, a
+deterministic stand-in documented here. The NUMERIC budget value lives in
+skills/session-begin Step 2 (the ritual owner — it changes only by editing
+that skill + the doctrine, never at runtime): 24000 rendered characters,
+proposed from measured corpus reality (2026-11-03: 435-record live store,
+constraint tier = 45 records / 20.2K chars full-fit) and CAPTAIN-RATIFIES
+via the slice-three merge. This script enforces an explicit --budget and
+never carries a default value — the number has exactly one home.
 
 Usage:
     python3 scripts/regenerate_hotcache.py                        # rebuild ~/.sisyphus/hotcache.md
     python3 scripts/regenerate_hotcache.py --stdout               # cache bytes to stdout, no write
     python3 scripts/regenerate_hotcache.py --check                # staleness check (exit 1 = stale)
-    python3 scripts/regenerate_hotcache.py --print-injection --budget 20000
+    python3 scripts/regenerate_hotcache.py --print-injection --budget 24000
+    python3 scripts/regenerate_hotcache.py --review               # retention candidates report (stdout, read-only)
     python3 scripts/regenerate_hotcache.py --state S --beads-dir B --git-repo G --out O
     python3 scripts/regenerate_hotcache.py --no-git               # omit the git input
     python3 scripts/regenerate_hotcache.py --from-capture FILE    # parse a captured bd memories --json
@@ -74,8 +83,9 @@ Output contract (deterministic):
             HOTCACHE-STALE: <input> fingerprint drifted (<a> -> <b>)  (--check)
             HOTCACHE-CURRENT: fingerprints match boss surfaces        (--check)
             HOTCACHE-CHECK-NA: no regeneration marker (model-written handoff) (--check)
-    stdout: cache bytes (--stdout) | budget-selected injection entries + BOUND line
-            (--print-injection) | nothing otherwise
+    stdout: cache bytes (--stdout) | budget-selected injection entries + BOUND
+            + TRUNCATED (when cut) + REVIEW lines (--print-injection) | the
+            retention-candidates report (--review) | nothing otherwise
 
 Exit codes:
     0  cache written / injection printed / --check current (or NA)
@@ -114,10 +124,18 @@ CATEGORY_TIER = {
     "exact": 1,
 }
 
+# `reason` routing (slice-three audit nit N5): reason is a write-law
+# canonical category (skills/memory-doctrine §2.2) but was missing from
+# this map until slice three, so its records rendered unrouted —
+# same-identity conflicts escaped contradiction detection and same-value
+# duplicates skipped dedupe. Routing them closes both escapes; unrouted
+# rendering remains the fate of genuinely foreign shapes only (zero loss
+# either way).
 CATEGORY_SECTION = {
     "constraint": "Preserved Constraints",
     "dependency": "Active Dependencies",
     "exact": "Critical Values",
+    "reason": "Rationale",
     "decision": "Decisions Made",
     "next": "Next Steps",
     "files": "Files Modified",
@@ -395,6 +413,31 @@ def build_records(memory_map: dict):
     return records
 
 
+def find_duplicates(memory_map: dict):
+    """Same write-law identity AND same value under multiple bd ids.
+
+    The sole door (update-in-place via --key) keeps one identity on one bd
+    record; identical coexistence is pre-law residue or a hand-run write
+    (write law §2.4: never stale duplication). build_records dedupes the
+    noise silently for rendering (session-begin assembly rule) — this scan
+    surfaces it for the retention review instead of letting the noise be
+    invisible. Returns {identity: [bd_id, ...]} sorted; deterministic.
+    """
+    seen = {}
+    duplicates = {}
+    for bd_id, raw in memory_map.items():
+        rec = Record(bd_id, raw)
+        if not rec.routed:
+            continue
+        first = seen.get(rec.identity)
+        if first is None:
+            seen[rec.identity] = (rec.value, [bd_id])
+        elif first[0] == rec.value:
+            first[1].append(bd_id)
+            duplicates[rec.identity] = sorted(first[1])
+    return dict(sorted(duplicates.items()))
+
+
 def detect_contradictions(records):
     """Pipe-format records sharing one identity with differing values.
 
@@ -482,7 +525,18 @@ def assemble(memory_map, state_projection, state_fp, git_head, beads_source):
     )
 
     intent_records = [r for r in records if r.routed and r.category == "intent"]
-    intent_line = intent_records[0].value if intent_records else NO_INTENT
+    # N4 (slice-two audit, D11): the summary pick sorts by bd_id, never by
+    # capture/insertion order — a same-identity intent contradiction sorts
+    # stably otherwise, so two permuted captures of the same records would
+    # render byte-different products under identical fingerprints (and
+    # --check would call both CURRENT). Both sides still surface verbatim in
+    # the Contradictions section; the pick is a deterministic summary line,
+    # never a resolution.
+    intent_line = (
+        min(intent_records, key=lambda r: r.bd_id.encode("utf-8")).value
+        if intent_records
+        else NO_INTENT
+    )
 
     lines = []
     lines.append("# Session Handoff")
@@ -496,6 +550,7 @@ def assemble(memory_map, state_projection, state_fp, git_head, beads_source):
     for title in (
         "Files Modified",
         "Decisions Made",
+        "Rationale",
         "Next Steps",
         "Evidence References",
         "Preserved Constraints",
@@ -669,17 +724,111 @@ def mode_injection(args) -> int:
     except InputError as err:
         print(f"ERROR: {err}", file=sys.stderr)
         return 2
-    selected, omitted_next = select_within_budget(build_records(memory_map), args.budget)
+    records = build_records(memory_map)
+    selected, omitted_next = select_within_budget(records, args.budget)
     for rec in selected:
         print(rec.render)
     print(
         f"BOUND: budget={args.budget} selected={len(selected)} "
         f"omitted_next={omitted_next.identity if omitted_next else 'none'}"
     )
+    if omitted_next is not None:
+        # The VISIBLE truncation marker (doctrine §3: inside a strict size
+        # budget, never a silent drop). stdout carries it so the consumer's
+        # context shows the cut, not just the run channel.
+        print(
+            f"TRUNCATED: budget bound reached — {len(records) - len(selected)} "
+            f"record(s) omitted, first: {omitted_next.identity} "
+            "(whole-entry fill, never mid-record; omitted records remain in "
+            "the full cache — nothing silently dropped)"
+        )
+    contradictions = detect_contradictions(records)
+    duplicates = find_duplicates(memory_map)
+    review_tail = (
+        "clean"
+        if not contradictions and not duplicates
+        else
+        "run scripts/regenerate_hotcache.py --review for the candidate report "
+        "(surface only — resolution stays judgment, never auto-delete; "
+        "skills/memory-doctrine §4)"
+    )
     print(
-        "CONSUMPTION: mechanism only — the numeric session-begin budget lands with "
-        "slice three; ordering law per skills/memory-doctrine §3.",
+        f"REVIEW: contradictions={len(contradictions)} "
+        f"duplicate_identities={len(duplicates)} — {review_tail}"
+    )
+    print(
+        "CONSUMPTION: budgeted hydration per skills/memory-doctrine §3 — the "
+        "numeric budget value lives in skills/session-begin Step 2 (its "
+        "single home; changes only by editing that skill + the doctrine); "
+        "ordering law per the doctrine.",
         file=sys.stderr,
+    )
+    return 0
+
+
+def mode_review(args) -> int:
+    """Retention-candidates report (doctrine §4): structural scan only.
+
+    Deterministic, stdout-only, read-only — NEVER writes bd, NEVER deletes:
+    the review surfaces candidates; resolution stays judgment through the
+    gated paths (update-in-place via the sole door, or bd-phase-policy's
+    gated forget). Two structural classes are mechanically detectable:
+    contradictions (same identity, differing values) and duplicate
+    identities (same identity + same value under multiple bd ids). Anything
+    else — a fact that is no longer true but has no conflicting twin — is
+    relevance, which is judgment: read the regenerated cache (the full
+    active set, canonically ordered) and decide; this report never guesses.
+    """
+    try:
+        memory_map, _state, _fp, _git = load_inputs(args)
+    except InputError as err:
+        print(f"ERROR: {err}", file=sys.stderr)
+        return 2
+    records = build_records(memory_map)
+    contradictions = detect_contradictions(records)
+    duplicates = find_duplicates(memory_map)
+    print(
+        f"MEMORY REVIEW: {len(memory_map)} records — "
+        f"{len(contradictions)} contradiction(s), "
+        f"{len(duplicates)} duplicate identit(ies)"
+    )
+    if contradictions:
+        print("## Contradictions (resolution required)")
+        for identity, group in contradictions.items():
+            print(
+                f"- {identity}: {len(group)} differing values "
+                f"({', '.join(r.bd_id for r in group)})"
+            )
+            for rec in group:
+                print(f"    - {rec.bd_id}: {rec.value}")
+        print(
+            "  RESOLUTION REQUIRED: reconcile at the boss surface — bd update "
+            "under one key (write law §2.4) or the gated forget path; never "
+            "auto-deleted, newest-wins is a doctrine violation."
+        )
+    if duplicates:
+        print("## Duplicate identities (same identity + same value, multiple bd ids)")
+        for identity, bd_ids in duplicates.items():
+            print(
+                f"- {identity}: {len(bd_ids)} copies ({', '.join(bd_ids)}) — "
+                "dedupe candidates (write-law noise; sole-door writes prevent these)"
+            )
+        print(
+            "  RESOLUTION: keep one record, remove the rest via the gated "
+            "path; never auto-deleted."
+        )
+    if not contradictions and not duplicates:
+        print(
+            "REVIEW CLEAN: no structural candidates — the structural layer "
+            "needs no retention pass (relevance remains a judgment pass, "
+            "skills/memory-doctrine §4)."
+        )
+    print(
+        "SCOPE: this report SURFACES candidates only — supersede stays the "
+        "write law's update-in-place (--key), deletion stays the gated forget "
+        "path (skill:bd-phase-policy); relevance review reads the regenerated "
+        "cache (the full active set, canonically ordered). Resolution is "
+        "judgment; nothing here is ever auto-executed."
     )
     return 0
 
@@ -723,6 +872,12 @@ def main() -> int:
              "fingerprints against the current boss surfaces (exit 1 = stale)",
     )
     parser.add_argument(
+        "--review", action="store_true",
+        help="retention-candidates report (skills/memory-doctrine §4): "
+             "structural scan only — contradictions + duplicate identities; "
+             "surfaces candidates, never writes, never deletes",
+    )
+    parser.add_argument(
         "--stdout", action="store_true",
         help="write cache bytes to stdout instead of the file",
     )
@@ -743,11 +898,13 @@ def main() -> int:
             print(
                 "ERROR: --print-injection requires --budget <non-negative int> "
                 "(the mechanism enforces an explicit bound; the numeric "
-                "session-begin value lands with slice three)",
+                "session-begin value lives in skills/session-begin Step 2)",
                 file=sys.stderr,
             )
             return 2
         return mode_injection(args)
+    if args.review:
+        return mode_review(args)
     if args.check:
         return mode_check(args)
     return mode_rebuild(args)

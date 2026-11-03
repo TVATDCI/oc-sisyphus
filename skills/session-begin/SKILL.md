@@ -9,8 +9,8 @@ compatibility: opencode
 Hydrates five context sources at session start, then presents the deterministic
 status skeleton (fixed nine-section output — see "Status presentation format").
 **Target cost: ~12-15K tokens total.** If you're spending more, you're
-over-querying (the memory step is ONE fixed query — never ad-hoc keywords, NOT
-bare dump).
+over-querying (the memory step is ONE fixed mechanism run — never ad-hoc
+keywords, NOT bare dump).
 Closes two gaps: (1) what changed in the repos while opencode was away, (2) what
 pi did in its independent micro-session(s). Also carries the OPEN-2 drift rider
 (Step 0): one read-only command surfacing routing drift since the last
@@ -79,7 +79,7 @@ Extract from hotcache:
 
 Label injected facts `[FROM HOTCACHE]` so they're distinguishable from live context.
 
-### Step 2 — Inject the uniform memory set (bd memories)
+### Step 2 — Inject the uniform memory set (budgeted mechanism)
 
 Retrieve the SAME memory set every session, regardless of context, cwd, or
 model seat — **no relevance filtering, no context-conditional additions, no
@@ -87,45 +87,59 @@ hotcache-derived keywords**. Two contexts must produce byte-identical
 injection lists; an economical model must never meet differing memory sets in
 different contexts (captain ruling 2026-10-23).
 
-Run exactly one fixed query, with the store pinned so cwd can never change
-what is read:
+Run exactly one mechanism invocation — one full-fidelity store read,
+deterministic selection, hard bound (slice three, 2026-11-03; the store is
+pinned inside the script — `$BEADS_DIR` or `~/Main-vault/.beads` — so cwd can
+never change what is read):
 
 ```
-BEADS_DIR="$HOME/Main-vault/.beads" bd memories constraint
+python3 ~/.config/opencode/scripts/regenerate_hotcache.py --print-injection --budget 24000
 ```
 
-Deterministic assembly rule — the bound and ordering, never deviated from at
-runtime:
-1. Keep entries in bd's native return order (alphabetical by key — verified
-   stable across invocations 2026-10-23).
-2. One entry = one memory record as `bd memories` renders it (its slug header
-   plus content line). Deduplicate by that identity — the `key=` field for
-   pipe-format records, the slug header otherwise — keeping the first
-   occurrence.
-3. Hard cap: first **15 entries**. Truncate in order — no re-ranking, no
-   "most relevant" selection, no runtime-added queries.
-4. 15 entries ≈ the ~5K-token injection budget.
+The mechanism (owned by `scripts/regenerate_hotcache.py`, law in
+`skill:memory-doctrine` §3):
 
-The fixed subset injected identically everywhere is the point: determinism
-beats coverage. Task-specific facts still arrive via the hotcache (Step 1)
-and the pi handoff (Step 4) — the memory layer is the uniform constraint
-underlay. The query and cap change only by editing this skill, never at
-runtime. (Precedence doctrine is unchanged and owned by "What NOT to do":
-current turn wins over injected memory.)
+1. **Order law:** hard constraints first, then active-task dependency/exact
+   values, then every remaining category in canonical identity order.
+   Recency is NOT derivable (records carry no dates) — canonical key order
+   is the doctrine's documented stand-in.
+2. **One entry** = one rendered record line (`- {identity} — {value}`,
+   full-fidelity — long values never truncated). Same-identity same-value
+   duplicates dedupe inside the mechanism; same-identity differing values
+   (contradictions) are NEVER silently picked — both sides stay visible.
+3. **Hard budget: 24,000 rendered characters (~6K tokens), whole entries
+   only.** Truncation is VISIBLE — stdout always carries the `BOUND:`
+   accounting line, and a `TRUNCATED:` line naming the first omitted record
+   whenever the budget cut anything. No re-ranking, no "most relevant"
+   selection, no runtime-added queries.
+4. **Structural review rides the same read (zero extra queries):** the
+   `REVIEW:` line counts contradictions + duplicate identities every run.
+   Nonzero counts are a retention-pass signal (memory-doctrine §4) — run
+   `--review` for the candidate report; resolution stays judgment through
+   the gated paths, never an auto-fix at session time.
 
-**Doctrine note:** the target ordering law — hard constraints first, then
-active-task dependencies/exact values, then recency, inside a strict size
-budget — is owned by `skill:memory-doctrine` (§3). The numeric budget lands
-with implementation slice 3; until it lands, this fixed mechanism is the
-operative rule. Authority/conflict questions between memory sources go to the
-doctrine.
+The budget value is **CAPTAIN-RATIFIED** (slice-three merge, 2026-11-03),
+proposed from measured corpus reality (435-record store; the 45-record
+constraint tier = 20.2K chars, full-fit under 24K). The value changes only by
+editing this skill + the doctrine together, never at runtime — the same law
+the old 15-entry cap lived under. The fixed subset injected identically
+everywhere is the point: determinism beats coverage. Task-specific facts
+still arrive via the hotcache (Step 1) and the pi handoff (Step 4) — the
+memory layer is the uniform constraint underlay. (Precedence doctrine is
+unchanged and owned by "What NOT to do": current turn wins over injected
+memory.)
 
-> **Use `bd memories <keyword>`, NOT bare `bd memories` or `bd remember`.**
-> Bare dumps everything (~30K tokens for 167 entries). `bd remember` is write-only.
-> The `BEADS_DIR` pin makes the store cwd-independent by construction — bd
-> otherwise auto-discovers `.beads/*.db` walking up from the cwd.
+Inject the resulting stdout VERBATIM — entries **and** the `BOUND` /
+`TRUNCATED` / `REVIEW` accounting lines — labeled `[FROM MEMORY]`. The
+visible accounting is part of the set: a truncated set must never read
+complete, and a structurally dirty store must never look clean.
 
-Inject the resulting set labeled `[FROM MEMORY]`.
+> **Why the mechanism, not a bare `bd memories` dump:** the script's one
+> `bd memories --json` read stays inside the mechanism — selection is
+> mechanical (tier order + budget), never attention-based, and the full
+> dump (~40K tokens at today's 435 records) never reaches the context.
+> `bd remember` stays write-only; hand-running `bd remember` bypasses the
+> sole door (write law §2.1) and is forbidden.
 
 ### Step 3 — Git sweep (what changed while away)
 
@@ -330,7 +344,7 @@ captain caught by diffing two contexts.
 | 0 (drift rider) | `deno run --allow-read …drift-check.ts` | Layer 4→6 (not allowlisted) | Can block outside discovery/prd phases — then skip (fail-open) |
 | 1 (hotcache) | `read` | Layer 3 | No — reads always allowed |
 | 1 (degraded scan) | `python3 ~/.config/opencode/scripts/check_degraded_mode.py` | Layer 4 (read-only python) | No — display-only trigger list |
-| 2 (bd memories) | `bd memories` | Layer 4 (bd read) | No — bd reads allowed |
+| 2 (budgeted memory injection) | `python3 …/regenerate_hotcache.py --print-injection --budget 24000` | Layer 4 (read-only python; one BEADS_DIR-pinned bd read inside) | No — display-only stdout |
 | 3 (git sweep) | `git status` / `git log` | Layer 4 | No — both on safe-bash allowlist |
 | 4 (pi handoff) | `read` | Layer 3 | No — reads always allowed |
 | 5 (screen) | `python3 ~/.config/opencode/scripts/screen_bd_proposals.py` | Layer 4 (read-only python) | No — display-only pre-flag |
@@ -361,8 +375,8 @@ write, and it's opt-in via operator decision.
   hotcache > retrieved memory. (This is precedence doctrine, not retrieval
   filtering — the Step-2 set itself never varies with context.)
 - **Don't derive memory keywords from the hotcache or add runtime queries** —
-  Step 2 is one fixed query with a stated cap and order, or the injection set
-  stops being context-independent.
+  Step 2 is one fixed mechanism run with a stated budget and order, or the
+  injection set stops being context-independent.
 - **Don't skip the git sweep** even when hotcache looks fresh — operator or pi
   may have committed after the handoff was written. The sweep catches this.
 - **Don't force the drift rider through a gate block** — if Layer 4/5/6 blocks
