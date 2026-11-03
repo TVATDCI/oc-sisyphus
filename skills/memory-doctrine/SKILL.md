@@ -72,14 +72,23 @@ bd memory writes go through **one door**, under rules adopted as law 2026-11-03:
 
 - **Load by domain, not recency.** Hydration order law: (1) hard constraints
   first, (2) active-task dependencies and exact values, (3) recency — all inside a
-  **strict size budget**. *[Slice-3 marker: the numeric budget value lands with
-  implementation slice 3 (hydration budget + retention). The principle and the
-  constraint-first ordering are law now.]*
-- **Current mechanism unchanged until slice 3:** session-begin Step 2's uniform
-  injection (one fixed query, bd-native order, first-15 cap — the 2026-10-23
-  determinism ruling) remains the operative mechanism; the doctrine governs the
-  target ordering law. Do not silently bend the mechanism and call it the law, or
-  vice versa — slice 3 re-lands the mechanism under the budget.
+  **strict size budget: 24,000 rendered characters (~6K tokens)**. Landed slice
+  three (2026-11-03): the value was PROPOSED from measured corpus reality (the
+  435-record live store — constraint tier 45 records / 20.2K chars full-fit;
+  tier-1 dependency/exact 73 records / 29.9K chars) and is **CAPTAIN-RATIFIED**
+  by the slice-three merge. The bound is hard and never silent: whole-entry
+  fill, `BOUND` accounting always, a visible `TRUNCATED` marker naming the
+  first omitted record. A truncated constraint tier is not a failure — it is
+  the mechanical retention signal (§4).
+- **Landed mechanism (slice three):** session-begin Step 2 runs
+  `scripts/regenerate_hotcache.py --print-injection --budget 24000` — one
+  BEADS_DIR-pinned full-fidelity read, deterministic tier order (recency remains
+  underivable — records carry no dates; canonical key order is the documented
+  stand-in), injected verbatim including the accounting lines. The value
+  changes only by editing this doctrine + the session-begin skill together,
+  never at runtime — the same law the old first-15 cap lived under (the
+  2026-10-23 determinism ruling holds through the mechanism: same inputs →
+  byte-identical injection set).
 - **Contradictions surface; they are never silently resolved** by newest-wins,
   hotcache, or web content. When two memory sources disagree, present the conflict
   for resolution (boss-surface wins per §1); resolving by silently picking the
@@ -96,8 +105,25 @@ bd memory writes go through **one door**, under rules adopted as law 2026-11-03:
   per session-close routing). The bd record itself updates in place under the same
   key (§2.4) or leaves via the gated forget path — never silent deletion, never
   stale duplication.
-- **Periodic relevance review is doctrine.** *[Slice-3 marker: review cadence and
-  mechanics land with implementation slice 3.]*
+- **Retention review — cadence and mechanics (landed slice three, 2026-11-03).**
+  Two cadences, no new substrate, never auto-delete:
+  1. **Structural scan — continuous, free.** The Step-2 mechanism run carries a
+     `REVIEW` line (contradictions + duplicate-identity counts) on every
+     session-begin — a structurally dirty store can never look clean.
+     `scripts/regenerate_hotcache.py --review` prints the full candidate
+     report on demand (deterministic, stdout-only, read-only).
+  2. **Relevance pass — judgment, on trigger.** Whether a fact is still
+     true/current is never code's call. The pass runs on operator word, before
+     any retention action, and mechanically whenever the injection's TRUNCATED
+     marker fires — a budget-truncated constraint tier is the store saying it
+     owes a retention pass (§3). The full active set for the pass is the
+     regenerated cache (every record, canonically ordered).
+
+  Same-identity stale facts supersede per the write law (§2.4: update-in-place
+  under one key, long-form rationale to the timeline); removal stays the gated
+  forget path (`skill:bd-phase-policy`). The review surfaces candidates;
+  resolution is judgment. Newest-wins, auto-expiry, and auto-deletion are
+  doctrine violations.
 
 ## 5. Beads coordination lanes — non-adoption, standing
 
@@ -136,6 +162,12 @@ out — never a mood, a tool-release novelty, or "it might help someday."
 - Rulings record: firstmate `learnings.md`, 2026-11-03 — "SIS-MEMORY DISCUSSION —
   CAPTAIN RULINGS" (authority map adopted per the oracle's layered map; write law
   adopted as law; lanes non-adoption ruled) + "KUN PLACEMENT VERDICT" (§6).
+- Slice three (2026-11-03): §3 numeric budget + §4 review cadence landed
+  (captain word "begin with slices two and three when ready"); the budget was
+  measured from the live corpus (435 records) and marked CAPTAIN-RATIFIES —
+  proposal + measurement basis: firstmate `data/sis-memory-budget-retention/report.md`;
+  audit nits N4 (order-sensitive intent pick) + N5 (reason-category routing gap)
+  closed from the slice-two audit (`data/sis-memory-hotcache-audit/report.md`).
 - Mechanism owners referenced, not restated: `skill:session-begin` (hydration
   mechanism + determinism contract), `skill:compaction` (5-loss-category
   extraction, handoff schema, degraded mode), `skill:bd-phase-policy` (phase

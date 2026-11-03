@@ -14,8 +14,10 @@
  *   T4 contradiction surfacing  — two contradictory durable facts surface
  *                                 for resolution — never silently resolved.
  *   T5 bounded hydration        — the budget mechanism exists and enforces a
- *                                 bound (the NUMERIC budget value is slice
- *                                 three — tested here with fixture bounds).
+ *                                 bound with a VISIBLE truncation marker (the
+ *                                 NUMERIC budget value landed slice three in
+ *                                 skills/session-begin Step 2: 24000 chars,
+ *                                 CAPTAIN-RATIFIES).
  *   T6 cross-desk isolation     — one desk's memory surfaces cannot read or
  *                                 write the other desk's store (path/env
  *                                 isolation asserted).
@@ -406,6 +408,17 @@ describe("memory doctrine standing set (T1–T6)", () => {
       const w2 = spawnSync("bd", ["remember", rec], envelope(root, beadsDir));
       assert.equal(w2.status, 0, `side-2 write failed: ${w2.stderr}`);
 
+      // N5 (slice three): the same drift class in a reason-category record.
+      // Pre-slice-three, reason records rendered unrouted and ESCAPED
+      // contradiction detection entirely — the routing addition closes it.
+      const w3 = wrapperWrite(root, beadsDir, {
+        scope: "global", turn: 3, category: "reason", key: "t4_why", value: "because the write law says surface",
+      });
+      assert.equal(w3.status, 0, `reason write failed: ${w3.stderr}`);
+      const recReason = "scope=global|turn=4|category=reason|key=t4_why|value=because drift (hand-run)";
+      const w4 = spawnSync("bd", ["remember", recReason], envelope(root, beadsDir));
+      assert.equal(w4.status, 0, `reason side-2 write failed: ${w4.stderr}`);
+
       const r = regenerate(root, { beadsDir, statePath, gitRepo: null, outPath: cachePath });
       assert.equal(r.status, 0, `regeneration failed: ${r.stderr}`);
       const cache = readFileSync(cachePath, "utf-8");
@@ -425,6 +438,20 @@ describe("memory doctrine standing set (T1–T6)", () => {
         !critical.includes("30s") && !critical.includes("60s"),
         "T4: conflicted identity rendered as a resolved Critical Value (silent pick)",
       );
+      // N5: the reason contradiction surfaces too — both sides verbatim,
+      // RESOLUTION REQUIRED, and the Rationale section never reads resolved
+      assert.match(r.stderr, /CONTRADICTION global:reason:t4_why/,
+        "T4/N5 FAILED: reason-category contradiction escaped detection");
+      const rationale = cache.split("## Rationale")[1]?.split("\n## ")[0] ?? "";
+      assert.ok(
+        !rationale.includes("because the write law") && !rationale.includes("because drift"),
+        "T4/N5: conflicted reason identity rendered as a resolved Rationale (silent pick)",
+      );
+      assert.ok(
+        cache.includes("because the write law says surface") && cache.includes("because drift (hand-run)"),
+        "T4/N5: reason contradiction sides not both verbatim in the product",
+      );
+      assert.match(cache, /RESOLUTION REQUIRED/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -471,18 +498,30 @@ describe("memory doctrine standing set (T1–T6)", () => {
       );
       assert.match(tight.stdout, /BOUND: budget=160 selected=\d+ omitted_next=\S+/,
         "T5: BOUND accounting line missing");
+      // slice three: the truncation marker — a cutting bound is VISIBLE on
+      // stdout, never a silent drop (assertion per the slice-three spec)
+      assert.match(tight.stdout, /TRUNCATED: budget bound reached/,
+        "T5 FAILED: budget cut records but no visible truncation marker");
+      assert.match(tight.stdout, /omitted, first: \S+/,
+        "T5: truncation marker does not name the first omitted record");
       assert.ok(!tight.stdout.includes("decision — tier three"), "T5: budget exceeded (tier-three entry selected under tight bound)");
 
-      // generous bound: everything fits
+      // generous bound: everything fits — no truncation marker, clean review
       const wide = inject(100000);
       const wideLines = wide.stdout.split("\n").filter((l) => l.startsWith("- "));
       assert.equal(wideLines.length, seeds.length, "T5: generous bound did not select all entries");
+      assert.ok(!wide.stdout.includes("TRUNCATED:"),
+        "T5: truncation marker present with nothing cut (marker must be conditional)");
+      assert.match(wide.stdout, /REVIEW: contradictions=0 duplicate_identities=0 — clean/,
+        "T5: structural REVIEW line missing or not clean on the seeded fixture");
 
       // zero bound: the mechanism enforces the empty set
       const zero = inject(0);
       assert.equal(zero.stdout.split("\n").filter((l) => l.startsWith("- ")).length, 0,
         "T5: zero budget selected entries");
       assert.match(zero.stdout, /BOUND: budget=0 selected=0 omitted_next=\S+/, "T5: zero-bound accounting wrong");
+      assert.match(zero.stdout, /TRUNCATED: budget bound reached/,
+        "T5: zero bound cut every record — truncation marker must fire");
 
       // determinism: same bound → same selection (two contexts, same bytes)
       const again = inject(160);

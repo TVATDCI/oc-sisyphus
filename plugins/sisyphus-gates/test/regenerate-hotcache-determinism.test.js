@@ -338,6 +338,8 @@ describe("hotcache regeneration — deterministic contract (fixture legs)", () =
       assert.equal(zero.status, 0);
       assert.equal(zero.stdout.split("\n").filter((l) => l.startsWith("- ")).length, 0);
       assert.match(zero.stdout, /BOUND: budget=0 selected=0 omitted_next=\S+/);
+      assert.match(zero.stdout, /TRUNCATED: budget bound reached/,
+        "zero bound cut every record — truncation marker must fire");
 
       // tight bound: only tier-0 (constraints) fit, in canonical key order
       // (the legacy slug constraint sorts before the pipe-format ones)
@@ -351,6 +353,13 @@ describe("hotcache regeneration — deterministic contract (fixture legs)", () =
       assert.ok(!tight.stdout.includes("exact value") || tightEntries.every((l) => l.includes("constraint:")),
         "priority law violated: exact/dependency ahead of unselected constraints");
       assert.match(tight.stdout, /BOUND: budget=120 selected=\d+ omitted_next=\S+/);
+      // the VISIBLE truncation marker (slice three): a cutting bound names
+      // the cut on stdout — never a silent drop
+      assert.match(
+        tight.stdout,
+        /TRUNCATED: budget bound reached — \d+ record\(s\) omitted, first: global:constraint:never_ship_red/,
+        "truncation marker missing (or wrong first-omitted identity) under a cutting bound",
+      );
 
       // generous bound: everything, constraints first (doctrine §3 order law)
       const wide = inject(100000);
@@ -360,6 +369,13 @@ describe("hotcache regeneration — deterministic contract (fixture legs)", () =
         "generous bound did not select every record");
       const firstTier = wideEntries.slice(0, 2).map((l) => l.includes("constraint"));
       assert.deepEqual(firstTier, [true, true], "constraints are not first under the order law");
+      // nothing cut → no truncation marker, accounting says none omitted,
+      // and the structural review rides the same read (clean fixture)
+      assert.ok(!wide.stdout.includes("TRUNCATED:"),
+        "truncation marker present with nothing cut (marker must be conditional)");
+      assert.match(wide.stdout, /BOUND: budget=100000 selected=\d+ omitted_next=none/);
+      assert.match(wide.stdout, /REVIEW: contradictions=0 duplicate_identities=0 — clean/,
+        "REVIEW line missing or not clean on a structurally clean fixture");
 
       // determinism: same bound → same selection bytes
       const again = inject(120);
@@ -401,6 +417,168 @@ describe("hotcache regeneration — deterministic contract (fixture legs)", () =
         preservedLines.map((l) => l.slice(2).split(" — ")[0]),
         ["constraint-legacy-pi", "global:constraint:never_ship_red", "global:constraint:single_writer"],
         "canonical identity ordering violated inside a section",
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("N4 permutation pin: two permuted captures of the same records produce byte-identical products", () => {
+    const root = fixtureDir("permutation");
+    try {
+      // the slice-two audit's D11 exotic: a same-identity intent
+      // contradiction. Under insertion-order picking, two permuted captures
+      // of these SAME records rendered byte-different products with
+      // IDENTICAL fingerprints (--check called both CURRENT). The pin: the
+      // summary pick sorts by bd_id, so capture order is irrelevant.
+      const permuted = {
+        ...CAPTURE,
+        "global:intent:audit_goal": "scope=global|turn=20|category=intent|key=audit_goal|value=alpha side",
+        "slug-intent-audit": "scope=global|turn=21|category=intent|key=audit_goal|value=beta side",
+      };
+      const keysA = Object.keys(permuted);
+      const keysB = [...keysA].reverse();
+      const cachePathA = join(root, "cache-a.md");
+      const cachePathB = join(root, "cache-b.md");
+      const run = (keys, out) => {
+        const capture = {};
+        for (const k of keys) capture[k] = permuted[k];
+        writeFileSync(join(root, "memories.json"), JSON.stringify(capture, null, 2));
+        return spawnSync(
+          "python3", [REGEN, "--from-capture", join(root, "memories.json"),
+                      "--state", join(root, "state.json"), "--no-git", "--out", out],
+          { encoding: "utf-8", timeout: 30000 },
+        );
+      };
+      const ra = run(keysA, cachePathA);
+      const rb = run(keysB, cachePathB);
+      assert.equal(ra.status, 0, `permutation leg A failed: ${ra.stderr}`);
+      assert.equal(rb.status, 0, `permutation leg B failed: ${rb.stderr}`);
+      const bytesA = readFileSync(cachePathA, "utf-8");
+      const bytesB = readFileSync(cachePathB, "utf-8");
+      assert.equal(bytesB, bytesA,
+        "N4 FAILED: permuted capture order changed the product bytes (order instability)");
+      // the pick is the bd_id-min side — deterministic; both sides still
+      // surface verbatim in the Contradictions section (never a resolution)
+      const m = bytesA.match(/^\*\*Original intent:\*\* (.+)$/m);
+      assert.ok(m, "Original intent line missing from the product");
+      assert.equal(m[1], "alpha side", "N4: intent pick is not the bd_id-min side");
+      assert.match(bytesA, /## Contradictions \(resolution required\)/);
+      assert.ok(bytesA.includes("beta side"), "N4: contradiction side B missing from the product");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("N5 reason routing: reason records route to Rationale — dedupe and contradiction detection no longer escape them", () => {
+    const root = fixtureDir("reason");
+    try {
+      const withReason = {
+        ...CAPTURE,
+        "global:reason:why_gates": "scope=global|turn=30|category=reason|key=why_gates|value=gates exist to fail closed",
+      };
+      writeFileSync(join(root, "memories.json"), JSON.stringify(withReason, null, 2));
+      const r = regen(root, []);
+      assert.equal(r.status, 0, `regeneration failed: ${r.stderr}`);
+      const cache = r.stdout;
+      const rationale = cache.split("## Rationale")[1]?.split("\n## ")[0] ?? "";
+      assert.ok(rationale.includes("gates exist to fail closed"),
+        "N5 FAILED: reason record not routed to the Rationale section");
+      assert.ok(cache.includes("gates exist to fail closed"),
+        "N5: zero loss violated — reason value missing (routing lost it)");
+
+      // same-value duplicate under a second bd id: deduped to one render
+      // (pre-slice-three this escaped dedupe because unrouted records skip it)
+      const dup = {
+        ...withReason,
+        "slug-reason-dup": "scope=global|turn=31|category=reason|key=why_gates|value=gates exist to fail closed",
+      };
+      writeFileSync(join(root, "memories.json"), JSON.stringify(dup, null, 2));
+      const r2 = regen(root, []);
+      assert.equal(r2.status, 0);
+      const rationale2 = r2.stdout.split("## Rationale")[1]?.split("\n## ")[0] ?? "";
+      assert.equal((rationale2.match(/gates exist to fail closed/g) || []).length, 1,
+        "N5 FAILED: same-value reason duplicate rendered twice (dedupe escaped)");
+
+      // differing value under the same write-law identity: contradiction
+      // surfaced, Rationale must never read like a resolved pick
+      const conflict = {
+        ...withReason,
+        "slug-reason-drift": "scope=global|turn=32|category=reason|key=why_gates|value=gates exist to fail open (drifted)",
+      };
+      writeFileSync(join(root, "memories.json"), JSON.stringify(conflict, null, 2));
+      const r3 = regen(root, []);
+      assert.equal(r3.status, 0);
+      assert.match(r3.stdout, /## Contradictions \(resolution required\)/,
+        "N5 FAILED: reason contradiction did not surface a resolution section");
+      assert.match(r3.stderr, /CONTRADICTION global:reason:why_gates: 2 differing values surfaced/,
+        "N5: reason contradiction not reported on the run channel");
+      assert.ok(r3.stdout.includes("gates exist to fail open (drifted)"),
+        "N5: reason contradiction side silently dropped");
+      assert.match(r3.stdout, /RESOLUTION REQUIRED/);
+      const rationale3 = r3.stdout.split("## Rationale")[1]?.split("\n## ")[0] ?? "";
+      assert.ok(
+        !rationale3.includes("fail closed") && !rationale3.includes("fail open"),
+        "N5 FAILED: conflicted reason identity rendered as a resolved Rationale (silent pick)",
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("--review mode: structural candidates report — deterministic, stdout-only, surfaces never deletes", () => {
+    const root = fixtureDir("review");
+    try {
+      const dirty = {
+        ...CAPTURE,
+        "global:reason:why_review": "scope=global|turn=40|category=reason|key=why_review|value=reviews surface, never delete",
+        "slug-reason-review-dup": "scope=global|turn=41|category=reason|key=why_review|value=reviews surface, never delete",
+        "slug-exact-drift-review": "scope=global|turn=42|category=exact|key=plugin_pin|value=@opencode-ai/plugin 1.21.0 (drifted for review)",
+      };
+      writeFileSync(join(root, "memories.json"), JSON.stringify(dirty, null, 2));
+      const run = () => spawnSync(
+        "python3", [REGEN, "--review", "--from-capture", join(root, "memories.json")],
+        { encoding: "utf-8", timeout: 30000 },
+      );
+      const r1 = run();
+      assert.equal(r1.status, 0, `--review failed: ${r1.stderr}`);
+      assert.match(r1.stdout, /MEMORY REVIEW: \d+ records — 1 contradiction\(s\), 1 duplicate identit\(ies\)/,
+        "--review header counts wrong");
+      assert.match(r1.stdout, /## Contradictions \(resolution required\)/);
+      assert.match(r1.stdout, /global:exact:plugin_pin: 2 differing values/);
+      assert.match(r1.stdout, /## Duplicate identities/);
+      assert.match(r1.stdout, /global:reason:why_review: 2 copies/,
+        "--review missed the reason-category duplicate (N5 class)");
+      assert.match(r1.stdout, /RESOLUTION REQUIRED/);
+      assert.match(r1.stdout, /never auto-deleted/);
+      assert.match(r1.stdout, /SCOPE: this report SURFACES candidates only/);
+      // deterministic: two runs, byte-identical report
+      const r2 = run();
+      assert.equal(r2.stdout, r1.stdout, "--review output not deterministic");
+
+      // clean store → the fixed clean line (placeholder discipline)
+      writeFileSync(join(root, "memories-clean.json"), JSON.stringify(CAPTURE, null, 2));
+      const rClean = spawnSync(
+        "python3", [REGEN, "--review", "--from-capture", join(root, "memories-clean.json")],
+        { encoding: "utf-8", timeout: 30000 },
+      );
+      assert.equal(rClean.status, 0);
+      assert.match(rClean.stdout, /REVIEW CLEAN: no structural candidates/);
+      assert.ok(!rClean.stdout.includes("## Contradictions"),
+        "clean store produced a contradictions section");
+
+      // the injection run carries the REVIEW line — the structural scan
+      // rides the same read at zero extra cost (session-begin surfaces it)
+      const inj = spawnSync(
+        "python3", [REGEN, "--print-injection", "--budget", "100000",
+                    "--from-capture", join(root, "memories.json")],
+        { encoding: "utf-8", timeout: 30000 },
+      );
+      assert.equal(inj.status, 0, `injection run failed: ${inj.stderr}`);
+      assert.match(
+        inj.stdout,
+        /REVIEW: contradictions=1 duplicate_identities=1 — run scripts\/regenerate_hotcache\.py --review/,
+        "injection output lacks the dirty-store REVIEW line",
       );
     } finally {
       rmSync(root, { recursive: true, force: true });
