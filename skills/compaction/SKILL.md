@@ -114,7 +114,7 @@ python3 ~/.config/opencode/scripts/bd_remember.py --scope global --turn 12 --cat
 - Never inject memories that conflict with the user's most recent message
 - Label injected facts as `[FROM MEMORY]` so they can be distinguished from live context
 
-**Retrieval policy (superseded 2026-10-23, aligned 2026-10-24):** the earlier adaptive policy (match the current task/bead ID, sort hard constraints first, take top-K with K=5 constraints + 10 facts) is RETIRED. The live contract is session-begin's determinism rule: one fixed query, first 15 entries, truncated in order — no re-ranking, no task-matching, identical everywhere. Do not reintroduce adaptive retrieval here; if the fixed subset needs changing, change session-begin's rule itself.
+**Retrieval policy (superseded 2026-10-23, aligned 2026-10-24):** the earlier adaptive policy (match the current task/bead ID, sort hard constraints first, take top-K with K=5 constraints + 10 facts) is RETIRED. The live contract is session-begin's determinism rule: one fixed query, first 15 entries, truncated in order — no re-ranking, no task-matching, identical everywhere. Do not reintroduce adaptive retrieval here; if the fixed subset needs changing, change session-begin's rule itself. The target ordering law (hard constraints → active-task dependencies/exact values → recency, inside a strict size budget) is stated in `skill:memory-doctrine` §3; the numeric budget lands with implementation slice 3 — until then session-begin's fixed mechanism is the operative rule.
 
 ---
 

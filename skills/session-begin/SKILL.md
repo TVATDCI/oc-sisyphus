@@ -113,6 +113,13 @@ underlay. The query and cap change only by editing this skill, never at
 runtime. (Precedence doctrine is unchanged and owned by "What NOT to do":
 current turn wins over injected memory.)
 
+**Doctrine note:** the target ordering law — hard constraints first, then
+active-task dependencies/exact values, then recency, inside a strict size
+budget — is owned by `skill:memory-doctrine` (§3). The numeric budget lands
+with implementation slice 3; until it lands, this fixed mechanism is the
+operative rule. Authority/conflict questions between memory sources go to the
+doctrine.
+
 > **Use `bd memories <keyword>`, NOT bare `bd memories` or `bd remember`.**
 > Bare dumps everything (~30K tokens for 167 entries). `bd remember` is write-only.
 > The `BEADS_DIR` pin makes the store cwd-independent by construction — bd
