@@ -131,11 +131,16 @@ CATEGORY_TIER = {
 # duplicates skipped dedupe. Routing them closes both escapes; unrouted
 # rendering remains the fate of genuinely foreign shapes only (zero loss
 # either way).
+# `preference` routing (build 3, the N5-class follow-up slice three
+# explicitly flagged as NOT fixed): preference is likewise a canonical
+# write-law category that rendered unrouted with the identical two
+# escapes; routing it closes both the same way.
 CATEGORY_SECTION = {
     "constraint": "Preserved Constraints",
     "dependency": "Active Dependencies",
     "exact": "Critical Values",
     "reason": "Rationale",
+    "preference": "Preferences",
     "decision": "Decisions Made",
     "next": "Next Steps",
     "files": "Files Modified",
@@ -551,6 +556,7 @@ def assemble(memory_map, state_projection, state_fp, git_head, beads_source):
         "Files Modified",
         "Decisions Made",
         "Rationale",
+        "Preferences",
         "Next Steps",
         "Evidence References",
         "Preserved Constraints",

@@ -19,6 +19,10 @@
  *   - contradiction surfacing: same write-law identity, differing values →
  *     both sides verbatim + RESOLUTION REQUIRED; never silently resolved;
  *     same-value duplicates are NOT contradictions (dedupe by identity).
+ *   - preference routing (build 3, the N5-class follow-up): preference
+ *     records route to their own Preferences section — contradiction
+ *     detection AND dedupe both bite on them (they escaped both while
+ *     unrouted).
  *   - budget mechanism (T5 fixture half): doctrine priority order
  *     (constraints → dependency/exact → rest), whole-entry fill, BOUND
  *     accounting, deterministic selection.
@@ -526,6 +530,69 @@ describe("hotcache regeneration — deterministic contract (fixture legs)", () =
     }
   });
 
+  test("preference routing (build 3, N5-class): preference records route to Preferences — contradiction detection and dedupe both bite", () => {
+    const root = fixtureDir("preference");
+    try {
+      // positive routing: the preference record renders in its own
+      // Preferences section, never under Additional Durable Records
+      // (the N5-class unrouted escape this slice closes)
+      const withPreference = {
+        ...CAPTURE,
+        "global:preference:flash_first": "scope=global|turn=50|category=preference|key=flash_first|value=flash-first seats for scoped mechanical ships",
+      };
+      writeFileSync(join(root, "memories.json"), JSON.stringify(withPreference, null, 2));
+      const r = regen(root, []);
+      assert.equal(r.status, 0, `regeneration failed: ${r.stderr}`);
+      const cache = r.stdout;
+      const preferences = cache.split("## Preferences")[1]?.split("\n## ")[0] ?? "";
+      assert.ok(preferences.includes("flash-first seats for scoped mechanical ships"),
+        "preference routing FAILED: preference record not routed to the Preferences section");
+      const unrouted = cache.split("## Additional Durable Records")[1]?.split("\n## ")[0] ?? "";
+      assert.ok(!unrouted.includes("global:preference:flash_first"),
+        "preference routing: routed preference record still renders unrouted");
+      assert.ok(cache.includes("flash-first seats for scoped mechanical ships"),
+        "preference routing: zero loss violated — preference value missing (routing lost it)");
+
+      // dedupe bites: same-value duplicate under a second bd id renders
+      // once (unrouted records skip dedupe — routing is what makes this fire)
+      const dup = {
+        ...withPreference,
+        "slug-preference-dup": "scope=global|turn=51|category=preference|key=flash_first|value=flash-first seats for scoped mechanical ships",
+      };
+      writeFileSync(join(root, "memories.json"), JSON.stringify(dup, null, 2));
+      const r2 = regen(root, []);
+      assert.equal(r2.status, 0);
+      const preferences2 = r2.stdout.split("## Preferences")[1]?.split("\n## ")[0] ?? "";
+      assert.equal((preferences2.match(/flash-first seats for scoped mechanical ships/g) || []).length, 1,
+        "preference dedupe FAILED: same-value preference duplicate rendered twice (dedupe escaped)");
+
+      // contradiction detection bites: differing value under the same
+      // write-law identity surfaces RESOLUTION REQUIRED, and Preferences
+      // must never read like a resolved pick
+      const conflict = {
+        ...withPreference,
+        "slug-preference-drift": "scope=global|turn=52|category=preference|key=flash_first|value=strong-only seats everywhere (drifted)",
+      };
+      writeFileSync(join(root, "memories.json"), JSON.stringify(conflict, null, 2));
+      const r3 = regen(root, []);
+      assert.equal(r3.status, 0);
+      assert.match(r3.stdout, /## Contradictions \(resolution required\)/,
+        "preference contradiction FAILED: did not surface a resolution section");
+      assert.match(r3.stderr, /CONTRADICTION global:preference:flash_first: 2 differing values surfaced/,
+        "preference contradiction not reported on the run channel");
+      assert.ok(r3.stdout.includes("strong-only seats everywhere (drifted)"),
+        "preference contradiction side silently dropped");
+      assert.match(r3.stdout, /RESOLUTION REQUIRED/);
+      const preferences3 = r3.stdout.split("## Preferences")[1]?.split("\n## ")[0] ?? "";
+      assert.ok(
+        !preferences3.includes("flash-first seats") && !preferences3.includes("strong-only seats"),
+        "conflicted preference identity rendered as a resolved Preferences pick (silent resolution)",
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test("--review mode: structural candidates report — deterministic, stdout-only, surfaces never deletes", () => {
     const root = fixtureDir("review");
     try {
@@ -534,6 +601,8 @@ describe("hotcache regeneration — deterministic contract (fixture legs)", () =
         "global:reason:why_review": "scope=global|turn=40|category=reason|key=why_review|value=reviews surface, never delete",
         "slug-reason-review-dup": "scope=global|turn=41|category=reason|key=why_review|value=reviews surface, never delete",
         "slug-exact-drift-review": "scope=global|turn=42|category=exact|key=plugin_pin|value=@opencode-ai/plugin 1.21.0 (drifted for review)",
+        "global:preference:vote_style": "scope=global|turn=43|category=preference|key=vote_style|value=preferences surface, never delete",
+        "slug-preference-review-dup": "scope=global|turn=44|category=preference|key=vote_style|value=preferences surface, never delete",
       };
       writeFileSync(join(root, "memories.json"), JSON.stringify(dirty, null, 2));
       const run = () => spawnSync(
@@ -542,13 +611,15 @@ describe("hotcache regeneration — deterministic contract (fixture legs)", () =
       );
       const r1 = run();
       assert.equal(r1.status, 0, `--review failed: ${r1.stderr}`);
-      assert.match(r1.stdout, /MEMORY REVIEW: \d+ records — 1 contradiction\(s\), 1 duplicate identit\(ies\)/,
+      assert.match(r1.stdout, /MEMORY REVIEW: \d+ records — 1 contradiction\(s\), 2 duplicate identit\(ies\)/,
         "--review header counts wrong");
       assert.match(r1.stdout, /## Contradictions \(resolution required\)/);
       assert.match(r1.stdout, /global:exact:plugin_pin: 2 differing values/);
       assert.match(r1.stdout, /## Duplicate identities/);
       assert.match(r1.stdout, /global:reason:why_review: 2 copies/,
         "--review missed the reason-category duplicate (N5 class)");
+      assert.match(r1.stdout, /global:preference:vote_style: 2 copies/,
+        "--review missed the preference-category duplicate (N5-class build-3 routing)");
       assert.match(r1.stdout, /RESOLUTION REQUIRED/);
       assert.match(r1.stdout, /never auto-deleted/);
       assert.match(r1.stdout, /SCOPE: this report SURFACES candidates only/);
@@ -577,7 +648,7 @@ describe("hotcache regeneration — deterministic contract (fixture legs)", () =
       assert.equal(inj.status, 0, `injection run failed: ${inj.stderr}`);
       assert.match(
         inj.stdout,
-        /REVIEW: contradictions=1 duplicate_identities=1 — run scripts\/regenerate_hotcache\.py --review/,
+        /REVIEW: contradictions=1 duplicate_identities=2 — run scripts\/regenerate_hotcache\.py --review/,
         "injection output lacks the dirty-store REVIEW line",
       );
     } finally {
