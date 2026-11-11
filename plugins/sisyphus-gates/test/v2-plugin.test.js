@@ -83,7 +83,19 @@ function makeMockCtx(overrides = {}) {
     prompts: [],
   };
   const ctx = {
-    options: overrides.options ?? {},
+    // Hermeticity (fm/test-sandbox-hermeticity, 2026-11-11): default the
+    // cwd-dependent sandbox-allow tier OFF for booted tests. resolveOptions
+    // spreads host options over config, and optionsSearchPath always
+    // includes the deployed repo root, so the repo opencode.json sandbox
+    // lists load in every boot. Run from a checkout under a configured
+    // sandbox path (e.g. a /tmp scratch clone), Layer 3.7 pre-approves
+    // "npm install"-class commands and no-state fail-closed assertions
+    // silently stop throwing (ddd-env-red-metachar-p0). Tests exercising
+    // sandbox-allow pass their own options and are unaffected.
+    options: overrides.options ?? {
+      sandbox_paths: [],
+      sandbox_allowed_commands: [],
+    },
     location: {
       directory: overrides.directory ?? "/nonexistent-config-dir",
       project: { id: "test-project", directory: "/tmp", canonical: "/tmp" },
