@@ -277,6 +277,8 @@ grep '"bead":"brain-xxx"' "$HOME/.sisyphus/evidence/execution-receipts.jsonl"
 - Counter is monotonic — never decrement.
 - Receipts survive compaction because they live in `bd remember` and the JSONL log.
 - Toggle a tracking item (bead, harness task, checklist entry) to done only after its verification query returns clean — never on the assumption the pass is finished.
+- A gate-blocked verification command is reported verbatim as blocked in the receipt — never presented as passed and never misattributed to a different command.
+- After any subagent file-write, re-read the written file yourself before reporting it verified; a subagent's self-reported read-back is not your verification.
 
 ---
 
