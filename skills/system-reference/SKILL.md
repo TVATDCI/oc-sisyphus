@@ -330,3 +330,9 @@ dump full file contents — synthesize and point to sources for detail.
 The `sisyphus-gates` metachar defense is **enforced live on the DEFAULT path, in EVERY phase** (metachar-p0 2026-10-22 + metachar-p0-b 2026-10-22: the plugin aliases the live tool name `shell` onto the decision layer's `bash` keying — proven by `scripts/v2-live-metachar-proof.sh`; and Layer 4.6 makes the compound screen phase-independent — proven by `scripts/v2-default-path-proof.sh`, codemode ENABLED, state at the discovery steady-state, the exact shape of the captain's fresh-window window; the pre-p0-b red was the discovery/prd-writing Layer 6 short-circuit allowing flagged compounds, NOT codemode hiding shell calls — a real session's shell command always surfaces as a direct `shell` tool call). A compound containing `|`, `&&`, `||`, `;`, `&`, `>`, `>>`, `<`, `2>&1`, `$(…)`, or backticks is **blocked in all phases unless every segment is safe-read-only** (Layer 4.5 allow-path, brain-2q4 P2 — `git status && git log` runs by design; `ls && rm -rf …` blocks because the second segment is destructive). Work with it:
 
 Reference: `brain-2q4` (adversarial spec-lock in `plugins/sisyphus-gates/test/adversarial/`). Layer 4.5 read-only-compound allow-path is LIVE (P2, metachar-p0-verified); any compound with a non-safe segment blocks in every phase (Layer 4.6, metachar-p0-b-verified on the default path).
+
+### On-demand routing pointers (from AGENTS.md, backpass 2026-11-12)
+
+- **Session protocols** → `skill:session-close` / `skill:session-begin`
+- **Toolkits** → `skill:toolkit-lsp` (LSP) · `skill:toolkit-research` (web/docs/GitHub) · `skill:toolkit-session` (session history)
+- **CodeGraph-indexed repos** (`.codegraph/` at the repo root) → `skill:codegraph-usage` — before grep/find/read; no `.codegraph/` directory → skip CodeGraph entirely

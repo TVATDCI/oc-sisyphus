@@ -195,3 +195,12 @@ Before triggering compaction, verify these are in `bd remember`:
 - [ ] User's implicit preferences (style, tone, formatting)
 
 The full conversation history is always preserved in JSONL regardless of compaction — branching and rewinding remain possible.
+
+---
+
+### Context ceiling (from AGENTS.md Context Efficiency, backpass 2026-11-12)
+
+- Context window: ~1M (1,000,000) tokens — hard ceiling only. The bands below are the quality working budget (stay inside them); compaction @50% (~500K) is an emergency backstop, not license to be verbose.
+  - 🟢 **<50K tokens** — comfortable
+  - 🟡 **50–80K** — next slice smaller
+  - 🔴 **>80K** — split or archive
