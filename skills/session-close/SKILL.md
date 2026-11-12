@@ -105,6 +105,7 @@ Work is NOT complete until `git push` succeeds.
 - If push fails, resolve and retry until it succeeds
 - If `git push` is blocked with a session-close reason, the protocol state is the source of truth — run `protocol complete` (if all 4 layers are genuinely done) or escalate to the operator for `protocol override`. Do NOT attempt to bypass via prose.
 - If `git push` is blocked with a session-close reason, do NOT work around it via prose — run `protocol complete` or escalate to the operator for `protocol override`.
+- Every follow-up, cleanup, or hygiene item named in a session-close receipt must land as a bd issue or a `bd_remember` `next` fact in the same turn — receipt prose alone is not tracking.
 
 ---
 

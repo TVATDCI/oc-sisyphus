@@ -14,3 +14,11 @@ metadata:
 For memory writes via `bd remember`, use `python3 scripts/bd_remember.py` (gate-safe wrapper — passes the `|` delimiter inside Python argv, never hits the shell-safety gate).
 
 Write-law and authority questions (sole-door, categories, supersede-not-duplicate, source+date, no raw-web promotion) are owned by `skill:memory-doctrine`; this skill owns only the phase gating.
+
+## Command quick reference (from AGENTS.md, backpass 2026-11-12)
+
+`bd ready` / `bd show <id>` / `bd update <id> --claim` / `bd close <id>` / `bd dolt push` — full reference: `bd prime`.
+
+- If the wrapper warns a category is not in the canonical set, re-issue with a canonical one (`constraint`, `decision`, `dependency`, `exact`, `files`, `intent`, `next`, `preference`, `reason`) — never store under a warned category.
+
+(The wrapper prints the canonical set in its warning at decision time.)

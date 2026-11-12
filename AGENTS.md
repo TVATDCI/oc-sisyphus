@@ -4,24 +4,20 @@ Use **bd** (beads) for task tracking. Run `bd prime` for full workflow context.
 
 ## Session Triggers
 
-| Trigger | Action |
-|---------|--------|
-| `session-begin`, `continue`, `pick up`, `where was I` | Run `skill:session-begin` — 5-step hydration (hotcache → `bd memories` → git sweep → pi handoff → surface bd facts) + Step 0 routing-drift rider (skip-on-gate, fail-open — OPEN-2). `state.json` is Layer 0 trust-root; `hotcache.md` is the agent-readable projection. |
-| `session-close`, `done`, `archive`, `wrap up` | Run `skill:session-close` |
-| `checkpoint`, `save state` | Delegated to `skill:session-close` (its Checkpoint / Save State section) |
+- `session-begin` / `continue` / `pick up` / `where was I` → run `skill:session-begin` — 5-step hydration (hotcache → `bd memories` → git sweep → pi handoff → surface bd facts) + Step 0 routing-drift rider (skip-on-gate, fail-open — OPEN-2). `state.json` is Layer 0 trust-root; `hotcache.md` is the agent-readable projection.
+- `session-close` / `done` / `archive` / `wrap up` → run `skill:session-close`
+- `checkpoint` / `save state` → delegated to `skill:session-close` (its Checkpoint / Save State section)
 
 ## Beads
 
-`bd ready` / `bd show <id>` / `bd update <id> --claim` / `bd close <id>` / `bd dolt push` — full reference: `bd prime`.
-
 - Use `bd` for ALL task tracking — no TodoWrite, TaskCreate, or markdown TODO lists
-- Use `bd remember` for persistent knowledge — no MEMORY.md files
+- Use `bd remember` for persistent knowledge — no MEMORY.md files, no harness-native memory tools (their store never reaches bd)
 
 ### bd subcommand phase policy (gate v0.4.1+)
 
 - Full phase-agnostic vs phase-gated subcommand lists + gate-safe memory writes via `scripts/bd_remember.py` → `skill:bd-phase-policy`; load it before any `bd` subcommand outside an execution phase.
 
-- If the wrapper warns a category is not in the canonical set, re-issue with a canonical one (`constraint`, `decision`, `dependency`, `exact`, `files`, `intent`, `next`, `preference`, `reason`) — never store under a warned category.
+- If the wrapper warns a category is not in the canonical set, re-issue with a canonical one — never store under a warned category.
 
 ## Delegation
 
@@ -29,7 +25,6 @@ Use **bd** (beads) for task tracking. Run `bd prime` for full workflow context.
 
 ## Context Efficiency
 
-- Context window: ~1M (1,000,000) tokens — hard ceiling only. The bands below are the quality working budget (stay inside them); compaction @50% (~500K) is an emergency backstop, not license to be verbose.
 - 🟢 **<50K tokens** — comfortable
 - 🟡 **50–80K** — next slice smaller
 - 🔴 **>80K** — split or archive
@@ -48,8 +43,6 @@ Trigger compaction at **50% usage** (not 100%) — the full protocol lives in `s
 ## Doc Drift Guard
 
 If a change touches **skills, agents, routing, permissions, canonical paths, or workflow docs**, update `./COMPLETE-CODEBASE.md` in the same change. The session-close protocol enforces this at close time; the pre-push `check-doc-claims.sh` validates it at push time.
-
-Scope rules — the routine-model-swap exception (commit-message-only) vs mandatory timeline+prose sync, routing pin ownership (pipeline cast vs per-desk `omo.*.jsonc` variants), and the routing-decision map — live in `skill:doc-drift-guard`.
 
 ## Response & Gate Discipline
 
@@ -94,8 +87,5 @@ The `sisyphus-gates` metachar defense is **enforced live on the DEFAULT path, in
 ## On-Demand Reference
 
 - **System map + topology + timeline** → `./COMPLETE-CODEBASE.md` · **system history** → `SYSTEM-NARRATIVE.md` · **architecture/gates/workflow** → `skill:system-reference`
-- **Session protocols** → `skill:session-close` / `skill:session-begin`
 - **Language rules** → loaded by `scripts/load-rules.sh` (wave-executor Step 0) · **Agent full prompts** → loaded at delegation time
-- **Toolkits** → `skill:toolkit-lsp` (LSP) · `skill:toolkit-research` (web/docs/GitHub) · `skill:toolkit-session` (session history)
 - **Code search** (semantic, ~98% fewer tokens than grep+read) → `semble search "description" ./path` or the `semble` MCP tools — prefer over grep/glob/read for code-understanding questions
-- **CodeGraph-indexed repos** (`.codegraph/` at the repo root) → `skill:codegraph-usage` — before grep/find/read; no `.codegraph/` directory → skip CodeGraph entirely
