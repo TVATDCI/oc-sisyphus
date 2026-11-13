@@ -1,6 +1,6 @@
 # OpenCode Codebase — Complete Structure, Changes & Workflow
 
-> **Last reviewed:** 2026-11-10 | **Next review:** When agent routing changes or a new skill is added
+> **Last reviewed:** 2026-11-13 | **Next review:** When agent routing changes or a new skill is added
 > **Drift-prone sections:** §Agent Routing, §Change Timeline, §Skill count, §Plugin file count
 > **Stable sections:** §Directory Architecture, §Workflow State Machine, §Subagent Permissions
 > **Deep history + rationale (searchable):** Main-vault `wiki/concepts/` system-history pages (tags: `system-history`, `era-1`..`era-4`). Era pages WikiLink to event pages and the opencode-architecture concept pages.
@@ -22,7 +22,7 @@
    │ └── commands/ # Slash-command definitions (49 wrappers — the P1-d restoration COMPLETED 2026-10-24: every operational skill wrapped as a lean skill-load command, /prime carries a !`bd prime` shell block; 6 skills deliberately unwrapped — shell-safety + workflow-guard auto-firing guards, system-reference + opencode-expert + memory-doctrine references, fullstack-dev-workspace eval workspace)
    │
    ├── 3. SKILL LAYER
-    │ ├── skills/ # 55 real skill directories (compaction + doc-drift-guard added 2026-10-24 by the backpass charter apply; 49→53 synced 2026-10-27 — the Oct-24/25 era wrapper-restoration + skills additions had left the claim stale, caught by the completion-honesty gate during the Swamp-Club-guards push; jev added 2026-10-28, 53→54; memory-doctrine added 2026-11-03, 54→55) + 4 symlinked SKILL.md (herdr, herdr-collab from ~/.agents; shell-safety, git-commit-message from ~/dotfiles/agents/skills — B-track unification canonicals, 2026-10-01) + _shared refs (60 total)
+    │ ├── skills/ # 56 real skill directories (compaction + doc-drift-guard added 2026-10-24 by the backpass charter apply; 49→53 synced 2026-10-27 — the Oct-24/25 era wrapper-restoration + skills additions had left the claim stale, caught by the completion-honesty gate during the Swamp-Club-guards push; jev added 2026-10-28, 53→54; memory-doctrine added 2026-11-03, 54→55; untrusted-input-advisories added 2026-11-13 by the backpass round-3 apply, 55→56 — caught by TNT's completion-honesty check on the round-3 sync) + 4 symlinked SKILL.md (herdr, herdr-collab from ~/.agents; shell-safety, git-commit-message from ~/dotfiles/agents/skills — B-track unification canonicals, 2026-10-01) + _shared refs (61 total)
    │ ├── each has SKILL.md + optional scripts/evals
    │ └── Notable eval sets: code-review, git-commit-message, skill-creator; operator-owned fan-out review: orchestrator-review (fork of plugin-bundled review-work; Sisyphus gate lanes — code-review + security-auditor + ui-auditor + goal-verify + conditional regression-gate + oracle second-opinion)
    │
