@@ -16,3 +16,8 @@ Name the delegation shape when fanning out work (source: graph-engineering §15)
 **Fan-out governance (routing default, E-trim 2026-09-27):** N≤3 per wave; declare node count; one `execution-receipt` per node before merge. If N× the per-window band (§17 #2) exceeds the comfortable band, **collapse diamond→chain by default** — parallelism must buy wall-time the operator actually consumes.
 
 After every `task()` delegation, read the harness routing note; if the subagent model resolved "via category: unknown", flag the omo category drift and pin the model or category explicitly on that dispatch or the next.
+
+
+## Graph token multiplier (moved verbatim from AGENTS.md, 2026-11-13 backpass rework)
+
+- **Graph token multiplier (§17 #2):** fan-out multiplies total token burn across parallel windows. A wave running N parallel `task()` nodes should budget roughly **N×** the per-window band above (🟢/🟡/🔴); background fan-outs count against the same budget. If N× exceeds the comfortable band, collapse to serial (`chain`) or reduce N.
